@@ -31,11 +31,11 @@ public abstract class SolverContract {
 
     private static readonly TimeSpan Moment = TimeSpan.FromMilliseconds(1);
 
-    private Solution Optimum(IProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
+    private Solution Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
 
     [Fact]
     public void TrainsSharingATrackAreSeparatedByTheHeadway() {
-        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB, subjectTo: Horizon & ConflictFree & OccupiesA & OccupiesB));
+        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(Horizon & ConflictFree & OccupiesA & OccupiesB));
 
         Assert.Equal(Headway, solution.ObjectiveValue, precision: Precision);
         Assert.Equal(Headway, Math.Abs(solution.Value(DepartureA - DepartureB)), precision: Precision);
@@ -44,7 +44,7 @@ public abstract class SolverContract {
 
     [Fact]
     public void TrainsOnDifferentTracksNeedNoSeparation() {
-        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB, subjectTo: Horizon & ConflictFree & OccupiesA & !OccupiesB));
+        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(Horizon & ConflictFree & OccupiesA & !OccupiesB));
 
         Assert.Equal(0, solution.ObjectiveValue, precision: Precision);
         Assert.False(solution.Value(Separated));
@@ -54,9 +54,7 @@ public abstract class SolverContract {
     [Fact]
     public void TheSolverMayChooseToGiveUpTheTrackRatherThanWait() {
         // Departing late costs a little; not running on the shared track at all costs more than waiting.
-        var both = Problem.Minimise(
-            DepartureA + DepartureB + 1000 * (2 - OccupiesA - OccupiesB),
-            subjectTo: Horizon & ConflictFree);
+        var both = Problem.Minimise(DepartureA + DepartureB + 1000 * (2 - OccupiesA - OccupiesB)).SubjectTo(Horizon & ConflictFree);
         var solution = Optimum(both);
 
         Assert.Equal(Headway, solution.ObjectiveValue, precision: Precision);
@@ -72,7 +70,7 @@ public abstract class SolverContract {
             & (4 * a + b + 2 * c <= 11)
             & (3 * a + 4 * b + 2 * c <= 8);
 
-        var solution = Optimum(Problem.Maximise(5 * a + 4 * b + 3 * c, subjectTo: constraint));
+        var solution = Optimum(Problem.Maximise(5 * a + 4 * b + 3 * c).SubjectTo(constraint));
 
         Assert.Equal(13, solution.ObjectiveValue, precision: Precision);
         Assert.Equal((2, 0, 1), (solution.Value(a), solution.Value(b), solution.Value(c)));
@@ -82,30 +80,30 @@ public abstract class SolverContract {
     public void AnEquivalenceBindsInBothDirections() {
         var domain = X.Between(0, 10);
 
-        Assert.True(Optimum(Problem.Minimise(Flag, subjectTo: domain & Flag.Iff(X >= 5) & X.EqualTo(7))).Value(Flag));
-        Assert.False(Optimum(Problem.Maximise(Flag, subjectTo: domain & Flag.Iff(X >= 5) & X.EqualTo(3))).Value(Flag));
+        Assert.True(Optimum(Problem.Minimise(Flag).SubjectTo(domain & Flag.Iff(X >= 5) & X.EqualTo(7))).Value(Flag));
+        Assert.False(Optimum(Problem.Maximise(Flag).SubjectTo(domain & Flag.Iff(X >= 5) & X.EqualTo(3))).Value(Flag));
     }
 
     [Fact]
     public void AnImplicationBindsOnlyWhenItsAntecedentHolds() {
         var domain = X.Between(0, 100);
 
-        Assert.Equal(10, Optimum(Problem.Minimise(X, subjectTo: domain & Flag & Flag.Implies(X >= 10))).Value(X), precision: Precision);
-        Assert.Equal(0, Optimum(Problem.Minimise(X, subjectTo: domain & Flag.Implies(X >= 10))).Value(X), precision: Precision);
+        Assert.Equal(10, Optimum(Problem.Minimise(X).SubjectTo(domain & Flag & Flag.Implies(X >= 10))).Value(X), precision: Precision);
+        Assert.Equal(0, Optimum(Problem.Minimise(X).SubjectTo(domain & Flag.Implies(X >= 10))).Value(X), precision: Precision);
     }
 
     [Fact]
     public void DisequalityAndStrictnessOverWholeNumbersAreExact() {
         var domain = N.Between(3, 6);
 
-        Assert.Equal(4, Optimum(Problem.Minimise(N, subjectTo: domain & N.NotEqualTo(3))).Value(N));
-        Assert.Equal(5, Optimum(Problem.Maximise(N, subjectTo: domain & (N < 6))).Value(N));
-        Assert.Equal(5, Optimum(Problem.Minimise(N, subjectTo: domain & !(N <= 4))).Value(N));
+        Assert.Equal(4, Optimum(Problem.Minimise(N).SubjectTo(domain & N.NotEqualTo(3))).Value(N));
+        Assert.Equal(5, Optimum(Problem.Maximise(N).SubjectTo(domain & (N < 6))).Value(N));
+        Assert.Equal(5, Optimum(Problem.Minimise(N).SubjectTo(domain & !(N <= 4))).Value(N));
     }
 
     [Fact]
     public void StrictnessOverRealsIsRespected() {
-        var solution = Assert.IsAssignableFrom<ISolveResult>(Solver.Solve(Problem.Minimise(X, subjectTo: X.Between(0, 10) & (X > 5)))).SolutionOrNull;
+        var solution = Assert.IsAssignableFrom<ISolveResult>(Solver.Solve(Problem.Minimise(X).SubjectTo(X.Between(0, 10) & (X > 5)))).SolutionOrNull;
 
         Assert.NotNull(solution);
         Assert.True(solution.Value(X) > 5);
@@ -116,7 +114,7 @@ public abstract class SolverContract {
         var options = Enumerable.Range(0, 5).Select(index => Variable.Binary($"option{index}")).ToList();
         var weights = new double[] { 3, 9, 4, 7, 1 };
 
-        var solution = Optimum(Problem.Maximise(options.Zip(weights, (option, weight) => weight * option).Sum(), subjectTo: options.Sum().EqualTo(1)));
+        var solution = Optimum(Problem.Maximise(options.Zip(weights, (option, weight) => weight * option).Sum()).SubjectTo(options.Sum().EqualTo(1)));
 
         Assert.Equal(9, solution.ObjectiveValue, precision: Precision);
         Assert.Equal([false, true, false, false, false], options.Select(option => solution.Value(option)));
@@ -141,7 +139,7 @@ public abstract class SolverContract {
 
     [Fact]
     public void UnboundednessIsReported() =>
-        Assert.IsType<Unbounded>(Solver.Solve(Problem.Maximise(X + Y, subjectTo: (X >= 0) & (Y >= 0) & (X - Y <= 1))));
+        Assert.IsType<Unbounded>(Solver.Solve(Problem.Maximise(X + Y).SubjectTo((X >= 0) & (Y >= 0) & (X - Y <= 1))));
 
     [Fact]
     public void TypedExpressionsAreSolvedAndReadBackInTheirOwnTypes() {
@@ -156,7 +154,7 @@ public abstract class SolverContract {
             & (departure >= start.AddMinutes(10) + dwell)
             & (arrival - departure >= TimeSpan.FromMinutes(25));
 
-        var solution = Optimum(Problem.Minimise(arrival, subjectTo: constraint));
+        var solution = Optimum(Problem.Minimise(arrival).SubjectTo(constraint));
 
         Assert.Equal(TimeSpan.FromSeconds(60), solution.Value(dwell));
         Assert.Equal(start.AddMinutes(11), solution.Value(departure), Moment);
@@ -168,7 +166,7 @@ public abstract class SolverContract {
     public void TheLargestOfSeveralIsMadeAsSmallAsPossible() {
         var constraint = X.Between(0, 10) & Y.Between(0, 10) & (X + Y >= 7) & (X - Y <= 1);
 
-        var solution = Optimum(Problem.Minimise(Max(X, Y), subjectTo: constraint));
+        var solution = Optimum(Problem.Minimise(Max(X, Y)).SubjectTo(constraint));
 
         Assert.Equal(3.5, solution.ObjectiveValue, precision: Precision);
         Assert.Equal(3.5, solution.Value(Max(X, Y)), precision: Precision);
@@ -178,18 +176,18 @@ public abstract class SolverContract {
     public void TheLargestOfSeveralIsMadeAsLargeAsPossible() {
         var constraint = X.Between(0, 4) & Y.Between(0, 7) & (X + Y <= 8);
 
-        Assert.Equal(7, Optimum(Problem.Maximise(Max(X, Y), subjectTo: constraint)).ObjectiveValue, precision: Precision);
-        Assert.Equal(4, Optimum(Problem.Maximise(Min(X, Y), subjectTo: constraint)).ObjectiveValue, precision: Precision);
-        Assert.Equal(0, Optimum(Problem.Minimise(Min(X, Y), subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(7, Optimum(Problem.Maximise(Max(X, Y)).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(4, Optimum(Problem.Maximise(Min(X, Y)).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(0, Optimum(Problem.Minimise(Min(X, Y)).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
     }
 
     [Fact]
     public void AnAbsoluteValueBindsFromBothSides() {
         var constraint = X.Between(0, 10) & (Abs(X - 5) >= 2);
 
-        Assert.Equal(2, Optimum(Problem.Minimise(Abs(X - 5), subjectTo: constraint)).ObjectiveValue, precision: Precision);
-        Assert.Equal(5, Optimum(Problem.Maximise(Abs(X - 5), subjectTo: constraint)).ObjectiveValue, precision: Precision);
-        Assert.Equal(7, Optimum(Problem.Minimise(X, subjectTo: constraint & (X >= 4))).ObjectiveValue, precision: Precision);
+        Assert.Equal(2, Optimum(Problem.Minimise(Abs(X - 5)).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(5, Optimum(Problem.Maximise(Abs(X - 5)).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(7, Optimum(Problem.Minimise(X).SubjectTo(constraint & (X >= 4))).ObjectiveValue, precision: Precision);
         Assert.IsType<Infeasible>(Solver.Solve(Problem.Satisfy(constraint & (Abs(X - 5) <= 1))));
     }
 
@@ -197,7 +195,7 @@ public abstract class SolverContract {
     public void DeviationsFromSeveralTargetsAreSummed() {
         var targets = new double[] { 2, 4, 9 };
 
-        var solution = Optimum(Problem.Minimise(targets.Sum(target => Abs(X - target)), subjectTo: X.Between(0, 10)));
+        var solution = Optimum(Problem.Minimise(targets.Sum(target => Abs(X - target))).SubjectTo(X.Between(0, 10)));
 
         Assert.Equal(7, solution.ObjectiveValue, precision: Precision);
         Assert.Equal(4, solution.Value(X), precision: Precision);
@@ -208,14 +206,14 @@ public abstract class SolverContract {
         var inner = Max(X, Min(Y, 6));
         var constraint = X.Between(0, 3) & Y.Between(0, 10) & Flag.Iff(inner >= 5);
 
-        Assert.Equal(6, Optimum(Problem.Maximise(inner, subjectTo: constraint)).ObjectiveValue, precision: Precision);
-        Assert.True(Optimum(Problem.Maximise(Y, subjectTo: constraint)).Value(Flag));
-        Assert.Equal(10 - 20, Optimum(Problem.Maximise(Y - 20 * Flag, subjectTo: constraint & (Y >= 5))).ObjectiveValue, precision: Precision);
+        Assert.Equal(6, Optimum(Problem.Maximise(inner).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
+        Assert.True(Optimum(Problem.Maximise(Y).SubjectTo(constraint)).Value(Flag));
+        Assert.Equal(10 - 20, Optimum(Problem.Maximise(Y - 20 * Flag).SubjectTo(constraint & (Y >= 5))).ObjectiveValue, precision: Precision);
     }
 
     [Fact]
     public void AStartingSolutionChangesNothingButTheRoute() {
-        var problem = Problem.Minimise(DepartureA + DepartureB, subjectTo: Horizon & ConflictFree & OccupiesA & OccupiesB);
+        var problem = Problem.Minimise(DepartureA + DepartureB).SubjectTo(Horizon & ConflictFree & OccupiesA & OccupiesB);
         var optimum = Optimum(problem);
         var starts = new[] {
             optimum,
@@ -230,9 +228,9 @@ public abstract class SolverContract {
     [Fact]
     public void ObjectivesAreMetInOrderOfPriority() {
         var constraint = Horizon & ConflictFree & OccupiesA & OccupiesB;
-        var earliestThenAFirst = Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint).Then(Objective.Minimise(DepartureA));
-        var earliestThenBFirst = Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint).Then(Objective.Minimise(DepartureB));
-        var withinAMinuteThenFarApart = Problem.Lexicographic([Objective.Minimise(DepartureA + DepartureB, absoluteTolerance: 60), Objective.Maximise(DepartureB - DepartureA)], subjectTo: constraint);
+        var earliestThenAFirst = Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint).Then(Objective.Minimise(DepartureA));
+        var earliestThenBFirst = Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint).Then(Objective.Minimise(DepartureB));
+        var withinAMinuteThenFarApart = Problem.Lexicographic([Objective.Minimise(DepartureA + DepartureB, absoluteTolerance: 60), Objective.Maximise(DepartureB - DepartureA)]).SubjectTo(constraint);
 
         Assert.Equal((0, Headway), Departures(Assert.IsType<Optimal>(Solver.Solve(earliestThenAFirst))));
         Assert.Equal((Headway, 0), Departures(Assert.IsType<Optimal>(Solver.Solve(earliestThenBFirst))));
@@ -254,7 +252,7 @@ public abstract class SolverContract {
             & (DepartureB <= 100).WithName("B leaves early")
             & Flag.Implies(X >= 1);
 
-        var conflict = Solver.FindConflict(Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint));
+        var conflict = Solver.FindConflict(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint));
 
         Assert.Equal(["0 <= departureA", "0 <= departureB", "A leaves early", "B leaves early", "headway", "occupiesA", "occupiesB"], conflict.Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
         Assert.Empty(Solver.FindConflict(constraint.Conjuncts.Remove(conflict[0]).AllOf()));
@@ -264,10 +262,10 @@ public abstract class SolverContract {
     public void AnExpressionCountsOnlyIfItsBinaryVariableIsSet() {
         var constraint = X.Between(2, 10) & Y.Between(0, 10) & (Flag * X).EqualTo(Y);
 
-        Assert.Equal(10, Optimum(Problem.Maximise(Y, subjectTo: constraint)).ObjectiveValue, precision: Precision);
-        Assert.Equal(0, Optimum(Problem.Minimise(Y, subjectTo: constraint)).ObjectiveValue, precision: Precision);
-        Assert.Equal(2, Optimum(Problem.Minimise(Y, subjectTo: constraint & Flag)).ObjectiveValue, precision: Precision);
-        Assert.False(Optimum(Problem.Maximise(X, subjectTo: constraint & (Y <= 1))).Value(Flag));
+        Assert.Equal(10, Optimum(Problem.Maximise(Y).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(0, Optimum(Problem.Minimise(Y).SubjectTo(constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(2, Optimum(Problem.Minimise(Y).SubjectTo(constraint & Flag)).ObjectiveValue, precision: Precision);
+        Assert.False(Optimum(Problem.Maximise(X).SubjectTo(constraint & (Y <= 1))).Value(Flag));
     }
 
     [Fact]
@@ -275,10 +273,10 @@ public abstract class SolverContract {
         var cost = If(X >= 6, 2 * X - 3, X + 1);
         var domain = X.Between(0, 10);
 
-        Assert.Equal(17, Optimum(Problem.Maximise(cost, subjectTo: domain)).ObjectiveValue, precision: Precision);
-        Assert.Equal(1, Optimum(Problem.Minimise(cost, subjectTo: domain)).ObjectiveValue, precision: Precision);
-        Assert.Equal(9, Optimum(Problem.Minimise(cost, subjectTo: domain & (X >= 6))).ObjectiveValue, precision: Precision);
-        Assert.Equal(8, Optimum(Problem.Maximise(X, subjectTo: domain & (cost <= 13))).ObjectiveValue, precision: Precision);
-        Assert.Equal(15 + 4, Optimum(Problem.Maximise(cost + Flag * Max(Y, 4), subjectTo: domain & Y.Between(0, 3) & (X <= 9))).ObjectiveValue, precision: Precision);
+        Assert.Equal(17, Optimum(Problem.Maximise(cost).SubjectTo(domain)).ObjectiveValue, precision: Precision);
+        Assert.Equal(1, Optimum(Problem.Minimise(cost).SubjectTo(domain)).ObjectiveValue, precision: Precision);
+        Assert.Equal(9, Optimum(Problem.Minimise(cost).SubjectTo(domain & (X >= 6))).ObjectiveValue, precision: Precision);
+        Assert.Equal(8, Optimum(Problem.Maximise(X).SubjectTo(domain & (cost <= 13))).ObjectiveValue, precision: Precision);
+        Assert.Equal(15 + 4, Optimum(Problem.Maximise(cost + Flag * Max(Y, 4)).SubjectTo(domain & Y.Between(0, 3) & (X <= 9))).ObjectiveValue, precision: Precision);
     }
 }

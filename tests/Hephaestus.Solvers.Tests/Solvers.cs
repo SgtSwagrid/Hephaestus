@@ -62,14 +62,14 @@ public sealed class LinearProgrammingSolverTests {
     [InlineData("CLP")]
     [InlineData("PDLP")]
     public void ADisjunctionIsRefusedRatherThanSilentlyRelaxed(string solverId) {
-        var exception = Assert.Throws<NotSupportedException>(() => OrToolsSolver.Create(solverId).Solve(Problem.Minimise(Gap, subjectTo: Domain & ((X <= 3) | (X >= 7)))));
+        var exception = Assert.Throws<NotSupportedException>(() => OrToolsSolver.Create(solverId).Solve(Problem.Minimise(Gap).SubjectTo(Domain & ((X <= 3) | (X >= 7)))));
 
         Assert.Contains("_aux0", exception.Message);
     }
 
     [Fact]
     public void APurelyContinuousConjunctiveProblemIsStillWelcome() =>
-        Assert.Equal(1, Assert.IsType<Optimal>(OrToolsSolver.Create(OrToolsSolverId.Glop).Solve(Problem.Minimise(Gap, subjectTo: Domain & (X <= 4)))).Solution.ObjectiveValue, precision: 6);
+        Assert.Equal(1, Assert.IsType<Optimal>(OrToolsSolver.Create(OrToolsSolverId.Glop).Solve(Problem.Minimise(Gap).SubjectTo(Domain & (X <= 4)))).Solution.ObjectiveValue, precision: 6);
 
     [Fact]
     public void AnUnavailableSolverIsALoudError() =>

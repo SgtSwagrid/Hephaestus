@@ -19,7 +19,7 @@ public sealed class NumberQuantityTests {
         Assert.Equal(TrainsUnderneath, Trains.Expression);
         Assert.Equal(Variable.Continuous("cost"), Cost.Expression);
         Assert.Equal(new WholeNumberProjection<int>(), Trains.Projection);
-        Assert.IsType<IntegerVariable>(Problem.Minimise(Trains, subjectTo: Trains >= 2).Encode().Columns.Single().Variable);
+        Assert.IsType<IntegerVariable>(Problem.Minimise(Trains).SubjectTo(Trains >= 2).Encode().Columns.Single().Variable);
     }
 
     [Fact]

@@ -8,7 +8,7 @@ namespace Hephaestus;
 /// derived from them, giving a <see cref="MilpProblem"/>.
 /// </summary>
 public static class MilpEncoding {
-    extension(IProblem problem) {
+    extension(ISingleObjectiveProblem problem) {
         /// <summary>The problem as a plain mixed-integer linear programme.</summary>
         /// <exception cref="ModellingException">
         /// Two different variables share a name, an expression is not finite, or a big-M cannot be
@@ -23,15 +23,6 @@ public static class MilpEncoding {
         /// <exception cref="ModellingException">Two different variables share a name, or an expression is not finite.</exception>
         public IndicatorProblem EncodeLogic(EncodingOptions? options = null) => Lower(problem, options ?? EncodingOptions.Default);
 
-        /// <summary>The constraint every solution must satisfy.</summary>
-        public IBooleanExpression Constraint =>
-            problem switch {
-                Satisfaction satisfaction => satisfaction.Constraint,
-                Minimisation minimisation => minimisation.Constraint,
-                Maximisation maximisation => maximisation.Constraint,
-                _ => throw new NotSupportedException($"Unknown kind of problem: {problem.GetType().Name}."),
-            };
-
         /// <summary>The expression being optimised; constantly zero for a <see cref="Satisfaction"/> problem.</summary>
         public ILinearExpression Objective =>
             problem switch {
@@ -44,7 +35,7 @@ public static class MilpEncoding {
         public ObjectiveSense Sense => problem is Maximisation ? ObjectiveSense.Maximise : ObjectiveSense.Minimise;
 
         /// <summary>A problem of the same kind with another objective and constraint. (A <see cref="Satisfaction"/> problem has no objective to replace.)</summary>
-        public IProblem With(ILinearExpression objective, IBooleanExpression constraint) =>
+        public ISingleObjectiveProblem With(ILinearExpression objective, IBooleanExpression constraint) =>
             problem switch {
                 Minimisation => new Minimisation(objective, constraint),
                 Maximisation => new Maximisation(objective, constraint),
@@ -52,7 +43,7 @@ public static class MilpEncoding {
             };
     }
 
-    private static IndicatorProblem Lower(IProblem original, EncodingOptions options) {
+    private static IndicatorProblem Lower(ISingleObjectiveProblem original, EncodingOptions options) {
         var (problem, definitions) = original.Linearise(options);
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet();
         // Lowering keeps the conjuncts in order and adds its own after them, so a row can be put down to the constraint as it was written.

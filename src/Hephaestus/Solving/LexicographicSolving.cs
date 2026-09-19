@@ -3,12 +3,20 @@ using System.Collections.Immutable;
 namespace Hephaestus;
 
 /// <summary>
-/// Solves a <see cref="LexicographicProblem"/> with any solver, as a sequence of ordinary solves:
+/// Solves an <see cref="IMultipleObjectiveProblem"/> with any solver, as a sequence of ordinary solves:
 /// each objective in turn, subject to every earlier one doing no worse than it was found able to, and
 /// starting from the solution before.
 /// </summary>
 public static class LexicographicSolving {
     extension(ISolver solver) {
+        /// <summary>Solves a problem of either kind: in one go if it has a single objective or none, and one objective after another if it has several.</summary>
+        public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+            problem switch {
+                ISingleObjectiveProblem single => solver.Solve(single, startingFrom, cancellationToken),
+                IMultipleObjectiveProblem multiple => solver.Solve(multiple, startingFrom, cancellationToken),
+                _ => throw new NotSupportedException($"Unknown kind of problem: {problem.GetType().Name}."),
+            };
+
         /// <summary>Solves the problem, one objective after another.</summary>
         /// <returns>
         /// An outcome whose solution is the last one found and whose objective value is that of the
@@ -17,7 +25,7 @@ public static class LexicographicSolving {
         /// (a time limit, say) leaves the solution of the stage before, as <see cref="Feasible"/>.
         /// The solver's limits apply to each stage separately; the statistics are totals.
         /// </returns>
-        public ISolveResult Solve(LexicographicProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+        public ISolveResult Solve(IMultipleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
             problem.Objectives.IsEmpty
                 ? solver.Solve(Problem.Satisfy(problem.Constraint), startingFrom, cancellationToken)
                 : Concluded(problem, problem.Objectives.Aggregate(new Progress(problem.Constraint, startingFrom, []), (progress, objective) => Advance(solver, progress, objective, cancellationToken)).Stages);
@@ -40,16 +48,16 @@ public static class LexicographicSolving {
             ? new Progress(progress.Constraint & objective.NoWorseThan(solution.ObjectiveValue), solution, progress.Stages.Add(stage))
             : progress with { Stages = progress.Stages.Add(stage) };
 
-    private static ISolveResult Concluded(LexicographicProblem problem, ImmutableList<ISolveResult> stages) =>
+    private static ISolveResult Concluded(IMultipleObjectiveProblem problem, ImmutableList<ISolveResult> stages) =>
         Outcome(problem, stages, stages[^1]).With(Total(stages));
 
-    private static ISolveResult Outcome(LexicographicProblem problem, ImmutableList<ISolveResult> stages, ISolveResult last) =>
+    private static ISolveResult Outcome(IMultipleObjectiveProblem problem, ImmutableList<ISolveResult> stages, ISolveResult last) =>
         last.SolutionOrNull is { } found ? Found(found, problem, isProven: stages.Count == problem.Objectives.Length && stages.All(stage => stage is Optimal))
         // An unbounded objective is a fact about the model, wherever it comes in the order; it is not to be papered over.
         : last is Unbounded || stages.Count == 1 ? last
         : Found(stages[^2].SolutionOrNull!, problem, isProven: false);
 
-    private static ISolveResult Found(Solution solution, LexicographicProblem problem, bool isProven) =>
+    private static ISolveResult Found(Solution solution, IMultipleObjectiveProblem problem, bool isProven) =>
         Found(solution with { ObjectiveValue = solution.Value(problem.Objectives[0].Expression) }, isProven);
 
     private static ISolveResult Found(Solution solution, bool isProven) => isProven ? new Optimal(solution) : new Feasible(solution);

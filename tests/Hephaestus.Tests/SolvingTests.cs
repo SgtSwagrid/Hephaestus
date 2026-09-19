@@ -40,7 +40,7 @@ public sealed class SolvingTests {
     public void ADisjunctiveProblemIsSolvedThroughTheEncoding() {
         var separated = (M + 2 <= N) | (N + 2 <= M);
 
-        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M + 2 * N, subjectTo: Domain & separated))).Solution;
+        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M + 2 * N).SubjectTo(Domain & separated))).Solution;
 
         Assert.Equal(2, solution.ObjectiveValue);
         Assert.Equal(2, solution.Value(M));
@@ -50,14 +50,14 @@ public sealed class SolvingTests {
 
     [Fact]
     public void AuxiliaryVariablesNeverLeakIntoTheSolution() {
-        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Maximise(M, subjectTo: Domain & ((M <= 1) | (N >= 4))))).Solution;
+        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Maximise(M).SubjectTo(Domain & ((M <= 1) | (N >= 4))))).Solution;
 
         Assert.Equal([M, N], solution.Values.Keys);
     }
 
     [Fact]
     public void AnyExpressionCanBeReadOffASolution() {
-        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Maximise(M - N, subjectTo: Domain & A.Iff(M >= 3)))).Solution;
+        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Maximise(M - N).SubjectTo(Domain & A.Iff(M >= 3)))).Solution;
 
         Assert.Equal(5, solution.Value(M - N));
         Assert.Equal(11, solution.Value(2 * M + 1));
@@ -78,7 +78,7 @@ public sealed class SolvingTests {
     [InlineData(true, 3)]
     [InlineData(false, 0)]
     public void KnownConditionsSwitchConstraintsOnAndOff(bool isFreight, double expected) =>
-        Assert.Equal(expected, Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M, subjectTo: Domain & isFreight.Implies(M >= 3) & (!isFreight | (N <= 1))))).Solution.Value(M));
+        Assert.Equal(expected, Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M).SubjectTo(Domain & isFreight.Implies(M >= 3) & (!isFreight | (N <= 1))))).Solution.Value(M));
 
     [Fact]
     public void InfeasibilityIsReported() {
@@ -96,7 +96,7 @@ public sealed class SolvingTests {
                 unbounded: () => "unbounded",
                 unknown: reason => $"unknown: {reason}");
 
-        Assert.Equal("optimal 5", Describe(Solver.Solve(Problem.Maximise(M, subjectTo: Domain))));
+        Assert.Equal("optimal 5", Describe(Solver.Solve(Problem.Maximise(M).SubjectTo(Domain))));
         Assert.Equal("infeasible", Describe(new Infeasible()));
         Assert.Equal("unbounded", Describe(new Unbounded()));
         Assert.Equal("unknown: timed out", Describe(new Unknown("timed out")));
@@ -105,7 +105,7 @@ public sealed class SolvingTests {
 
     [Fact]
     public async Task SolvingCanBeAwaited() =>
-        Assert.IsType<Optimal>(await Solver.SolveAsync(Problem.Maximise(M, subjectTo: Domain), cancellationToken: TestContext.Current.CancellationToken));
+        Assert.IsType<Optimal>(await Solver.SolveAsync(Problem.Maximise(M).SubjectTo(Domain), cancellationToken: TestContext.Current.CancellationToken));
 
     [Fact]
     public void ProblemsAreValuesSoExtendingOneLeavesTheOriginalIntact() {
@@ -129,7 +129,7 @@ public sealed class SolvingTests {
         var backend = new RecordingBackend([]);
         var start = Solution.Empty.With(M, 2.2).With(A, true).With(Variable.Integer("stranger"), 9);
 
-        new MilpSolver(backend).Solve(Problem.Minimise(M, subjectTo: Domain & ((M >= 2) | A)), startingFrom: start);
+        new MilpSolver(backend).Solve(Problem.Minimise(M).SubjectTo(Domain & ((M >= 2) | A)), startingFrom: start);
 
         // The stranger is dropped, the whole-number variable is rounded, and n and the auxiliary binary are left to the solver.
         Assert.Equal([KeyValuePair.Create<IVariable, double>(A, 1), KeyValuePair.Create<IVariable, double>(M, 2)], backend.Starts.Single().OrderBy(entry => entry.Key.Name));
@@ -139,7 +139,7 @@ public sealed class SolvingTests {
     public void WithoutAStartingSolutionTheBackendStartsFromNothing() {
         var backend = new RecordingBackend([]);
 
-        new MilpSolver(backend).Solve(Problem.Minimise(M, subjectTo: Domain));
+        new MilpSolver(backend).Solve(Problem.Minimise(M).SubjectTo(Domain));
 
         Assert.Empty(backend.Starts.Single());
     }
@@ -170,7 +170,7 @@ public sealed class SolvingTests {
 
     [Fact]
     public void ALaterObjectiveOnlyChoosesAmongTheBestForTheEarlierOnes() {
-        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M, subjectTo: Linked).Then(Objective.Maximise(N)))).Solution;
+        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M).SubjectTo(Linked).Then(Objective.Maximise(N)))).Solution;
 
         Assert.Equal((0, 1), (solution.Value(M), solution.Value(N)));
         Assert.Equal(0, solution.ObjectiveValue);
@@ -178,8 +178,8 @@ public sealed class SolvingTests {
 
     [Fact]
     public void ATolerancedObjectiveGivesGroundToThoseAfterIt() {
-        var byAmount = Problem.Lexicographic([Objective.Minimise(M, absoluteTolerance: 2), Objective.Maximise(N)], subjectTo: Linked);
-        var byFraction = Problem.Lexicographic([Objective.Maximise(M + 5, relativeTolerance: 0.2), Objective.Minimise(N)], subjectTo: Linked & (N >= M - 1));
+        var byAmount = Problem.Lexicographic([Objective.Minimise(M, absoluteTolerance: 2), Objective.Maximise(N)]).SubjectTo(Linked);
+        var byFraction = Problem.Lexicographic([Objective.Maximise(M + 5, relativeTolerance: 0.2), Objective.Minimise(N)]).SubjectTo(Linked & (N >= M - 1));
 
         Assert.Equal((2, 3), Read(Assert.IsType<Optimal>(Solver.Solve(byAmount)).Solution));
         Assert.Equal((3, 2), Read(Assert.IsType<Optimal>(Solver.Solve(byFraction)).Solution));
@@ -202,7 +202,7 @@ public sealed class SolvingTests {
     public void EachStageStartsFromTheSolutionBeforeAndIsHeldToItsValue() {
         var backend = new WatchedBackend([]);
 
-        new MilpSolver(backend).Solve(Problem.Minimise(M, subjectTo: Linked).Then(Objective.Maximise(N)), startingFrom: Solution.Empty.With(M, 4));
+        new MilpSolver(backend).Solve(Problem.Minimise(M).SubjectTo(Linked).Then(Objective.Maximise(N)), startingFrom: Solution.Empty.With(M, 4));
 
         Assert.Equal([4.0], backend.Solves[0].Start.Values);
         Assert.Equal([0.0, 0.0], backend.Solves[1].Start.OrderBy(entry => entry.Key.Name).Select(entry => entry.Value));
@@ -211,8 +211,8 @@ public sealed class SolvingTests {
 
     [Fact]
     public void WithoutASolutionTheFirstStagesOutcomeStands() {
-        Assert.IsType<Infeasible>(Solver.Solve(Problem.Minimise(M, subjectTo: Linked & (M >= 9)).Then(Objective.Maximise(N))));
-        Assert.IsType<Optimal>(Solver.Solve(Problem.Lexicographic([], subjectTo: Linked)));
+        Assert.IsType<Infeasible>(Solver.Solve(Problem.Minimise(M).SubjectTo(Linked & (M >= 9)).Then(Objective.Maximise(N))));
+        Assert.IsType<Optimal>(Solver.Solve(Problem.Lexicographic([]).SubjectTo(Linked)));
     }
 
     /// <summary>Gives up on every solve after its first.</summary>
@@ -225,7 +225,7 @@ public sealed class SolvingTests {
 
     [Fact]
     public void AStageThatGivesUpLeavesTheSolutionBeforeItUnproven() {
-        var result = new MilpSolver(new FlaggingBackend([])).Solve(Problem.Minimise(M, subjectTo: Linked).Then(Objective.Maximise(N)).Then(Objective.Maximise(A)));
+        var result = new MilpSolver(new FlaggingBackend([])).Solve(Problem.Minimise(M).SubjectTo(Linked).Then(Objective.Maximise(N)).Then(Objective.Maximise(A)));
 
         Assert.Equal(0, Assert.IsType<Feasible>(result).Solution.Value(M));
     }
@@ -240,5 +240,81 @@ public sealed class SolvingTests {
         Assert.Equal(new Objective(ObjectiveSense.Maximise, delay.Expression, 0, 0.1), Objective.Maximise(delay, relativeTolerance: 0.1));
         Assert.Equal(new Objective(ObjectiveSense.Minimise, departure.Expression, 30), Objective.Minimise(departure, tolerance: TimeSpan.FromSeconds(30)));
         Assert.Equal(new Objective(ObjectiveSense.Maximise, departure.Expression), Objective.Maximise(departure));
+    }
+
+    [Fact]
+    public void AProblemIsBuiltUpOneStepAtATimeAndEachStepIsAProblem() {
+        var unconstrained = Problem.Minimise(M);
+        var bounded = unconstrained.SubjectTo(Domain);
+        var tightened = bounded.SubjectTo(M >= 3).SubjectTo(A | (N >= 1));
+
+        Assert.Equal(new Minimisation(M, BooleanConstant.True), unconstrained);
+        Assert.Equal(new Minimisation(M, Domain), bounded);
+        Assert.Equal(new Minimisation(M, Domain & (M >= 3) & (A | (N >= 1))), tightened);
+        Assert.Equal(new Maximisation(M, Domain & A), Problem.Maximise(M).SubjectTo(Domain).SubjectTo(A));
+        Assert.Equal(new Satisfaction(Domain & A), Problem.Satisfy(Domain).SubjectTo(A));
+        Assert.Equal(0, Assert.IsType<Optimal>(Solver.Solve(bounded)).Solution.ObjectiveValue);
+        Assert.Equal(3, Assert.IsType<Optimal>(Solver.Solve(tightened)).Solution.ObjectiveValue);
+    }
+
+    [Fact]
+    public void SeveralConstraintsGivenAtOnceMustAllHold() {
+        var several = new List<IBooleanExpression> { M >= 3, N <= 2, A };
+
+        Assert.Equal(new Minimisation(M, Domain & (M >= 3)), Problem.Minimise(M).SubjectTo(Domain, M >= 3));
+        Assert.Equal(new Minimisation(M, Domain & several.AllOf()), Problem.Minimise(M).SubjectTo(Domain).SubjectTo(several));
+        Assert.Equal(Problem.Minimise(M).SubjectTo(Domain), Problem.Minimise(M).SubjectTo(Domain).SubjectTo(Array.Empty<IBooleanExpression>()));
+        Assert.Equal(Domain & A & N.EqualTo(1), Problem.Minimise(M, N).SubjectTo(Domain, A, N.EqualTo(1)).Constraint.Conjuncts.AllOf(), EqualAsConjunctions);
+        Assert.Equal(3, Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M).SubjectTo(Domain, M >= 3, A))).Solution.ObjectiveValue);
+    }
+
+    private static bool EqualAsConjunctions(IBooleanExpression left, IBooleanExpression right) => left.Conjuncts.SequenceEqual(right.Conjuncts);
+
+    [Fact]
+    public void ObjectivesAndConstraintsMayComeInAnyOrder() {
+        var objectives = new[] { new Objective(ObjectiveSense.Minimise, M), new Objective(ObjectiveSense.Maximise, N, 1), new Objective(ObjectiveSense.Minimise, A, 0, 0.5) };
+        var problem = Problem.Minimise(M).SubjectTo(Domain).ThenMaximise(N, absoluteTolerance: 1).SubjectTo(N <= M + 1).ThenMinimise(A, relativeTolerance: 0.5);
+
+        Assert.Equal(objectives, problem.Objectives);
+        Assert.Equal(Domain & (N <= M + 1), problem.Constraint);
+        Assert.Equal(problem.Objectives, Problem.Lexicographic(objectives).SubjectTo(Domain).Objectives);
+        Assert.Equal(BooleanConstant.True, Problem.Lexicographic(objectives).Constraint);
+        Assert.Equal(0, Assert.IsType<Optimal>(Solver.Solve(problem)).Solution.Value(M));
+    }
+
+    [Fact]
+    public void AProblemThatIsNotYetConstrainedHasNoConstraintsToSpeakOf() {
+        Assert.Empty(Problem.Minimise(M).Constraint.Conjuncts);
+        Assert.Empty(Problem.Minimise(M).Encode().Rows);
+    }
+
+    [Fact]
+    public void SeveralObjectivesGivenAtOnceAreTakenInOrder() {
+        var chained = Problem.Minimise(M).ThenMinimise(N).ThenMinimise(A).SubjectTo(Domain);
+
+        Assert.Equal(chained.Objectives, Problem.Minimise(M, N, A).SubjectTo(Domain).Objectives);
+        Assert.Equal(chained.Objectives, Problem.Minimise(new ILinearExpression[] { M, N, A }).Objectives);
+        Assert.Equal(chained.Objectives, Problem.Minimise(M).ThenMinimise(N, A).Objectives);
+        Assert.Equal(chained.Objectives, Problem.Minimise(M).ThenMinimise(new List<IntegerVariable> { N }).ThenMinimise(A).Objectives);
+        Assert.Equal(
+            [new Objective(ObjectiveSense.Maximise, M), new Objective(ObjectiveSense.Maximise, N), new Objective(ObjectiveSense.Minimise, A), new Objective(ObjectiveSense.Maximise, M + N)],
+            Problem.Maximise(M, N).ThenMinimise(A).ThenMaximise(M + N, M + N).Objectives.Take(4));
+        // One expression is still an ordinary problem, and a number after it is still a tolerance.
+        Assert.IsType<Minimisation>(Problem.Minimise(M));
+        Assert.Equal(new Objective(ObjectiveSense.Minimise, N, 2), Problem.Minimise(M).ThenMinimise(N, 2).Objectives[1]);
+        Assert.Equal((5, 5), Read(Assert.IsType<Optimal>(Solver.Solve(Problem.Maximise(M, N).SubjectTo(Linked))).Solution));
+    }
+
+    [Fact]
+    public void AProblemOfEitherKindIsSolvedAndExplainedThroughTheirCommonType() {
+        IProblem single = Problem.Maximise(M).SubjectTo(Linked);
+        IProblem several = Problem.Maximise(M).ThenMinimise(N).SubjectTo(Linked);
+
+        Assert.Equal((5, 0), Read(Assert.IsType<Optimal>(Solver.Solve(several)).Solution));
+        Assert.Equal(5, Assert.IsType<Optimal>(Solver.Solve(single)).Solution.ObjectiveValue);
+        Assert.Equal([new Objective(ObjectiveSense.Maximise, M)], single.Objectives);
+        Assert.Empty(Problem.Satisfy(Linked).Objectives);
+        Assert.Empty(Solver.FindConflict(several));
+        Assert.IsAssignableFrom<IMultipleObjectiveProblem>(several.SubjectTo(M >= 1, N >= 1));
     }
 }

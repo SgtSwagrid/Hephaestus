@@ -23,7 +23,7 @@ public abstract class WholeNumberContract {
     private static IBooleanExpression Separated(ILinearExpression first, ILinearExpression second) =>
         (first + Headway <= second) | (second + Headway <= first);
 
-    private Solution Optimum(IProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
+    private Solution Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
 
     [Fact]
     public void ThreeTrainsQueueForOneTrack() {
@@ -33,7 +33,7 @@ public abstract class WholeNumberContract {
             & (DepartureA >= 60) & (DepartureC >= 30)
             & Separated(DepartureA, DepartureB) & Separated(DepartureA, DepartureC) & Separated(DepartureB, DepartureC);
 
-        var solution = Optimum(Problem.Minimise(departures.Sum(), subjectTo: constraint));
+        var solution = Optimum(Problem.Minimise(departures.Sum()).SubjectTo(constraint));
 
         Assert.Equal(0 + 120 + 240, solution.ObjectiveValue);
         Assert.True(solution.Value(constraint));
@@ -43,9 +43,9 @@ public abstract class WholeNumberContract {
     public void SeparationAppliesOnlyToTrainsThatShareTheTrack() {
         var constraint = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & (!(OccupiesA & OccupiesB) | Separated(DepartureA, DepartureB));
 
-        Assert.Equal(120, Optimum(Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint & OccupiesA & OccupiesB)).ObjectiveValue);
-        Assert.Equal(0, Optimum(Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint & OccupiesA & !OccupiesB)).ObjectiveValue);
-        Assert.Equal(120, Optimum(Problem.Minimise(DepartureA + DepartureB + 1000 * (2 - OccupiesA - OccupiesB), subjectTo: constraint)).ObjectiveValue);
+        Assert.Equal(120, Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint & OccupiesA & OccupiesB)).ObjectiveValue);
+        Assert.Equal(0, Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint & OccupiesA & !OccupiesB)).ObjectiveValue);
+        Assert.Equal(120, Optimum(Problem.Minimise(DepartureA + DepartureB + 1000 * (2 - OccupiesA - OccupiesB)).SubjectTo(constraint)).ObjectiveValue);
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public abstract class WholeNumberContract {
             & (4 * a + b + 2 * c <= 11)
             & (3 * a + 4 * b + 2 * c <= 8);
 
-        var solution = Optimum(Problem.Maximise(5 * a + 4 * b + 3 * c, subjectTo: constraint));
+        var solution = Optimum(Problem.Maximise(5 * a + 4 * b + 3 * c).SubjectTo(constraint));
 
         Assert.Equal(13, solution.ObjectiveValue);
         Assert.Equal((2, 0, 1), (solution.Value(a), solution.Value(b), solution.Value(c)));
@@ -67,21 +67,21 @@ public abstract class WholeNumberContract {
     public void LogicBindsAsItShould() {
         var domain = N.Between(0, 10);
 
-        Assert.True(Optimum(Problem.Minimise(Flag, subjectTo: domain & Flag.Iff(N >= 5) & N.EqualTo(7))).Value(Flag));
-        Assert.False(Optimum(Problem.Maximise(Flag, subjectTo: domain & Flag.Iff(N >= 5) & N.EqualTo(3))).Value(Flag));
-        Assert.Equal(6, Optimum(Problem.Minimise(N, subjectTo: domain & Flag & Flag.Implies(N >= 6))).Value(N));
-        Assert.Equal(4, Optimum(Problem.Minimise(N, subjectTo: domain & (N >= 3) & N.NotEqualTo(3))).Value(N));
-        Assert.Equal(9, Optimum(Problem.Maximise(N, subjectTo: domain & (N < 10) & ((N <= 2) ^ (N >= 8)))).Value(N));
+        Assert.True(Optimum(Problem.Minimise(Flag).SubjectTo(domain & Flag.Iff(N >= 5) & N.EqualTo(7))).Value(Flag));
+        Assert.False(Optimum(Problem.Maximise(Flag).SubjectTo(domain & Flag.Iff(N >= 5) & N.EqualTo(3))).Value(Flag));
+        Assert.Equal(6, Optimum(Problem.Minimise(N).SubjectTo(domain & Flag & Flag.Implies(N >= 6))).Value(N));
+        Assert.Equal(4, Optimum(Problem.Minimise(N).SubjectTo(domain & (N >= 3) & N.NotEqualTo(3))).Value(N));
+        Assert.Equal(9, Optimum(Problem.Maximise(N).SubjectTo(domain & (N < 10) & ((N <= 2) ^ (N >= 8)))).Value(N));
     }
 
     [Fact]
     public void FractionalCoefficientsAndLimitsAreHandled() {
         var domain = N.Between(0, 100);
 
-        Assert.Equal(5, Optimum(Problem.Maximise(N, subjectTo: domain & (0.5 * N < 3))).Value(N));
-        Assert.Equal(7, Optimum(Problem.Maximise(N, subjectTo: domain & (0.25 * N + 0.125 * Flag <= 1.9))).Value(N));
+        Assert.Equal(5, Optimum(Problem.Maximise(N).SubjectTo(domain & (0.5 * N < 3))).Value(N));
+        Assert.Equal(7, Optimum(Problem.Maximise(N).SubjectTo(domain & (0.25 * N + 0.125 * Flag <= 1.9))).Value(N));
         Assert.IsType<Infeasible>(Solver.Solve(Problem.Satisfy(domain & (2 * N).EqualTo(5))));
-        Assert.Equal(1, Optimum(Problem.Minimise(Flag, subjectTo: domain & (Flag | (2 * N).EqualTo(5)))).ObjectiveValue);
+        Assert.Equal(1, Optimum(Problem.Minimise(Flag).SubjectTo(domain & (Flag | (2 * N).EqualTo(5)))).ObjectiveValue);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public abstract class WholeNumberContract {
         var arrival = Variable.Integer("arrival");
         var constraint = DepartureA.Between(0, 100) & N.Between(10, 20) & arrival.EqualTo(DepartureA + N) & Flag.Iff(arrival >= 90);
 
-        var solution = Optimum(Problem.Maximise(arrival - 50 * Flag, subjectTo: constraint));
+        var solution = Optimum(Problem.Maximise(arrival - 50 * Flag).SubjectTo(constraint));
 
         Assert.Equal(89, solution.Value(arrival));
         Assert.False(solution.Value(Flag));
@@ -100,7 +100,7 @@ public abstract class WholeNumberContract {
         var options = Enumerable.Range(0, 5).Select(index => Variable.Binary($"option{index}")).ToList();
         var weights = new double[] { 3, 9, 4, 7, 1 };
 
-        var solution = Optimum(Problem.Maximise(options.Zip(weights, (option, weight) => weight * option).Sum(), subjectTo: options.Sum().EqualTo(1)));
+        var solution = Optimum(Problem.Maximise(options.Zip(weights, (option, weight) => weight * option).Sum()).SubjectTo(options.Sum().EqualTo(1)));
 
         Assert.Equal([false, true, false, false, false], options.Select(option => solution.Value(option)));
     }
@@ -118,7 +118,7 @@ public abstract class WholeNumberContract {
         var dwell = Variable.TimeSpan("dwell", unit: TimeSpan.FromSeconds(30), inWholeUnits: true);
         var constraint = departure.Between(start, start.AddHours(1)) & dwell.Between(TimeSpan.FromSeconds(45), TimeSpan.FromMinutes(5)) & (departure >= start.AddMinutes(10) + dwell);
 
-        var solution = Optimum(Problem.Minimise(departure, subjectTo: constraint));
+        var solution = Optimum(Problem.Minimise(departure).SubjectTo(constraint));
 
         Assert.Equal(TimeSpan.FromSeconds(60), solution.Value(dwell));
         Assert.Equal(start.AddMinutes(11), solution.Value(departure));
@@ -128,15 +128,15 @@ public abstract class WholeNumberContract {
     public void PiecewiseFunctionsOfWholeNumbersStayWhole() {
         var domain = DepartureA.Between(0, 100) & DepartureB.Between(0, 100);
 
-        Assert.Equal(60, Optimum(Problem.Minimise(Max(DepartureA, DepartureB), subjectTo: domain & (DepartureA + DepartureB >= 120))).ObjectiveValue);
-        Assert.Equal(100, Optimum(Problem.Maximise(Abs(DepartureA - DepartureB), subjectTo: domain)).ObjectiveValue);
-        Assert.Equal(7, Optimum(Problem.Maximise(Min(DepartureA, 7), subjectTo: domain)).ObjectiveValue);
-        Assert.Equal(40, Optimum(Problem.Minimise(DepartureA, subjectTo: domain & (Abs(DepartureA - 50) <= 10) & (Max(DepartureA, DepartureB) >= 30))).ObjectiveValue);
+        Assert.Equal(60, Optimum(Problem.Minimise(Max(DepartureA, DepartureB)).SubjectTo(domain & (DepartureA + DepartureB >= 120))).ObjectiveValue);
+        Assert.Equal(100, Optimum(Problem.Maximise(Abs(DepartureA - DepartureB)).SubjectTo(domain)).ObjectiveValue);
+        Assert.Equal(7, Optimum(Problem.Maximise(Min(DepartureA, 7)).SubjectTo(domain)).ObjectiveValue);
+        Assert.Equal(40, Optimum(Problem.Minimise(DepartureA).SubjectTo(domain & (Abs(DepartureA - 50) <= 10) & (Max(DepartureA, DepartureB) >= 30))).ObjectiveValue);
     }
 
     [Fact]
     public void AStartingSolutionChangesNothingButTheRoute() {
-        var problem = Problem.Minimise(DepartureA + DepartureB, subjectTo: DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Separated(DepartureA, DepartureB));
+        var problem = Problem.Minimise(DepartureA + DepartureB).SubjectTo(DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Separated(DepartureA, DepartureB));
         var starts = new[] { Solution.Empty.With(DepartureA, 300).With(DepartureB, 600), Solution.Empty.With(DepartureA, 0.4), Solution.Empty.With(DepartureA, 5).With(DepartureB, 6) };
 
         // The solver is fetched first, because a solver that has to be skipped says so by throwing, which Assert.All would count as a failure.
@@ -149,21 +149,21 @@ public abstract class WholeNumberContract {
     public void ObjectivesAreMetInOrderOfPriority() {
         var constraint = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Separated(DepartureA, DepartureB);
 
-        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint).Then(Objective.Minimise(DepartureB)).Then(Objective.Maximise(N)), N.Between(0, 3));
+        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint).Then(Objective.Minimise(DepartureB)).Then(Objective.Maximise(N)), N.Between(0, 3));
 
         Assert.Equal((120, 0, 3), (solution.Value(DepartureA), solution.Value(DepartureB), solution.Value(N)));
     }
 
-    private Solution Optimum(LexicographicProblem problem, IBooleanExpression also) =>
-        Assert.IsType<Optimal>(Solver.Solve(problem with { Constraint = problem.Constraint & also })).Solution;
+    private Solution Optimum(IMultipleObjectiveProblem problem, IBooleanExpression also) =>
+        Assert.IsType<Optimal>(Solver.Solve(problem.SubjectTo(also))).Solution;
 
     [Fact]
     public void ConditionalsOfWholeNumbersStayWhole() {
         var domain = DepartureA.Between(0, 100) & N.Between(0, 5);
 
-        Assert.Equal(100 + 5, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N), subjectTo: domain & OccupiesA)).ObjectiveValue);
-        Assert.Equal(200, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N), subjectTo: domain)).ObjectiveValue);
-        Assert.Equal(3, Optimum(Problem.Minimise(If(DepartureA >= 50, N + 3, DepartureA), subjectTo: domain & (DepartureA >= 10))).ObjectiveValue);
+        Assert.Equal(100 + 5, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N)).SubjectTo(domain & OccupiesA)).ObjectiveValue);
+        Assert.Equal(200, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N)).SubjectTo(domain)).ObjectiveValue);
+        Assert.Equal(3, Optimum(Problem.Minimise(If(DepartureA >= 50, N + 3, DepartureA)).SubjectTo(domain & (DepartureA >= 10))).ObjectiveValue);
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public abstract class WholeNumberContract {
         var passengers = Variable.Integer<long>("passengers");
         var constraint = trains.Between(0, 40) & platforms.Between(1, 6) & (trains <= 6 * platforms) & (passengers.Expression <= 850 * trains.Expression) & (passengers >= 9000L);
 
-        var solution = Optimum(Problem.Minimise(100 * platforms.Expression + 7 * trains.Expression, subjectTo: constraint));
+        var solution = Optimum(Problem.Minimise(100 * platforms.Expression + 7 * trains.Expression).SubjectTo(constraint));
 
         Assert.Equal((11, 2, 9000L), (solution.Value(trains), solution.Value(platforms), solution.Value(passengers)));
         Assert.IsType<int>(solution.Value(trains));

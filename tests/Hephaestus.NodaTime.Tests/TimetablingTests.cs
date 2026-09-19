@@ -32,7 +32,7 @@ public sealed class TimetablingTests {
             & departureB.Between(Start.PlusMinutes(4), Start.PlusHours(1))
             & separated;
 
-        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise((departureA - Start) + (departureB - Start), subjectTo: constraint))).Solution;
+        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise((departureA - Start) + (departureB - Start)).SubjectTo(constraint))).Solution;
 
         AssertClose(Start.PlusMinutes(4), solution.Value(departureB));
         AssertClose(Start.PlusMinutes(6), solution.Value(departureA));
@@ -51,7 +51,7 @@ public sealed class TimetablingTests {
             & (departure - arrival).EqualTo(dwell)
             & (dwell >= Duration.FromSeconds(50));
 
-        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise(departure, subjectTo: constraint))).Solution;
+        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise(departure).SubjectTo(constraint))).Solution;
 
         Assert.Equal(Duration.FromSeconds(60), solution.Value(dwell));
         AssertClose(Start.PlusMinutes(11), solution.Value(departure));
@@ -68,7 +68,7 @@ public sealed class TimetablingTests {
             & (reopening - possession >= Period.FromWeeks(1))
             & (possession.NotEqualTo(today.PlusDays(3)));
 
-        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise(reopening, subjectTo: constraint))).Solution;
+        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise(reopening).SubjectTo(constraint))).Solution;
 
         Assert.Equal(today.PlusDays(4), solution.Value(possession));
         Assert.Equal(today.PlusDays(11), solution.Value(reopening));
@@ -87,7 +87,7 @@ public sealed class TimetablingTests {
             & (handover >= origin + Duration.FromHours(3))
             & ((briefing - origin.InZone(sydney)) >= (handover - origin) + Duration.FromMinutes(30));
 
-        var solution = Assert.IsType<Optimal>(new Z3Solver().Solve(Problem.Minimise(briefing, subjectTo: constraint))).Solution;
+        var solution = Assert.IsType<Optimal>(new Z3Solver().Solve(Problem.Minimise(briefing).SubjectTo(constraint))).Solution;
 
         Assert.Equal(origin + Duration.FromHours(3), solution.Value(handover));
         Assert.Equal((origin + Duration.FromMinutes(210)).InZone(sydney), solution.Value(briefing));
@@ -98,7 +98,7 @@ public sealed class TimetablingTests {
         var curfew = Variable.LocalTime("curfew", unit: Duration.FromMinutes(1));
         var constraint = curfew.Between(LocalTime.Midnight, LocalTime.MaxValue) & (curfew >= new LocalTime(22, 15)) & (curfew - new LocalTime(22, 0) <= Duration.FromMinutes(45));
 
-        var solution = Assert.IsType<Optimal>(OrToolsSolver.Create().Solve(Problem.Maximise(curfew, subjectTo: constraint))).Solution;
+        var solution = Assert.IsType<Optimal>(OrToolsSolver.Create().Solve(Problem.Maximise(curfew).SubjectTo(constraint))).Solution;
 
         Assert.Equal(new LocalTime(22, 45), solution.Value(curfew));
     }
@@ -131,7 +131,7 @@ public sealed class TimetablingTests {
         var departure = Variable.LocalDateTime("departure", origin: Start);
         var constraint = dwell.Between(Duration.FromSeconds(45), Duration.FromMinutes(5)) & departure.Between(Start, Start.PlusHours(1)) & (departure >= Start.PlusMinutes(10) + dwell);
 
-        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise(departure, subjectTo: constraint))).Solution;
+        var solution = Assert.IsType<Optimal>(SolversByName[solver].Solve(Problem.Minimise(departure).SubjectTo(constraint))).Solution;
 
         AssertClose(Start.PlusMinutes(10).PlusSeconds(45), solution.Value(departure));
     }

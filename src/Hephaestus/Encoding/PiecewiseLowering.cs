@@ -29,7 +29,7 @@ public sealed record ConditionalDefinition(
 /// tie the two together are already part of the problem.
 /// </summary>
 public sealed record LinearisedProblem(
-    IProblem Problem,
+    ISingleObjectiveProblem Problem,
     ImmutableArray<IDefinition> Definitions
 ) {
     /// <summary>The variables that were introduced.</summary>
@@ -45,7 +45,7 @@ public sealed record LinearisedProblem(
 /// binary variable. Only where a larger <c>m</c> would help is <c>m &lt;= a | m &lt;= b</c> needed too.
 /// </summary>
 public static class PiecewiseLowering {
-    extension(IProblem problem) {
+    extension(ISingleObjectiveProblem problem) {
         /// <summary>An equivalent problem without piecewise-linear functions. A problem that has none is returned as it is.</summary>
         /// <exception cref="ModellingException">An expression is not finite.</exception>
         public LinearisedProblem Linearise(EncodingOptions? options = null) => Lower(problem, options ?? EncodingOptions.Default);
@@ -91,7 +91,7 @@ public static class PiecewiseLowering {
         Exactly = AtLeast | AtMost,
     }
 
-    private static LinearisedProblem Lower(IProblem problem, EncodingOptions options) {
+    private static LinearisedProblem Lower(ISingleObjectiveProblem problem, EncodingOptions options) {
         var start = new Lifting(ImmutableDictionary<object, IVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options, 0);
         var constraint = Lift(new Step<IBooleanExpression>(problem.Constraint, start));
         var objective = Lift(new Step<ILinearExpression>(problem.Objective, constraint.State));
@@ -100,7 +100,7 @@ public static class PiecewiseLowering {
             : Defined(problem.With(objective.Expression, constraint.Expression), objective.State.Definitions, options);
     }
 
-    private static LinearisedProblem Defined(IProblem lifted, ImmutableList<IDefinition> definitions, EncodingOptions options) {
+    private static LinearisedProblem Defined(ISingleObjectiveProblem lifted, ImmutableList<IDefinition> definitions, EncodingOptions options) {
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
         var demands = DemandsOf(lifted.Constraint, auxiliaries, options).Aggregate(DemandsOf(lifted.Objective.Normalise(), lifted.Sense, auxiliaries), Record);
         // An inner maximum is only leant on by the problem and by maxima introduced after it, so going backwards meets every demand in time.

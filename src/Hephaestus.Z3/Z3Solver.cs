@@ -13,12 +13,12 @@ namespace Hephaestus.Z3;
 public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
     /// <inheritdoc/>
     /// <remarks>Z3 has no use for a starting solution, and ignores it.</remarks>
-    public ISolveResult Solve(IProblem original, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+    public ISolveResult Solve(ISingleObjectiveProblem original, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => original.Linearise()) is var (linearised, encodingTime) && Timed.Run(() => Solve(original, linearised, cancellationToken)) is var (result, solvingTime)
             ? result.With(new SolveStatistics(encodingTime, solvingTime))
             : throw new InvalidOperationException();
 
-    private ISolveResult Solve(IProblem original, LinearisedProblem linearised, CancellationToken cancellationToken) {
+    private ISolveResult Solve(ISingleObjectiveProblem original, LinearisedProblem linearised, CancellationToken cancellationToken) {
         var problem = linearised.Problem;
         using var context = new Context();
         using var interruption = cancellationToken.Register(context.Interrupt);
@@ -140,7 +140,7 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
             ? (mantissa * BigInteger.Pow(2, exponent)).ToString(CultureInfo.InvariantCulture)
             : $"{mantissa.ToString(CultureInfo.InvariantCulture)}/{BigInteger.Pow(2, -exponent).ToString(CultureInfo.InvariantCulture)}";
 
-    private static Solution ReadSolution(Symbols symbols, Model model, IProblem problem, ImmutableSortedSet<IVariable> auxiliaries) =>
+    private static Solution ReadSolution(Symbols symbols, Model model, ISingleObjectiveProblem problem, ImmutableSortedSet<IVariable> auxiliaries) =>
         new Solution(ImmutableSortedDictionary.Create<IVariable, double>(VariableOrder.Comparer), 0).WithValues(
             symbols.Constants
                 .Where(entry => !auxiliaries.Contains(entry.Key))

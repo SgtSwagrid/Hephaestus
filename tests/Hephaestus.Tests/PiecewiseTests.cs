@@ -11,9 +11,9 @@ public sealed class PiecewiseTests {
     private static readonly IntegerVariable M = Variable.Integer("m");
     private static readonly IBooleanExpression Box = X.Between(0, 10) & Y.Between(0, 10);
 
-    private static IEnumerable<string> Rows(IProblem problem) => problem.Encode().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal);
+    private static IEnumerable<string> Rows(ISingleObjectiveProblem problem) => problem.Encode().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal);
 
-    private static IEnumerable<string> Auxiliaries(IProblem problem) => problem.Encode().Columns.Where(column => column.IsAuxiliary).Select(column => column.Variable.Name).Order(StringComparer.Ordinal);
+    private static IEnumerable<string> Auxiliaries(ISingleObjectiveProblem problem) => problem.Encode().Columns.Where(column => column.IsAuxiliary).Select(column => column.Variable.Name).Order(StringComparer.Ordinal);
 
     [Fact]
     public void TheFunctionsOnlyBuildData() {
@@ -52,7 +52,7 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void AMaximumThatIsPushedDownNeedsNoBinaryVariable() {
-        var problem = Problem.Minimise(Max(X, Y), subjectTo: Box & (Max(X, Y) <= 8));
+        var problem = Problem.Minimise(Max(X, Y)).SubjectTo(Box & (Max(X, Y) <= 8));
 
         Assert.Equal(["_max0"], Auxiliaries(problem));
         Assert.Equal(["-_max0 + x <= 0", "-_max0 + y <= 0"], Rows(problem));
@@ -61,7 +61,7 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void AMaximumThatIsPushedUpNeedsTheChoiceOfWhichOperandItEquals() {
-        var problem = Problem.Maximise(Max(X, Y), subjectTo: Box & (X + Y <= 12));
+        var problem = Problem.Maximise(Max(X, Y)).SubjectTo(Box & (X + Y <= 12));
 
         Assert.Equal(["_aux0", "_max0"], Auxiliaries(problem));
         // Neither conditional row could be relaxed without an upper bound for _max0. It has the largest of its operands' upper bounds: 10.
@@ -70,7 +70,7 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void AMinimumIsAMaximumInDisguise() {
-        var problem = Problem.Maximise(Min(X, Y), subjectTo: Box);
+        var problem = Problem.Maximise(Min(X, Y)).SubjectTo(Box);
 
         // min(x, y) = -max(-x, -y), and maximising it pushes that maximum down.
         Assert.Equal("-_max0", problem.Encode().Objective.Format());
@@ -83,7 +83,7 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void UsedBothWaysItIsTiedBothWays() =>
-        Assert.Equal(["_aux0", "_max0"], Auxiliaries(Problem.Minimise(Abs(X - 5), subjectTo: X.Between(0, 10) & (Abs(X - 5) >= 2))));
+        Assert.Equal(["_aux0", "_max0"], Auxiliaries(Problem.Minimise(Abs(X - 5)).SubjectTo(X.Between(0, 10) & (Abs(X - 5) >= 2))));
 
     [Fact]
     public void EqualFunctionsShareOneVariableHoweverTheyWereWritten() =>
@@ -96,7 +96,7 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void TheMaximumOfWholeNumbersIsAWholeNumber() {
-        var encoded = Problem.Minimise(Max(N, 2 * M) + Max(N, 0.5 * M), subjectTo: N.Between(0, 5) & M.Between(0, 5)).Encode();
+        var encoded = Problem.Minimise(Max(N, 2 * M) + Max(N, 0.5 * M)).SubjectTo(N.Between(0, 5) & M.Between(0, 5)).Encode();
 
         Assert.IsType<IntegerVariable>(encoded.Columns.Single(column => column.Variable.Name == "_max0").Variable);
         Assert.IsType<ContinuousVariable>(encoded.Columns.Single(column => column.Variable.Name == "_max1").Variable);
@@ -104,11 +104,11 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void NamesStepAroundThoseAlreadyInUse() =>
-        Assert.Equal(["_max1"], Auxiliaries(Problem.Minimise(Max(X, Variable.Continuous("_max0")), subjectTo: Box & Variable.Continuous("_max0").Between(0, 1))));
+        Assert.Equal(["_max1"], Auxiliaries(Problem.Minimise(Max(X, Variable.Continuous("_max0"))).SubjectTo(Box & Variable.Continuous("_max0").Between(0, 1))));
 
     [Fact]
     public void AProblemWithoutThemIsLeftAlone() {
-        var problem = Problem.Minimise(X, subjectTo: Box);
+        var problem = Problem.Minimise(X).SubjectTo(Box);
 
         Assert.Same(problem, problem.Linearise().Problem);
         Assert.Empty(problem.Linearise().Definitions);
@@ -169,11 +169,11 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void AConditionalThatIsOnlyPushedOneWayIsOnlyHeldFromTheOther() =>
-        Assert.Equal(["!runs => _if0 >= 2", "runs => _if0 - x >= 0"], Problem.Minimise(If(Runs, X, 2), subjectTo: Box).EncodeLogic().Rows.Select(row => row.Format().Replace("-_if0 + x <= 0", "_if0 - x >= 0").Replace("-_if0 <= -2", "_if0 >= 2")).Order(StringComparer.Ordinal));
+        Assert.Equal(["!runs => _if0 >= 2", "runs => _if0 - x >= 0"], Problem.Minimise(If(Runs, X, 2)).SubjectTo(Box).EncodeLogic().Rows.Select(row => row.Format().Replace("-_if0 + x <= 0", "_if0 - x >= 0").Replace("-_if0 <= -2", "_if0 >= 2")).Order(StringComparer.Ordinal));
 
     [Fact]
     public void ACompoundConditionIsEncodedBothWays() {
-        var problem = Problem.Maximise(If((X >= 5) & Runs, Y, 1), subjectTo: Box);
+        var problem = Problem.Maximise(If((X >= 5) & Runs, Y, 1)).SubjectTo(Box);
 
         Assert.Contains("_if0", Auxiliaries(problem));
         Assert.Equal<IVariable>([Runs, X, Y], [.. problem.Variables]);
@@ -181,7 +181,7 @@ public sealed class PiecewiseTests {
 
     [Fact]
     public void ConditionalsNestWithTheOtherFunctionsAndShareWhenEqual() =>
-        Assert.Equal(["_if1", "_max0"], Auxiliaries(Problem.Minimise(If(Runs, Max(X, Y)) + If(Runs, Max(X, Y) + 0), subjectTo: Box)));
+        Assert.Equal(["_if1", "_max0"], Auxiliaries(Problem.Minimise(If(Runs, Max(X, Y)) + If(Runs, Max(X, Y) + 0)).SubjectTo(Box)));
 
     [Fact]
     public void TypedConditionals() {

@@ -10,9 +10,7 @@ public sealed class StatisticsAndOptionsTests {
     private static readonly IntegerVariable[] Slots = [.. Enumerable.Range(0, 5).Select(index => Variable.Integer($"slot{index}"))];
 
     /// <summary>Five trains, one track, ninety seconds apart: a whole-number problem that every backend here can take, with 90 * 10 as its optimum.</summary>
-    private static readonly IProblem Queue = Problem.Minimise(
-        Slots.Sum(),
-        subjectTo: Slots.AllOf(slot => slot.Between(0, 3600))
+    private static readonly ISingleObjectiveProblem Queue = Problem.Minimise(Slots.Sum()).SubjectTo(Slots.AllOf(slot => slot.Between(0, 3600))
             & Slots.SelectMany((first, index) => Slots.Skip(index + 1).Select(second => (first + 90 <= second) | (second + 90 <= first))).AllOf());
 
     public static TheoryData<string> BoundingSolvers => ["SCIP", "HiGHS", "CP-SAT", "Gurobi", "Gurobi (big-M)"];
@@ -51,7 +49,7 @@ public sealed class StatisticsAndOptionsTests {
 
     [Fact]
     public void TheBoundAllowsForTheConstantInTheObjective() =>
-        Assert.Equal(1900, Assert.IsType<Optimal>(Create("CP-SAT").Solve(Problem.Minimise(2 * Slots.Sum() + 100, subjectTo: Queue.Constraint))).Statistics.BestBound!.Value, precision: 3);
+        Assert.Equal(1900, Assert.IsType<Optimal>(Create("CP-SAT").Solve(Problem.Minimise(2 * Slots.Sum() + 100).SubjectTo(Queue.Constraint))).Statistics.BestBound!.Value, precision: 3);
 
     [Fact]
     public void InfeasibilityStillReportsItsTimes() =>
@@ -93,7 +91,7 @@ public sealed class StatisticsAndOptionsTests {
         var slots = Enumerable.Range(0, 30).Select(index => Variable.Integer($"slot{index}")).ToList();
         var constraint = slots.AllOf(slot => slot.Between(0, 36000)) & slots.SelectMany((first, index) => slots.Skip(index + 1).Select(second => (first + 90 <= second) | (second + 90 <= first))).AllOf();
 
-        var result = Create("SCIP", SolverOptions.Default.With("limits/solutions", "1")).Solve(Problem.Minimise(slots.Sum(), subjectTo: constraint));
+        var result = Create("SCIP", SolverOptions.Default.With("limits/solutions", "1")).Solve(Problem.Minimise(slots.Sum()).SubjectTo(constraint));
 
         Assert.True(Assert.IsType<Feasible>(result).RelativeGap > 0);
     }

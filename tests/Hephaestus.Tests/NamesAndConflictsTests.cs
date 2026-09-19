@@ -56,7 +56,7 @@ public sealed class NamesAndConflictsTests {
         var plain = M.Between(0, 5) & ((M >= 3) | A) & (Max(M, N) <= 4);
         var named = M.Between(0, 5).WithName("domain") & ((M.WithName("emm") >= 3).WithName("late") | A.WithName("occupied")).WithName("either") & (Max(M, N).WithName("latest") <= 4);
 
-        Assert.Equal(Problem.Minimise(M, plain).Encode().Format(), Problem.Minimise(M.WithName("objective"), named).Encode().Format());
+        Assert.Equal(Problem.Minimise(M).SubjectTo(plain).Encode().Format(), Problem.Minimise(M.WithName("objective")).SubjectTo(named).Encode().Format());
         Assert.Equal<IVariable>([.. plain.Variables], [.. named.Variables]);
         Assert.True(new Solution(Solution.Empty.Values.Add(M, 3).Add(N, 1).Add(A, 0), 0).Value(named));
         Assert.Equal((M + 1).Normalise(), (M.WithName("emm") + 1).Normalise());
@@ -100,7 +100,7 @@ public sealed class NamesAndConflictsTests {
 
     [Fact]
     public void BoundsTakePartInConflictsLikeAnyOtherConstraint() =>
-        Assert.Equal(["5 <= m", "n <= 6", "m + 2 <= n"], Solver.FindConflict(Problem.Minimise(M, subjectTo: M.Between(5, 5) & N.Between(0, 6) & (M + 2 <= N))).Select(conjunct => conjunct.Name));
+        Assert.Equal(["5 <= m", "n <= 6", "m + 2 <= n"], Solver.FindConflict(Problem.Minimise(M).SubjectTo(M.Between(5, 5) & N.Between(0, 6) & (M + 2 <= N))).Select(conjunct => conjunct.Name));
 
     [Fact]
     public void ASingleConstraintCanBeAConflictAllByItself() =>
@@ -134,7 +134,7 @@ public sealed class NamesAndConflictsTests {
     [Fact]
     public void BoundsKnowTheConstraintThatStatesThem() {
         var (loose, tight, floor) = ((M <= 8).WithName("loose"), (M <= 5).WithName("tight"), (M >= 1).WithName("floor"));
-        var encoded = Problem.Minimise(Max(M, N), subjectTo: loose & tight & floor & N.EqualTo(3).WithName("fixed") & A).EncodeLogic();
+        var encoded = Problem.Minimise(Max(M, N)).SubjectTo(loose & tight & floor & N.EqualTo(3).WithName("fixed") & A).EncodeLogic();
 
         Assert.Equal(new BoundOrigin(floor, tight), encoded.BoundOrigins[M]);
         Assert.Equal("fixed", encoded.BoundOrigins[N].Lower!.Name);
