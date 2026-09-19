@@ -252,7 +252,7 @@ public sealed class SolvingTests {
         Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(M), Domain), bounded);
         Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(M), Domain & (M >= 3) & (A | (N >= 1))), tightened);
         Assert.Equal(new SingleObjectiveProblem(Objective.Maximise(M), Domain & A), Problem.Maximise(M).SubjectTo(Domain).SubjectTo(A));
-        Assert.Equal(new SingleObjectiveProblem(new NoObjective(), Domain & A), Problem.Satisfy(Domain).SubjectTo(A));
+        Assert.Equal(new SingleObjectiveProblem(Objective.None, Domain & A), Problem.Satisfy(Domain).SubjectTo(A));
         Assert.Equal(0, Assert.IsType<Optimal>(Solver.Solve(bounded)).Solution.ObjectiveValue);
         Assert.Equal(3, Assert.IsType<Optimal>(Solver.Solve(tightened)).Solution.ObjectiveValue);
     }
@@ -331,14 +331,27 @@ public sealed class SolvingTests {
 
     [Fact]
     public void TheKindOfObjectiveIsTheKindOfProblem() {
-        Assert.Equal(new SingleObjectiveProblem(new NoObjective(), Linked), Problem.Satisfy(Linked));
+        Assert.Equal(new SingleObjectiveProblem(Objective.None, Linked), Problem.Satisfy(Linked));
         Assert.Equal(new SingleObjectiveProblem(new Optimisation(ObjectiveSense.Maximise, M), Linked), Problem.Maximise(M).SubjectTo(Linked));
         Assert.IsAssignableFrom<ILexicographicObjective>(Problem.Maximise(M).ThenMinimise(N).Objective);
         Assert.IsAssignableFrom<ISingleObjective>(Problem.Maximise(M).SubjectTo(Linked).Objective);
-        Assert.Empty(new NoObjective().Priorities);
+        Assert.Empty(Objective.None.Priorities);
+        Assert.Equal(new NoObjective(), Objective.None);
+        Assert.Equal(Problem.Satisfy(Linked), Problem.Optimise(Objective.None).SubjectTo(Linked));
         Assert.Equal([new Prioritised(Objective.Maximise(M))], Objective.Maximise(M).Priorities);
         // Only an objective that has its place among several carries a tolerance; alone, there is nothing for it to give way to.
         Assert.Equal(new Prioritised(new Optimisation(ObjectiveSense.Minimise, N), 0, 0.1), Objective.Minimise(N, relativeTolerance: 0.1));
         Assert.IsType<Optimisation>(Objective.Minimise(N));
+    }
+
+    [Fact]
+    public void ObjectivesChainAmongThemselvesAsProblemsDo() {
+        var chained = Objective.Minimise(M).ThenMaximise(N, absoluteTolerance: 1).ThenMinimise(A, M + N);
+
+        Assert.Equal(
+            [new Prioritised(Objective.Minimise(M)), new Prioritised(Objective.Maximise(N), 1), new Prioritised(Objective.Minimise(A)), new Prioritised(Objective.Minimise(M + N))],
+            chained.Priorities);
+        Assert.Equal(chained.Priorities, Problem.Minimise(M).ThenMaximise(N, absoluteTolerance: 1).ThenMinimise(A, M + N).Objective.Priorities);
+        Assert.Equal(chained.Priorities, Objective.None.ThenMinimise(M).ThenMaximise(N, 1).ThenMinimise(new ILinearExpression[] { A, M + N }).Priorities);
     }
 }

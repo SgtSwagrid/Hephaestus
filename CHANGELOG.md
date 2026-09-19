@@ -32,4 +32,5 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Shadow prices: `problem.ShadowPrices(solution, backend)`, quoted per named constraint, for problems with logic and whole numbers too (as the prices of the linear programme in force at the solution).
 - LP and MPS export: `problem.Encode().ToLp()`, `.ToMps()` and `problem.EncodeLogic().ToLp()` (indicator constraints). Rows carry the constraint they were encoded from (`row.Origin`) and are named after it.
 - Typed numbers: `Variable.Integer<int>("trains")` and `Variable.Continuous<decimal>("cost")`, quantities that read back in their own numeric type.
+- `Objective.None`, and `ThenMinimise` / `ThenMaximise` on objectives themselves; the ones on problems are defined by them.
 - `FindConflict` uses Gurobi's native IIS to narrow the search down (`IConflictBackend`, `IConflictSolver`); column bounds now know the constraint that states them (`IndicatorProblem.BoundOrigins`).

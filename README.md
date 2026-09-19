@@ -281,13 +281,13 @@ Objectives that are to be traded off against each other need nothing special: we
 An objective is a value in its own right, so it can be built once and set against one set of constraints after another:
 
 ```csharp
-var punctualThenCheap = Objective.Minimise(totalDelay).Then(Objective.Minimise(cost, relativeTolerance: 0.05));
+var punctualThenCheap = Objective.Minimise(totalDelay).ThenMinimise(cost, relativeTolerance: 0.05);
 
 var baseline = solver.Solve(Problem.Optimise(punctualThenCheap).SubjectTo(timetable));
 var blockade = solver.Solve(Problem.Optimise(punctualThenCheap).SubjectTo(timetable, trackTwoIsClosed));
 ```
 
-The kinds of objective are the kinds of problem. An `ISingleObjective` is `NoObjective` or an `Optimisation` (a sense and an expression); an `ILexicographicObjective` is a list of those, each with the tolerance that only makes sense among several. A problem is its objective and its constraint, and is an `ISingleObjectiveProblem` or an `IMultipleObjectiveProblem` accordingly. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
+The kinds of objective are the kinds of problem. An `ISingleObjective` is `Objective.None` or an `Optimisation` (a sense and an expression); an `ILexicographicObjective` is a list of those, each with the tolerance that only makes sense among several. A problem is its objective and its constraint, and is an `ISingleObjectiveProblem` or an `IMultipleObjectiveProblem` accordingly. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
 
 ### Writing a model to a file
 
