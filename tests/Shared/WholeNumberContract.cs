@@ -156,4 +156,13 @@ public abstract class WholeNumberContract {
 
     private Solution Optimum(LexicographicProblem problem, IBooleanExpression also) =>
         Assert.IsType<Optimal>(Solver.Solve(problem with { Constraint = problem.Constraint & also })).Solution;
+
+    [Fact]
+    public void ConditionalsOfWholeNumbersStayWhole() {
+        var domain = DepartureA.Between(0, 100) & N.Between(0, 5);
+
+        Assert.Equal(100 + 5, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N), subjectTo: domain & OccupiesA)).ObjectiveValue);
+        Assert.Equal(200, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N), subjectTo: domain)).ObjectiveValue);
+        Assert.Equal(3, Optimum(Problem.Minimise(If(DepartureA >= 50, N + 3, DepartureA), subjectTo: domain & (DepartureA >= 10))).ObjectiveValue);
+    }
 }

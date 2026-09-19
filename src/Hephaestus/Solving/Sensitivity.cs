@@ -49,7 +49,7 @@ public static class Sensitivity {
 
     private static ShadowPrices Priced(IProblem original, LinearisedProblem linearised, Solution solution, IMilpBackend backend, SolverOptions options, CancellationToken cancellationToken) {
         // The variables that stand for maxima are hidden from solutions, but what they stand for can be read off.
-        var full = linearised.Definitions.Aggregate(solution, (known, definition) => known.With(definition.Variable, Math.Max(known.Value(definition.Left), known.Value(definition.Right))));
+        var full = linearised.Definitions.Aggregate(solution, (known, definition) => known.With(definition.Variable, ValueOf(definition, known)));
         // Lowering keeps the conjuncts in order and adds its own after them, which go unpriced (and unnamed).
         var written = original.Constraint.Conjuncts;
         var rows = linearised.Problem.Constraint.Conjuncts
@@ -65,6 +65,13 @@ public static class Sensitivity {
             // A constraint with no row in force (a bound on a whole-number variable, say) has no price to speak of.
             .SetItems(written.Select(conjunct => conjunct.Name).Except(rows.Select(row => row.Name)).Select(name => KeyValuePair.Create(name, 0.0))));
     }
+
+    private static double ValueOf(IDefinition definition, Solution solution) =>
+        definition switch {
+            MaximumDefinition maximum => Math.Max(solution.Value(maximum.Left), solution.Value(maximum.Right)),
+            ConditionalDefinition conditional => solution.Value(solution.Value(conditional.Condition) ? conditional.Then : conditional.Otherwise),
+            _ => throw new NotSupportedException($"Unknown kind of definition: {definition.GetType().Name}."),
+        };
 
     private static IEnumerable<PricedRow> RowsOf(string name, IBooleanExpression conjunct, Solution solution) =>
         Active(new Step(conjunct, true, solution)).SelectMany(comparison => AsRow(comparison, solution)).Select(row => new PricedRow(name, row));

@@ -93,6 +93,7 @@ public static class Formatting {
             Maximum maximum => WriteCall(step.Tokens.Add("max("), maximum.Left, maximum.Right),
             Minimum minimum => WriteCall(step.Tokens.Add("min("), minimum.Left, minimum.Right),
             AbsoluteValue absolute => WriteLinear(new LinearStep(absolute.Operand, step.Tokens.Add("abs("))).Add(")"),
+            Conditional conditional => WriteCall(WriteBoolean(new BooleanStep(conditional.Condition, 0, step.Tokens.Add("if("))).Add(", "), conditional.Then, conditional.Otherwise),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
 

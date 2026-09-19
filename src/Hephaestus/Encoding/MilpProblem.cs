@@ -59,13 +59,15 @@ public sealed record MilpProblem(
 /// reads off stated bounds such as <c>x &lt;= 10</c>; later ones derive implied bounds.
 /// </param>
 /// <param name="AuxiliaryPrefix">The prefix for the names of auxiliary binary variables.</param>
+/// <param name="ConditionalPrefix">The prefix for the names of the variables that stand for conditional expressions.</param>
 /// <param name="PiecewisePrefix">The prefix for the names of the variables that stand for maxima, minima and absolute values.</param>
 public sealed record EncodingOptions(
     double StrictnessEpsilon = 1e-4,
     double? FallbackBigM = null,
     int BoundPropagationRounds = 10,
     string AuxiliaryPrefix = "_aux",
-    string PiecewisePrefix = "_max"
+    string PiecewisePrefix = "_max",
+    string ConditionalPrefix = "_if"
 ) {
     /// <summary>The default settings.</summary>
     public static EncodingOptions Default { get; } = new();

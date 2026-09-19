@@ -23,7 +23,7 @@ public static class LinearNormalisation {
             Product product => Accumulate(step with { Expression = product.Expression, Scale = step.Scale * product.Coefficient }),
             NamedTerm named => Accumulate(step with { Expression = named.Expression }),
             Sum sum => Accumulate(step with { Expression = sum.Right, Into = Accumulate(step with { Expression = sum.Left }) }),
-            Maximum or Minimum or AbsoluteValue => throw new ModellingException($"The expression '{step.Expression.Format()}' is piecewise linear, so it has no affine form of its own. It is lowered to linear form when the problem that contains it is encoded."),
+            Maximum or Minimum or AbsoluteValue or Conditional => throw new ModellingException($"The expression '{step.Expression.Format()}' is piecewise linear, so it has no affine form of its own. It is lowered to linear form when the problem that contains it is encoded."),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
 

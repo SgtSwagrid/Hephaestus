@@ -1,7 +1,7 @@
 namespace Hephaestus;
 
 /// <summary>
-/// The piecewise-linear functions: <c>Max</c>, <c>Min</c> and <c>Abs</c>. Like the operators, they
+/// The piecewise-linear functions: <c>Max</c>, <c>Min</c>, <c>Abs</c> and <c>If</c>. Like the operators, they
 /// only build data. When a problem is encoded, each is replaced by an auxiliary variable tied to its
 /// operands, with a binary variable only where the problem could otherwise cheat: minimising
 /// <c>Max(a, b)</c> or bounding <c>Abs(x)</c> from above costs none. With
@@ -36,6 +36,18 @@ public static partial class Piecewise {
 
     /// <summary>The distance of an expression from zero.</summary>
     public static ILinearExpression Abs(ILinearExpression operand) => new AbsoluteValue(operand);
+
+    /// <summary><paramref name="then"/> if the condition holds, and <paramref name="otherwise"/> if it does not.</summary>
+    public static ILinearExpression If(IBooleanExpression condition, ILinearExpression then, ILinearExpression otherwise) => new Conditional(condition, then, otherwise);
+
+    /// <inheritdoc cref="If(IBooleanExpression, ILinearExpression, ILinearExpression)"/>
+    public static ILinearExpression If(IBooleanExpression condition, ILinearExpression then, double otherwise = 0) => new Conditional(condition, then, new Constant(otherwise));
+
+    /// <inheritdoc cref="If(IBooleanExpression, ILinearExpression, ILinearExpression)"/>
+    public static ILinearExpression If(IBooleanExpression condition, double then, ILinearExpression otherwise) => new Conditional(condition, new Constant(then), otherwise);
+
+    /// <inheritdoc cref="If(IBooleanExpression, ILinearExpression, ILinearExpression)"/>
+    public static ILinearExpression If(IBooleanExpression condition, double then, double otherwise = 0) => new Conditional(condition, new Constant(then), new Constant(otherwise));
 
     private static T Fold<T>(IReadOnlyList<T> operands, Func<T, T, T> combine) =>
         operands.Count == 0

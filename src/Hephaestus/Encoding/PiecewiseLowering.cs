@@ -2,12 +2,26 @@ using System.Collections.Immutable;
 
 namespace Hephaestus;
 
+/// <summary>What a variable introduced by the lowering stands for. The cases are <see cref="MaximumDefinition"/> and <see cref="ConditionalDefinition"/>.</summary>
+public interface IDefinition {
+    /// <summary>The variable that was introduced.</summary>
+    IVariable Variable { get; }
+}
+
 /// <summary><c>Variable</c> stands for <c>max(Left, Right)</c>.</summary>
 public sealed record MaximumDefinition(
     IVariable Variable,
     ILinearExpression Left,
     ILinearExpression Right
-);
+) : IDefinition;
+
+/// <summary><c>Variable</c> stands for <c>Then</c> if <c>Condition</c> holds, and for <c>Otherwise</c> if not.</summary>
+public sealed record ConditionalDefinition(
+    IVariable Variable,
+    IBooleanExpression Condition,
+    ILinearExpression Then,
+    ILinearExpression Otherwise
+) : IDefinition;
 
 /// <summary>
 /// A problem freed of piecewise-linear functions, and the variables that were introduced to free
@@ -16,7 +30,7 @@ public sealed record MaximumDefinition(
 /// </summary>
 public sealed record LinearisedProblem(
     IProblem Problem,
-    ImmutableArray<MaximumDefinition> Definitions
+    ImmutableArray<IDefinition> Definitions
 ) {
     /// <summary>The variables that were introduced.</summary>
     public ImmutableSortedSet<IVariable> Auxiliaries => Definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
@@ -43,11 +57,18 @@ public static class PiecewiseLowering {
         AffineForm Right
     );
 
+    /// <summary>Identifies a conditional by its condition as written and the affine forms of its branches.</summary>
+    private sealed record Choice(
+        IBooleanExpression Condition,
+        AffineForm Then,
+        AffineForm Otherwise
+    );
+
     private sealed record Lifting(
-        ImmutableDictionary<Shape, IVariable> Known,
-        ImmutableList<MaximumDefinition> Definitions,
+        ImmutableDictionary<object, IVariable> Known,
+        ImmutableList<IDefinition> Definitions,
         ImmutableHashSet<string> Reserved,
-        string Prefix,
+        EncodingOptions Options,
         int NextIndex
     );
 
@@ -71,7 +92,7 @@ public static class PiecewiseLowering {
     }
 
     private static LinearisedProblem Lower(IProblem problem, EncodingOptions options) {
-        var start = new Lifting(ImmutableDictionary<Shape, IVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options.PiecewisePrefix, 0);
+        var start = new Lifting(ImmutableDictionary<object, IVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options, 0);
         var constraint = Lift(new Step<IBooleanExpression>(problem.Constraint, start));
         var objective = Lift(new Step<ILinearExpression>(problem.Objective, constraint.State));
         return objective.State.Definitions.IsEmpty
@@ -79,7 +100,7 @@ public static class PiecewiseLowering {
             : Defined(problem.With(objective.Expression, constraint.Expression), objective.State.Definitions, options);
     }
 
-    private static LinearisedProblem Defined(IProblem lifted, ImmutableList<MaximumDefinition> definitions, EncodingOptions options) {
+    private static LinearisedProblem Defined(IProblem lifted, ImmutableList<IDefinition> definitions, EncodingOptions options) {
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
         var demands = DemandsOf(lifted.Constraint, auxiliaries, options).Aggregate(DemandsOf(lifted.Objective.Normalise(), lifted.Sense, auxiliaries), Record);
         // An inner maximum is only leant on by the problem and by maxima introduced after it, so going backwards meets every demand in time.
@@ -92,10 +113,34 @@ public static class PiecewiseLowering {
         ImmutableList<IBooleanExpression> Constraints
     );
 
-    private static Tying Tie(Tying tying, MaximumDefinition definition, ImmutableSortedSet<IVariable> auxiliaries, EncodingOptions options) {
+    private static Tying Tie(Tying tying, IDefinition definition, ImmutableSortedSet<IVariable> auxiliaries, EncodingOptions options) {
         var constraint = Tie(definition, tying.Demands.GetValueOrDefault(definition.Variable));
         return new Tying(DemandsOf(constraint, auxiliaries, options).Aggregate(tying.Demands, Record), tying.Constraints.Add(constraint));
     }
+
+    private static IBooleanExpression Tie(IDefinition definition, Demand demand) =>
+        definition switch {
+            MaximumDefinition maximum => Tie(maximum, demand),
+            ConditionalDefinition conditional => Tie(conditional, demand),
+            _ => throw new NotSupportedException($"Unknown kind of definition: {definition.GetType().Name}."),
+        };
+
+    /// <summary>
+    /// Whichever branch the condition selects, the variable is held to it: exactly, or only from the
+    /// side on which the problem could otherwise cheat. With a binary variable for a condition, that is
+    /// two conditional rows and nothing more.
+    /// </summary>
+    private static IBooleanExpression Tie(ConditionalDefinition definition, Demand demand) =>
+        demand == Demand.None
+            ? BooleanConstant.True
+            : definition.Condition.Implies(Held(definition.Variable, demand, definition.Then)) & (!definition.Condition).Implies(Held(definition.Variable, demand, definition.Otherwise));
+
+    private static IBooleanExpression Held(IVariable variable, Demand demand, ILinearExpression to) =>
+        demand switch {
+            Demand.AtLeast => variable >= to,
+            Demand.AtMost => variable <= to,
+            _ => variable.EqualTo(to),
+        };
 
     private static IBooleanExpression Tie(MaximumDefinition definition, Demand demand) =>
         (demand.HasFlag(Demand.AtLeast) ? (definition.Variable >= definition.Left) & (definition.Variable >= definition.Right) : BooleanConstant.True)
@@ -134,6 +179,7 @@ public static class PiecewiseLowering {
             Maximum maximum => Named(Both(step.State, maximum.Left, maximum.Right), isNegated: false),
             Minimum minimum => Named(Both(step.State, -minimum.Left, -minimum.Right), isNegated: true),
             AbsoluteValue absolute => Named(Both(step.State, absolute.Operand, -absolute.Operand), isNegated: false),
+            Conditional conditional => Chosen(Lift(new Step<IBooleanExpression>(conditional.Condition, step.State)), conditional),
             _ => new Lifted<ILinearExpression>(step.Expression, step.State),
         };
 
@@ -155,19 +201,27 @@ public static class PiecewiseLowering {
     /// <summary>The variable that stands for the maximum of the two operands, negated if it is really a minimum that is wanted.</summary>
     private static Lifted<ILinearExpression> Named(Lifted<(ILinearExpression Left, ILinearExpression Right)> operands, bool isNegated) {
         var shape = new Shape(operands.Expression.Left.Normalise(), operands.Expression.Right.Normalise());
-        var state = operands.State.Known.ContainsKey(shape) ? operands.State : Introduce(operands.State, shape, operands.Expression.Left, operands.Expression.Right);
+        var state = Introduced(operands.State, shape, operands.State.Options.PiecewisePrefix, shape.Left.IsIntegral && shape.Right.IsIntegral, variable => new MaximumDefinition(variable, operands.Expression.Left, operands.Expression.Right));
         return new Lifted<ILinearExpression>(isNegated ? -state.Known[shape] : state.Known[shape], state);
     }
 
-    private static Lifting Introduce(Lifting state, Shape shape, ILinearExpression left, ILinearExpression right) {
-        var index = Enumerable.Range(state.NextIndex, int.MaxValue - state.NextIndex).First(candidate => !state.Reserved.Contains(state.Prefix + candidate));
-        // The maximum of whole numbers is a whole number, which matters to solvers that know no others.
-        IVariable variable = shape.Left.IsIntegral && shape.Right.IsIntegral ? new IntegerVariable(state.Prefix + index) : new ContinuousVariable(state.Prefix + index);
-        return state with {
-            Known = state.Known.Add(shape, variable),
-            Definitions = state.Definitions.Add(new MaximumDefinition(variable, left, right)),
-            NextIndex = index + 1,
-        };
+    /// <summary>The variable that stands for whichever branch the condition selects.</summary>
+    private static Lifted<ILinearExpression> Chosen(Lifted<IBooleanExpression> condition, Conditional conditional) {
+        var branches = Both(condition.State, conditional.Then, conditional.Otherwise);
+        var choice = new Choice(condition.Expression, branches.Expression.Left.Normalise(), branches.Expression.Right.Normalise());
+        var state = Introduced(branches.State, choice, branches.State.Options.ConditionalPrefix, choice.Then.IsIntegral && choice.Otherwise.IsIntegral, variable => new ConditionalDefinition(variable, condition.Expression, branches.Expression.Left, branches.Expression.Right));
+        return new Lifted<ILinearExpression>(state.Known[choice], state);
+    }
+
+    /// <summary>The state with a variable for <paramref name="key"/>, introduced now unless an equal expression has been met before.</summary>
+    private static Lifting Introduced(Lifting state, object key, string prefix, bool isIntegral, Func<IVariable, IDefinition> define) {
+        if (state.Known.ContainsKey(key)) {
+            return state;
+        }
+        var index = Enumerable.Range(state.NextIndex, int.MaxValue - state.NextIndex).First(candidate => !state.Reserved.Contains(prefix + candidate));
+        // A choice among whole numbers is a whole number, which matters to solvers that know no others.
+        IVariable variable = isIntegral ? new IntegerVariable(prefix + index) : new ContinuousVariable(prefix + index);
+        return state with { Known = state.Known.Add(key, variable), Definitions = state.Definitions.Add(define(variable)), NextIndex = index + 1 };
     }
 
     private static Lifted<IBooleanExpression> Lift(Step<IBooleanExpression> step) => DeepRecursion.Guard(LiftUnguarded, step);

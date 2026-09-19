@@ -19,6 +19,10 @@ public static class LinearOperators {
         public static ILinearExpression operator *(ILinearExpression expression, double coefficient) => new Product(coefficient, expression);
         public static ILinearExpression operator /(ILinearExpression expression, double divisor) => new Product(1 / divisor, expression);
 
+        // The one product of two expressions that stays linear: by a binary variable, it is the expression or nothing.
+        public static ILinearExpression operator *(BinaryVariable gate, ILinearExpression expression) => new Conditional(gate, expression, new Constant(0));
+        public static ILinearExpression operator *(ILinearExpression expression, BinaryVariable gate) => new Conditional(gate, expression, new Constant(0));
+
         public static IBooleanExpression operator <=(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.LessThanOrEqual, right);
         public static IBooleanExpression operator <=(ILinearExpression left, double right) => new Comparison(left, Relation.LessThanOrEqual, new Constant(right));
         public static IBooleanExpression operator <=(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.LessThanOrEqual, right);
@@ -34,6 +38,11 @@ public static class LinearOperators {
         public static IBooleanExpression operator >(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.GreaterThan, right);
         public static IBooleanExpression operator >(ILinearExpression left, double right) => new Comparison(left, Relation.GreaterThan, new Constant(right));
         public static IBooleanExpression operator >(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.GreaterThan, right);
+    }
+
+    extension(BinaryVariable) {
+        /// <summary>The product of two binary variables, which is one exactly when both are. (It settles which of them is the gate.)</summary>
+        public static ILinearExpression operator *(BinaryVariable gate, BinaryVariable expression) => new Conditional(gate, expression, new Constant(0));
     }
 
     extension(ILinearExpression expression) {

@@ -259,4 +259,26 @@ public abstract class SolverContract {
         Assert.Equal(["0 <= departureA", "0 <= departureB", "A leaves early", "B leaves early", "headway", "occupiesA", "occupiesB"], conflict.Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
         Assert.Empty(Solver.FindConflict(constraint.Conjuncts.Remove(conflict[0]).AllOf()));
     }
+
+    [Fact]
+    public void AnExpressionCountsOnlyIfItsBinaryVariableIsSet() {
+        var constraint = X.Between(2, 10) & Y.Between(0, 10) & (Flag * X).EqualTo(Y);
+
+        Assert.Equal(10, Optimum(Problem.Maximise(Y, subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(0, Optimum(Problem.Minimise(Y, subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(2, Optimum(Problem.Minimise(Y, subjectTo: constraint & Flag)).ObjectiveValue, precision: Precision);
+        Assert.False(Optimum(Problem.Maximise(X, subjectTo: constraint & (Y <= 1))).Value(Flag));
+    }
+
+    [Fact]
+    public void AConditionalTakesTheBranchItsConditionSelects() {
+        var cost = If(X >= 6, 2 * X - 3, X + 1);
+        var domain = X.Between(0, 10);
+
+        Assert.Equal(17, Optimum(Problem.Maximise(cost, subjectTo: domain)).ObjectiveValue, precision: Precision);
+        Assert.Equal(1, Optimum(Problem.Minimise(cost, subjectTo: domain)).ObjectiveValue, precision: Precision);
+        Assert.Equal(9, Optimum(Problem.Minimise(cost, subjectTo: domain & (X >= 6))).ObjectiveValue, precision: Precision);
+        Assert.Equal(8, Optimum(Problem.Maximise(X, subjectTo: domain & (cost <= 13))).ObjectiveValue, precision: Precision);
+        Assert.Equal(15 + 4, Optimum(Problem.Maximise(cost + Flag * Max(Y, 4), subjectTo: domain & Y.Between(0, 3) & (X <= 9))).ObjectiveValue, precision: Precision);
+    }
 }
