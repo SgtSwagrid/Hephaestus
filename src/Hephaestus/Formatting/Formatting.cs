@@ -83,6 +83,7 @@ public static class Formatting {
         step.Expression switch {
             Constant constant => step.Tokens.Add(Number(constant.Value)),
             IVariable variable => step.Tokens.Add(variable.Name),
+            NamedTerm named => step.Tokens.Add(named.Name),
             Product { Coefficient: -1 } product => WriteOperand(product.Expression, step.Tokens.Add("-")),
             Product product => WriteOperand(product.Expression, step.Tokens.Add(Number(product.Coefficient)).Add("*")),
             Sum { Right: Product { Coefficient: -1 } subtracted } sum => WriteOperand(subtracted.Expression, WriteLinear(step with { Expression = sum.Left }).Add(" - ")),
@@ -122,6 +123,7 @@ public static class Formatting {
         step.Expression switch {
             BooleanConstant constant => step.Tokens.Add(constant.Value ? "true" : "false"),
             BinaryVariable variable => step.Tokens.Add(variable.Name),
+            NamedConstraint named => step.Tokens.Add(named.Name),
             Comparison comparison => WriteLinear(new LinearStep(comparison.Right, WriteLinear(new LinearStep(comparison.Left, step.Tokens)).Add($" {Symbol(comparison.Relation)} "))),
             Negation negation => WriteBoolean(new BooleanStep(negation.Operand, 5, step.Tokens.Add("!"))),
             Conjunction conjunction => WriteBinary(step, conjunction.Left, 4, " & ", conjunction.Right, 4),

@@ -4,7 +4,8 @@ namespace Hephaestus;
 /// A real-valued expression that is linear (strictly: affine) in its variables, or piecewise so.
 /// The cases are <see cref="Constant"/>, <see cref="Sum"/>, <see cref="Product"/>, the
 /// <see cref="IVariable"/> records, and the piecewise-linear <see cref="Maximum"/>,
-/// <see cref="Minimum"/> and <see cref="AbsoluteValue"/>, which the encoder lowers to linear form. Expressions are plain data, kept exactly as written;
+/// <see cref="Minimum"/> and <see cref="AbsoluteValue"/>, which the encoder lowers to linear form,
+/// and <see cref="NamedTerm"/>. Expressions are plain data, kept exactly as written;
 /// all interpretation (normalisation, bounds, encoding, evaluation) happens in later passes.
 /// </summary>
 public interface ILinearExpression;

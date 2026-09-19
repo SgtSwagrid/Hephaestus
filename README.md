@@ -105,7 +105,7 @@ Operators (`+ - * /`, `<= >= < >`, `& | ! ^`, plus `EqualTo`, `NotEqualTo`, `Bet
 
 Because expressions are immutable values with structural equality, a constraint can be composed from smaller named pieces, logged, compared and unit-tested without a solver or a "problem" object in sight. (`==` is reserved by C# for that structural equality, which is why the equality *constraint* is spelt `EqualTo`.)
 
-### A problem is one constraint, not a list
+### A problem is one constraint
 
 ```csharp
 Problem.Satisfy(constraint)
@@ -113,7 +113,29 @@ Problem.Minimise(objective, subjectTo: constraint)
 Problem.Maximise(objective, subjectTo: constraint)
 ```
 
-A list of constraints would only duplicate what `&` already means. Conjoin a collection with `constraints.AllOf()` (and `AnyOf()`, and `terms.Sum()`); these build balanced trees, so a hundred thousand constraints are no deeper than seventeen levels. Problems are records too: "rollback" is keeping the old value, and extending is `problem with { Constraint = problem.Constraint & extra }`.
+Conjoin a collection with `constraints.AllOf()` (and `AnyOf()`, and `terms.Sum()`); these build balanced trees, so a hundred thousand constraints are no deeper than seventeen levels. Problems are records too: "rollback" is keeping the old value, and extending is `problem with { Constraint = problem.Constraint & extra }`.
+
+The constraints of a model are still there to be had: `constraint.Conjuncts` takes the tree of `&` apart again, and those are the units in which an infeasibility is explained (below).
+
+### Names, and explaining infeasibility
+
+```csharp
+var isSeparated    = ((departureA + headway <= departureB) | (departureB + headway <= departureA)).WithName("separated");
+var isConflictFree = (!(occupiesA & occupiesB) | isSeparated).WithName("headway A/B");
+
+isConflictFree.Format()                     // "headway A/B"
+((NamedConstraint)isConflictFree).Expression.Format()    // "!(occupiesA & occupiesB) | separated"
+```
+
+Any expression, boolean, linear or typed, can be given a name with `WithName`. A name changes nothing about what an expression means; it is what the expression is called wherever it is written out, including inside a larger one. An expression without one goes by the way it is written, so every constraint has a usable `Name` from the start.
+
+```csharp
+if (solver.Solve(problem) is Infeasible) {
+    var conflict = solver.FindConflict(problem);        // "headway A/B", "A leaves early", "B leaves early", "0 <= departureA", ...
+}
+```
+
+`FindConflict` returns conjuncts that cannot all hold and none of which can be spared: drop any one and the rest can. It asks nothing of a solver but to tell feasible from infeasible, so it works with every backend, and takes about `k · log(n / k)` solves to find `k` constraints among `n`. Bounds take part like any other constraint, since that is all they are.
 
 ### Variables have no bounds; bounds are constraints
 

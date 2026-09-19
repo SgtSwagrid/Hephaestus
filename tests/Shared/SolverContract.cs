@@ -242,4 +242,21 @@ public abstract class SolverContract {
 
     private static (double, double) Departures(Optimal result) =>
         (Math.Round(result.Solution.Value(DepartureA), Precision), Math.Round(result.Solution.Value(DepartureB), Precision));
+
+    [Fact]
+    public void AnInfeasibleTimetableIsExplainedByTheConstraintsThatClash() {
+        var constraint =
+            Horizon
+            & ConflictFree.WithName("headway")
+            & OccupiesA & OccupiesB
+            & (DepartureA <= 100).WithName("A leaves early")
+            & X.Between(0, 5) & Y.Between(0, 5) & (X + Y <= 3)
+            & (DepartureB <= 100).WithName("B leaves early")
+            & Flag.Implies(X >= 1);
+
+        var conflict = Solver.FindConflict(Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint));
+
+        Assert.Equal(["0 <= departureA", "0 <= departureB", "A leaves early", "B leaves early", "headway", "occupiesA", "occupiesB"], conflict.Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
+        Assert.Empty(Solver.FindConflict(constraint.Conjuncts.Remove(conflict[0]).AllOf()));
+    }
 }

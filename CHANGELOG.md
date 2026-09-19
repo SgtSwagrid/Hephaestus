@@ -24,3 +24,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - `SolverOptions.AbsoluteGap`, `Seed`, `Log` and `Parameters` (the solver's own parameters, by its own names).
 - Warm starts: `solver.Solve(problem, startingFrom: solution)`, with `Solution.Empty.With(variable, value)` to build a start by hand.
 - Several objectives in order of priority: `Problem.Minimise(a, subjectTo: c).Then(Objective.Maximise(b))`, solved with any solver as a sequence of ordinary solves.
+- Names for expressions (`WithName`, `Name`), `constraint.Conjuncts`, and `solver.FindConflict(problem)`, which explains an infeasible problem with any solver.
