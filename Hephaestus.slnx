@@ -11,6 +11,7 @@
     <Project Path="src/Hephaestus/Hephaestus.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Hephaestus.Highs.Tests/Hephaestus.Highs.Tests.csproj" />
     <Project Path="tests/Hephaestus.NodaTime.Tests/Hephaestus.NodaTime.Tests.csproj" />
     <Project Path="tests/Hephaestus.Solvers.Tests/Hephaestus.Solvers.Tests.csproj" />
     <Project Path="tests/Hephaestus.Tests/Hephaestus.Tests.csproj" />

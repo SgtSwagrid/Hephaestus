@@ -2,15 +2,14 @@
 
   <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
 
-  <!-- Every project in 'src' is published as a separate NuGet package. Metadata common to all libraries is in the root. -->
+  <!-- Settings specific to the Hephaestus packages. Authorship, licence, README and Source Link come from the shared file above. -->
   <PropertyGroup Label="Package">
     <IsPackable>true</IsPackable>
+    <!-- Both spellings of "optimisation" are tags on purpose: tags exist to be searched for. -->
+    <PackageTags>optimisation;optimization;milp;mip;linear-programming;smt;solver;functional;gurobi;highs;cp-sat;or-tools;z3</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- Operator overloads speak for themselves; everything else is documented. -->
     <NoWarn>$(NoWarn);CS1591</NoWarn>
-    <!-- Both spellings of "optimisation" are tags on purpose: tags exist to be searched for. -->
-    <PackageTags>optimisation;optimization;milp;mip;linear-programming;smt;solver;functional;or-tools;z3</PackageTags>
-    <PackageProjectUrl>https://alecdorrington.com/Hephaestus/</PackageProjectUrl>
   </PropertyGroup>
 
 </Project>

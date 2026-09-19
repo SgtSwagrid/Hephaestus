@@ -76,5 +76,5 @@ internal static class BoundPropagation {
             ? new Interval(Math.Ceiling(limit.Lower - Slack(limit.Lower)), Math.Floor(limit.Upper + Slack(limit.Upper)))
             : limit;
 
-    private static double Slack(double value) => double.IsInfinity(value) ? 0 : 1e-9 * Math.Max(1, Math.Abs(value));
+    private static double Slack(double value) => double.IsInfinity(value) ? 0 : 1e-9 + 1e-12 * Math.Abs(value);
 }

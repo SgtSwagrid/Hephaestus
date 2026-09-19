@@ -87,10 +87,13 @@ public sealed record CpSatBackend : IIndicatorBackend {
         Enumerable.Range(0, 10).Select(power => Math.Pow(10, power)).Where(scale => form.Coefficients.Values.All(coefficient => IsWhole(coefficient * scale))).Cast<double?>().FirstOrDefault()
         ?? throw new NotSupportedException($"CP-SAT takes whole coefficients only, and no power of ten up to a billion makes those of '{form.Format()}' whole.");
 
-    private static bool IsWhole(double value) => Math.Abs(value - Math.Round(value)) <= 1e-9 * Math.Max(1, Math.Abs(value));
+    private static bool IsWhole(double value) => Math.Abs(value - Math.Round(value)) <= Dust(value);
 
     /// <summary>The largest whole number not above <paramref name="value"/>, forgiving floating-point error a hair's breadth below a whole number.</summary>
-    private static long Floor(double value) => (long)Math.Floor(value + 1e-9 * Math.Max(1, Math.Abs(value)));
+    private static long Floor(double value) => (long)Math.Floor(value + Dust(value));
+
+    /// <summary>The floating-point error to forgive in a number of this size: a few ulps, never enough to reach a neighbouring whole number.</summary>
+    private static double Dust(double value) => 1e-9 + 1e-13 * Math.Abs(value);
 
     private static string Parameters(SolverOptions options) =>
         string.Join(' ', new[] {

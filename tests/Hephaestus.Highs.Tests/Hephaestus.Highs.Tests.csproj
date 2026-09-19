@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Kept apart from the other solver tests: Highs.Native and Google.OrTools both ship a native highs.dll, and only one can win. -->
+  <ItemGroup>
+    <Compile Include="../Shared/*.cs" LinkBase="Contracts" />
+    <ProjectReference Include="../../src/Hephaestus.Highs/Hephaestus.Highs.csproj" />
+  </ItemGroup>
+
+</Project>

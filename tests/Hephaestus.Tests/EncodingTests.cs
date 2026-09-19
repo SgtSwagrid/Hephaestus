@@ -59,6 +59,13 @@ public sealed class EncodingTests {
     }
 
     [Fact]
+    public void RoundingInwardsForgivesDustButNotGenuineFractionsHoweverLargeTheNumber() {
+        var encoded = Problem.Satisfy((N <= 999_999.9995) & (N >= 0.1 + 0.2 - 0.3 + 5)).Encode();
+
+        Assert.Equal(new Column(N, 5, 999_999, IsAuxiliary: false), encoded.Columns.Single());
+    }
+
+    [Fact]
     public void BinaryVariablesAssertedAtTheTopLevelAreFixedByTheirBounds() {
         var encoded = Problem.Satisfy(OccupiesA & !OccupiesB).Encode();
 
