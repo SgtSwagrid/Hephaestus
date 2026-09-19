@@ -33,7 +33,7 @@ var everyoneRuns = trains.AllOf(train => train.OccupiesSection);
 var noConflicts = Pairs(trains).AllOf(pair => IsConflictFree(pair.First, pair.Second));
 
 var totalDelay = trains.Select(train => train.Departure - earliest[train.Name]).Sum();
-var problem = Problem.Minimise(totalDelay, subjectTo: withinTheHour & everyoneRuns & noConflicts);
+var problem = Problem.Minimise(totalDelay).SubjectTo(withinTheHour & everyoneRuns & noConflicts);
 
 Console.WriteLine("The constraint, as the library sees it:");
 Console.WriteLine($"  {IsConflictFree(trains[0], trains[1]).Format()}");

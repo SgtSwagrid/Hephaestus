@@ -17,7 +17,7 @@ public interface ISolver {
     /// variables, or mention others, or not be feasible at all; the answer is the same, only perhaps sooner.
     /// </param>
     /// <param name="cancellationToken">Stops the solve early.</param>
-    ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default);
+    ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>A solver for plain mixed-integer linear programmes.</summary>
@@ -53,7 +53,7 @@ public sealed record MilpSolver(
     SolverOptions? Options = null
 ) : IConflictSolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+    public ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => problem.Encode(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
             : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
@@ -61,7 +61,7 @@ public sealed record MilpSolver(
 
     /// <inheritdoc/>
     /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
-    public ImmutableArray<IBooleanExpression> NarrowConflict(IProblem problem, CancellationToken cancellationToken = default) =>
+    public ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default) =>
         Backend is IConflictBackend backend ? Conflicts.Narrow(problem.EncodeLogic(Encoding), backend, Options ?? SolverOptions.Default, cancellationToken) : [];
 }
 
@@ -75,7 +75,7 @@ public sealed record IndicatorSolver(
     SolverOptions? Options = null
 ) : IConflictSolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+    public ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => problem.EncodeLogic(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
             : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
@@ -83,7 +83,7 @@ public sealed record IndicatorSolver(
 
     /// <inheritdoc/>
     /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
-    public ImmutableArray<IBooleanExpression> NarrowConflict(IProblem problem, CancellationToken cancellationToken = default) =>
+    public ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default) =>
         Backend is IConflictBackend backend ? Conflicts.Narrow(problem.EncodeLogic(Encoding), backend, Options ?? SolverOptions.Default, cancellationToken) : [];
 }
 

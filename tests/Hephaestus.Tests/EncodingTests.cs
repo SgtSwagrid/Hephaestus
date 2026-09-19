@@ -161,7 +161,7 @@ public sealed class EncodingTests {
 
     [Fact]
     public void TheObjectiveIsCarriedAcrossInNormalForm() {
-        var encoded = Problem.Maximise(2 * (X + Y) - X + 7, subjectTo: X.Between(0, 1) & Y.Between(0, 1)).Encode();
+        var encoded = Problem.Maximise(2 * (X + Y) - X + 7).SubjectTo(X.Between(0, 1) & Y.Between(0, 1)).Encode();
 
         Assert.Equal(ObjectiveSense.Maximise, encoded.Sense);
         Assert.Equal("x + 2*y + 7", encoded.Objective.Format());
@@ -169,7 +169,7 @@ public sealed class EncodingTests {
 
     [Fact]
     public void VariablesThatOnlyAppearInTheObjectiveStillGetColumns() {
-        var encoded = Problem.Minimise(X + Y, subjectTo: X >= 0).Encode();
+        var encoded = Problem.Minimise(X + Y).SubjectTo(X >= 0).Encode();
 
         Assert.Equal([X, Y], encoded.Columns.Select(column => column.Variable));
     }
@@ -186,7 +186,7 @@ public sealed class EncodingTests {
 
     [Fact]
     public void TheEncodedProgrammeCanBePrinted() {
-        var encoded = Problem.Minimise(X, subjectTo: X.Between(0, 10) & ((X <= 3) | (X >= 7))).Encode();
+        var encoded = Problem.Minimise(X).SubjectTo(X.Between(0, 10) & ((X <= 3) | (X >= 7))).Encode();
 
         Assert.Equal(
             string.Join(Environment.NewLine, [

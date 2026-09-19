@@ -68,9 +68,9 @@ var withinTheHour  = departureA.Between(0, 3600) & departureB.Between(0, 3600);
 var isSeparated    = (departureA + headway <= departureB) | (departureB + headway <= departureA);
 var isConflictFree = !(occupiesA & occupiesB) | isSeparated;
 
-var problem = Problem.Minimise(
-    departureA + departureB,
-    subjectTo: withinTheHour & isConflictFree & occupiesA & occupiesB);
+var problem = Problem.Minimise(departureA + departureB)
+    .SubjectTo(withinTheHour)
+    .SubjectTo(isConflictFree & occupiesA & occupiesB);
 
 var summary = OrToolsSolver.Create().Solve(problem).Match(
     optimal:    solution => $"A leaves at {solution.Value(departureA)}, B at {solution.Value(departureB)}",
@@ -109,11 +109,13 @@ Because expressions are immutable values with structural equality, a constraint 
 
 ```csharp
 Problem.Satisfy(constraint)
-Problem.Minimise(objective, subjectTo: constraint)
-Problem.Maximise(objective, subjectTo: constraint)
+Problem.Minimise(objective).SubjectTo(constraint)
+Problem.Maximise(objective).SubjectTo(constraint).SubjectTo(another, andAnother)
 ```
 
-Conjoin a collection with `constraints.AllOf()` (and `AnyOf()`, and `terms.Sum()`); these build balanced trees, so a hundred thousand constraints are no deeper than seventeen levels. Problems are records too: "rollback" is keeping the old value, and extending is `problem with { Constraint = problem.Constraint & extra }`.
+A problem is a value, and every step of building one gives another: `SubjectTo` conjoins a further constraint onto the one the problem has, so `.SubjectTo(a).SubjectTo(b)`, `.SubjectTo(a, b)` and `.SubjectTo(a & b)` are the same problem, and a whole collection can be passed at once. A problem can be handed around and constrained further by whoever receives it, and the original is untouched.
+
+Conjoin a collection with `constraints.AllOf()` (and `AnyOf()`, and `terms.Sum()`); these build balanced trees, so a hundred thousand constraints are no deeper than seventeen levels. "Rollback" is keeping the old value.
 
 The constraints of a model are still there to be had: `constraint.Conjuncts` takes the tree of `&` apart again, and those are the units in which an infeasibility is explained (below).
 
@@ -141,7 +143,7 @@ if (solver.Solve(problem) is Infeasible) {
 
 ```csharp
 var platformFree = (departure >= release).WithName("platform free");
-var problem      = Problem.Minimise(totalDelay, subjectTo: platformFree & ...);
+var problem      = Problem.Minimise(totalDelay).SubjectTo(platformFree & ...);
 
 var solution = solver.Solve(problem).SolutionOrNull!;
 var prices   = problem.ShadowPrices(solution, new GurobiBackend());
@@ -184,7 +186,7 @@ using static Hephaestus.Piecewise;
 
 var isPunctual = Abs(arrival - booked) <= tolerance;
 var makespan   = Max(finishes);
-var problem    = Problem.Minimise(makespan + 10 * Abs(arrival - booked), subjectTo: ...);
+var problem    = Problem.Minimise(makespan + 10 * Abs(arrival - booked)).SubjectTo(...);
 ```
 
 `Max`, `Min` and `Abs` are records like everything else, and work on plain and typed expressions alike. When a problem is encoded, each becomes an auxiliary variable tied to its operands (all three are maxima: `min(a, b) = -max(-a, -b)` and `|e| = max(e, -e)`), and equal ones share a variable. How it is tied depends on how the problem leans on it. Minimising a maximum, or bounding an absolute value from above, only tempts the solver to make the variable too small, so `m >= a & m >= b` is enough and no binary variable is spent; that is the usual linear-programming idiom, found for you. Only a use that rewards a larger value (`Abs(x - y) >= 5`, or maximising a maximum) adds `m <= a | m <= b`, which costs one binary. The variable is bounded by the bounds of its operands, so its big-M is derived like any other.
@@ -229,11 +231,11 @@ Supporting another type means writing one small record that implements `IProject
 
 ### Swapping the solver
 
-`ISolver` is the seam: `ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default)`. A backend joins at whichever level suits the solver:
+`ISolver` is the seam: `ISolveResult Solve(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default)`. A backend joins at whichever level suits the solver:
 
 | A solver that takes... | implements | and sees | Examples |
 | --- | --- | --- | --- |
-| logic as it stands | `ISolver` | the `IProblem` itself | `Z3Solver` |
+| logic as it stands | `ISolver` | the `ISingleObjectiveProblem` itself | `Z3Solver` |
 | conditional linear constraints | `IIndicatorBackend` | an `IndicatorProblem`: linear rows guarded by literals, no big-M | `GurobiBackend`, `CpSatBackend` |
 | linear constraints only | `IMilpBackend` | a `MilpProblem`: bounded columns, linear rows, a linear objective | `HighsBackend`, `OrToolsBackend` |
 
@@ -267,14 +269,14 @@ result.RelativeGap                                // how far a Feasible result m
 ### Several objectives
 
 ```csharp
-var problem = Problem.Minimise(totalDelay, subjectTo: constraint)
-    .Then(Objective.Minimise(platformChanges))
-    .Then(Objective.Maximise(slack));
+var problem = Problem.Minimise(totalDelay, platformChanges)       // in order of priority
+    .ThenMaximise(slack)
+    .SubjectTo(constraint);
 
 var result = solver.Solve(problem);
 ```
 
-Objectives that are to be traded off against each other need nothing special: weigh them into one expression. Objectives in order of priority are a `LexicographicProblem`: each is optimised in turn, among the solutions that are best for those before it. That is done with a sequence of ordinary solves, so it works with every solver: each stage is held to the values already found and starts from the solution before. An objective can give ground to those after it (`Objective.Minimise(totalDelay, relativeTolerance: 0.01)`, or a typed `tolerance: Duration.FromMinutes(2)`); `Problem.Lexicographic([...], subjectTo: ...)` takes the whole list at once. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
+Objectives that are to be traded off against each other need nothing special: weigh them into one expression. Several expressions given to `Minimise` or `Maximise` are objectives in order of priority, as are those added with `ThenMinimise` and `ThenMaximise`. Either way the result is an `IMultipleObjectiveProblem`, where a problem with one objective or none is an `ISingleObjectiveProblem`; both are `IProblem`s, and `solver.Solve` and `FindConflict` take either. With several objectives, each is optimised in turn, among the solutions that are best for those before it. That is done with a sequence of ordinary solves, so it works with every solver: each stage is held to the values already found and starts from the solution before. An objective can give ground to those after it: `.ThenMinimise(changes, relativeTolerance: 0.01)`, or, for the general case, `.Then(objective)` with an `Objective` of its own, which is a sense, an expression and its tolerances, and can be typed (`Objective.Minimise(delay, tolerance: Duration.FromMinutes(2))`). `Problem.Lexicographic([...])` takes the whole list at once, which is also how the first objective is given a tolerance. `SubjectTo` may come anywhere in the chain. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
 
 ### Writing a model to a file
 

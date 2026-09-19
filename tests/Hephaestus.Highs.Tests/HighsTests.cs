@@ -22,11 +22,11 @@ public sealed class HighsBackendTests {
 
     [Fact]
     public void LimitsAreAccepted() =>
-        Assert.IsType<Optimal>(HighsSolver.Create(options: new SolverOptions(TimeLimit: TimeSpan.FromSeconds(10), RelativeGap: 0, Threads: 2)).Solve(Problem.Maximise(X + N, subjectTo: X.Between(0, 1.5) & N.Between(0, 5) & (X + N <= 5.25))));
+        Assert.IsType<Optimal>(HighsSolver.Create(options: new SolverOptions(TimeLimit: TimeSpan.FromSeconds(10), RelativeGap: 0, Threads: 2)).Solve(Problem.Maximise(X + N).SubjectTo(X.Between(0, 1.5) & N.Between(0, 5) & (X + N <= 5.25))));
 
     [Fact]
     public void AProblemWithNoRowsAtAllIsSolved() =>
-        Assert.Equal(7, Assert.IsType<Optimal>(HighsSolver.Create().Solve(Problem.Maximise(X + N, subjectTo: X.Between(0, 2) & N.Between(0, 5)))).Solution.ObjectiveValue, precision: 6);
+        Assert.Equal(7, Assert.IsType<Optimal>(HighsSolver.Create().Solve(Problem.Maximise(X + N).SubjectTo(X.Between(0, 2) & N.Between(0, 5)))).Solution.ObjectiveValue, precision: 6);
 
     [Fact]
     public void ACancelledSolveNeverStarts() =>
@@ -34,7 +34,7 @@ public sealed class HighsBackendTests {
 
     [Fact]
     public void AnOptimalResultIsTightAgainstItsBound() {
-        var result = Assert.IsType<Optimal>(HighsSolver.Create(options: new SolverOptions(AbsoluteGap: 0, Seed: 7)).Solve(Problem.Maximise(X + N, subjectTo: X.Between(0, 1.5) & N.Between(0, 5) & (X + N <= 5.25))));
+        var result = Assert.IsType<Optimal>(HighsSolver.Create(options: new SolverOptions(AbsoluteGap: 0, Seed: 7)).Solve(Problem.Maximise(X + N).SubjectTo(X.Between(0, 1.5) & N.Between(0, 5) & (X + N <= 5.25))));
 
         Assert.Equal(5.25, result.Statistics.BestBound!.Value, precision: 6);
         Assert.Equal(0, result.RelativeGap!.Value, precision: 6);
@@ -43,7 +43,7 @@ public sealed class HighsBackendTests {
 
     [Fact]
     public void ItsOwnOptionsAreAcceptedWhateverTheirType() =>
-        Assert.IsType<Optimal>(HighsSolver.Create(options: SolverOptions.Default.With("mip_heuristic_effort", "0.1").With("mip_max_nodes", "1000").With("presolve", "off").With("mip_detect_symmetry", "false")).Solve(Problem.Maximise(N, subjectTo: N.Between(0, 5))));
+        Assert.IsType<Optimal>(HighsSolver.Create(options: SolverOptions.Default.With("mip_heuristic_effort", "0.1").With("mip_max_nodes", "1000").With("presolve", "off").With("mip_detect_symmetry", "false")).Solve(Problem.Maximise(N).SubjectTo(N.Between(0, 5))));
 
     [Fact]
     public void AnOptionItDoesNotKnowIsAnError() =>

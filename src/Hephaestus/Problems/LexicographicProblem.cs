@@ -46,38 +46,20 @@ public sealed record Objective(
 /// A problem with several objectives in order of priority: the first is optimised, then the second
 /// among the solutions that are best for the first, and so on. (Objectives that are to be traded off
 /// against each other need nothing special: weigh them into one expression.) An objective's tolerance
-/// loosens its hold on those after it. Build one with <c>Problem.Lexicographic</c>, or by
-/// following an ordinary problem with <c>Then</c>.
+/// loosens its hold on those after it. Build one by following an ordinary problem with <c>Then</c>,
+/// <c>ThenMinimise</c> or <c>ThenMaximise</c>, or all at once with <c>Problem.Lexicographic</c>.
 /// </summary>
 public sealed record LexicographicProblem(
     ImmutableArray<Objective> Objectives,
     IBooleanExpression Constraint
-);
+) : IMultipleObjectiveProblem;
 
-/// <summary>Functions for building problems with several objectives.</summary>
-public static class LexicographicProblems {
-    extension(Problem) {
-        /// <inheritdoc cref="LexicographicProblem"/>
-        public static LexicographicProblem Lexicographic(IEnumerable<Objective> objectives, IBooleanExpression subjectTo) => new([.. objectives], subjectTo);
-    }
-
-    extension(IProblem problem) {
-        /// <summary>The same problem with a further objective, which matters only among the solutions that are best for this one.</summary>
-        public LexicographicProblem Then(Objective objective) =>
-            problem is Satisfaction
-                ? new LexicographicProblem([objective], problem.Constraint)
-                : new LexicographicProblem([new Objective(problem.Sense, problem.Objective), objective], problem.Constraint);
-    }
-
-    extension(LexicographicProblem problem) {
-        /// <summary>The same problem with a further objective, which matters only among the solutions that are best for those before it.</summary>
-        public LexicographicProblem Then(Objective objective) => problem with { Objectives = problem.Objectives.Add(objective) };
-    }
-
+/// <summary>Functions over objectives.</summary>
+public static class Objectives {
     extension(Objective objective) {
         /// <summary>The ordinary problem of optimising this objective alone.</summary>
-        public IProblem SubjectTo(IBooleanExpression constraint) =>
-            objective.Sense == ObjectiveSense.Minimise ? Problem.Minimise(objective.Expression, constraint) : Problem.Maximise(objective.Expression, constraint);
+        public ISingleObjectiveProblem SubjectTo(IBooleanExpression constraint) =>
+            (objective.Sense == ObjectiveSense.Minimise ? Problem.Minimise(objective.Expression) : Problem.Maximise(objective.Expression)).SubjectTo(constraint);
 
         /// <summary>
         /// The constraint that this objective does no worse than <paramref name="value"/>, within its

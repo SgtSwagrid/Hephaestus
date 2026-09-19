@@ -30,14 +30,14 @@ public sealed class SensitivityRefusalTests {
 
     [Fact]
     public void ABackendWithoutDualValuesSaysSo() {
-        var problem = Problem.Minimise(X, subjectTo: X >= 1);
+        var problem = Problem.Minimise(X).SubjectTo(X >= 1);
 
         Assert.Contains("no dual values", Assert.Throws<InvalidOperationException>(() => problem.ShadowPrices(Solution.Empty.With(X, 1), new OrToolsBackend(OrToolsSolverId.Scip))).Message);
     }
 
     [Fact]
     public void ASolutionOfSomeOtherProblemHasNoPrices() {
-        var problem = Problem.Minimise(X, subjectTo: (X >= 1) | (X <= -5));
+        var problem = Problem.Minimise(X).SubjectTo((X >= 1) | (X <= -5));
 
         Assert.Contains("not solved to optimality", Assert.Throws<InvalidOperationException>(() => problem.ShadowPrices(Solution.Empty.With(X, -7), new OrToolsBackend(OrToolsSolverId.Glop))).Message);
     }

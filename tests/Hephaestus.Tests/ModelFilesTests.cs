@@ -10,9 +10,7 @@ public sealed class ModelFilesTests {
     private static readonly IBooleanExpression Headway =
         (!(OccupiesA & OccupiesB) | (DepartureA + 120 <= DepartureB) | (DepartureB + 120 <= DepartureA)).WithName("headway A/B");
 
-    private static readonly IProblem Problem1 = Problem.Minimise(
-        DepartureA + 2 * DepartureB + 7,
-        subjectTo: DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Headway & OccupiesA & (DepartureA - DepartureB + N).EqualTo(3) & (N >= -4));
+    private static readonly ISingleObjectiveProblem Problem1 = Problem.Minimise(DepartureA + 2 * DepartureB + 7).SubjectTo(DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Headway & OccupiesA & (DepartureA - DepartureB + N).EqualTo(3) & (N >= -4));
 
     private static string[] Lines(string text) => text.TrimEnd('\n').Split('\n');
 
@@ -105,12 +103,12 @@ public sealed class ModelFilesTests {
                 " FX bnd occupiesA 0",
                 "ENDATA",
             ],
-            Lines(Problem.Maximise(DepartureA - 2 * N + 5, subjectTo: (DepartureA + DepartureB <= 10).WithName("capacity") & (DepartureA + N >= 2) & (DepartureA - 2 * DepartureB).EqualTo(0) & (DepartureA <= 8) & N.Between(0, 3) & !OccupiesA).Encode().ToMps()));
+            Lines(Problem.Maximise(DepartureA - 2 * N + 5).SubjectTo((DepartureA + DepartureB <= 10).WithName("capacity") & (DepartureA + N >= 2) & (DepartureA - 2 * DepartureB).EqualTo(0) & (DepartureA <= 8) & N.Between(0, 3) & !OccupiesA).Encode().ToMps()));
 
     [Fact]
     public void NamesAreMadeSafeAndKeptApart() {
         var awkward = new[] { Variable.Continuous("x y"), Variable.Continuous("x-y"), Variable.Continuous("2nd"), Variable.Continuous("e1") };
-        var lines = Lines(Problem.Minimise(awkward.Sum(), subjectTo: awkward.AllOf(variable => variable >= 1) & (awkward.Sum() >= 9).WithName("sum") & (awkward.Sum() <= 99).WithName("sum")).Encode().ToLp());
+        var lines = Lines(Problem.Minimise(awkward.Sum()).SubjectTo(awkward.AllOf(variable => variable >= 1) & (awkward.Sum() >= 9).WithName("sum") & (awkward.Sum() <= 99).WithName("sum")).Encode().ToLp());
 
         Assert.Equal(" obj: 1 x_2nd + 1 x_e1 + 1 x_y + 1 x_y_2", lines[2]);
         Assert.Contains(lines, line => line.StartsWith(" sum: ", StringComparison.Ordinal));
@@ -119,7 +117,7 @@ public sealed class ModelFilesTests {
 
     [Fact]
     public void ARowWithTwoSidesIsARangeInMpsAndTwoRowsInLp() {
-        var programme = Problem.Minimise(DepartureA, subjectTo: (DepartureA >= 0) & (DepartureB >= 0)).Encode() with {
+        var programme = Problem.Minimise(DepartureA).SubjectTo((DepartureA >= 0) & (DepartureB >= 0)).Encode() with {
             Rows = [new LinearRow(Solution.Empty.Values.Add(DepartureA, 1).Add(DepartureB, 1), 2, 6)],
         };
 

@@ -22,18 +22,18 @@ public abstract class SensitivityContract {
 
     private const double Step = 0.01;
 
-    private double Optimum(IProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution.ObjectiveValue;
+    private double Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution.ObjectiveValue;
 
-    private ShadowPrices Prices(IProblem problem) => problem.ShadowPrices(Assert.IsType<Optimal>(Solver.Solve(problem)).Solution, Backend);
+    private ShadowPrices Prices(ISingleObjectiveProblem problem) => problem.ShadowPrices(Assert.IsType<Optimal>(Solver.Solve(problem)).Solution, Backend);
 
     /// <summary>The rate at which the optimum moves as <paramref name="loosened"/> takes the place of <paramref name="constraint"/>.</summary>
-    private double Rate(IProblem problem, IBooleanExpression constraint, IBooleanExpression loosened) =>
+    private double Rate(ISingleObjectiveProblem problem, IBooleanExpression constraint, IBooleanExpression loosened) =>
         (Optimum(problem.With(problem.Objective, problem.Constraint.Conjuncts.Replace(constraint, loosened).AllOf())) - Optimum(problem)) / Step;
 
     [Fact]
     public void ThePricesOfATextbookLinearProgrammeAreItsDualValues() {
         var (plant1, plant2, plant3) = ((Doors <= 4).WithName("plant 1"), (2 * Windows <= 12).WithName("plant 2"), (3 * Doors + 2 * Windows <= 18).WithName("plant 3"));
-        var problem = Problem.Maximise(3 * Doors + 5 * Windows, subjectTo: (Doors >= 0) & (Windows >= 0) & plant1 & plant2 & plant3);
+        var problem = Problem.Maximise(3 * Doors + 5 * Windows).SubjectTo((Doors >= 0) & (Windows >= 0) & plant1 & plant2 & plant3);
 
         var prices = Prices(problem);
 
@@ -48,8 +48,8 @@ public abstract class SensitivityContract {
     [Fact]
     public void APriceIsTheRateOfChangeWhicheverWayTheConstraintFacesAndWhicheverWayTheObjectiveGoes() {
         var (demand, blend, cap) = ((Doors + Windows >= 10).WithName("demand"), (Doors - 2 * Windows).EqualTo(1).WithName("blend"), (Windows <= 8).WithName("cap"));
-        var minimise = Problem.Minimise(4 * Doors + 3 * Windows, subjectTo: demand & blend & cap);
-        var maximise = Problem.Maximise(-4 * Doors - 3 * Windows, subjectTo: demand & blend & cap);
+        var minimise = Problem.Minimise(4 * Doors + 3 * Windows).SubjectTo(demand & blend & cap);
+        var maximise = Problem.Maximise(-4 * Doors - 3 * Windows).SubjectTo(demand & blend & cap);
 
         Assert.Equal(Rate(minimise, demand, Doors + Windows >= 10 + Step), Prices(minimise).Of(demand), precision: 4);
         Assert.Equal(Rate(minimise, blend, (Doors - 2 * Windows).EqualTo(1 + Step)), Prices(minimise).Of(blend), precision: 4);
@@ -64,7 +64,7 @@ public abstract class SensitivityContract {
         var release = (DepartureA >= 100).WithName("release");
         var headway = ((DepartureA + 120 + 60 * Express <= DepartureB) | (DepartureB + 120 <= DepartureA)).WithName("headway");
         var horizon = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600);
-        var problem = Problem.Minimise(DepartureB + 2 * DepartureA - 50 * Express, subjectTo: horizon & release & (DepartureB >= 200) & headway & Express.Implies(DepartureB >= 300));
+        var problem = Problem.Minimise(DepartureB + 2 * DepartureA - 50 * Express).SubjectTo(horizon & release & (DepartureB >= 200) & headway & Express.Implies(DepartureB >= 300));
 
         var prices = Prices(problem);
 
@@ -81,7 +81,7 @@ public abstract class SensitivityContract {
     public void PiecewiseFunctionsArePricedThroughTheSideThatIsInForce() {
         var latest = (Max(DepartureA, DepartureB) <= 500).WithName("latest");
         var (releaseA, releaseB) = ((DepartureA >= 100).WithName("release A"), (DepartureB >= 250).WithName("release B"));
-        var problem = Problem.Minimise(Max(DepartureA, DepartureB) + 0.1 * DepartureA, subjectTo: releaseA & releaseB & latest);
+        var problem = Problem.Minimise(Max(DepartureA, DepartureB) + 0.1 * DepartureA).SubjectTo(releaseA & releaseB & latest);
 
         var prices = Prices(problem);
 

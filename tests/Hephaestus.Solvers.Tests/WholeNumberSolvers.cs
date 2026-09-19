@@ -27,14 +27,14 @@ public sealed class CpSatRefusalTests {
 
     [Fact]
     public void ContinuousVariablesAreRefusedByName() {
-        var exception = Assert.Throws<NotSupportedException>(() => CpSatSolver.Create().Solve(Problem.Minimise(N, subjectTo: N.Between(0, 5) & (Variable.Continuous("x") >= 1))));
+        var exception = Assert.Throws<NotSupportedException>(() => CpSatSolver.Create().Solve(Problem.Minimise(N).SubjectTo(N.Between(0, 5) & (Variable.Continuous("x") >= 1))));
 
         Assert.Contains("'x'", exception.Message);
     }
 
     [Fact]
     public void VariablesWithoutFiniteDomainsAreNamed() {
-        var exception = Assert.Throws<ModellingException>(() => CpSatSolver.Create().Solve(Problem.Minimise(N, subjectTo: (N >= 0) & (Variable.Integer("m") <= N))));
+        var exception = Assert.Throws<ModellingException>(() => CpSatSolver.Create().Solve(Problem.Minimise(N).SubjectTo((N >= 0) & (Variable.Integer("m") <= N))));
 
         Assert.Contains("'n'", exception.Message);
         Assert.Contains("'m'", exception.Message);
@@ -46,5 +46,5 @@ public sealed class CpSatRefusalTests {
 
     [Fact]
     public void LimitsAreRespected() =>
-        Assert.IsType<Optimal>(CpSatSolver.Create(options: new SolverOptions(TimeLimit: TimeSpan.FromSeconds(10), RelativeGap: 0, Threads: 2)).Solve(Problem.Maximise(N, subjectTo: N.Between(0, 5))));
+        Assert.IsType<Optimal>(CpSatSolver.Create(options: new SolverOptions(TimeLimit: TimeSpan.FromSeconds(10), RelativeGap: 0, Threads: 2)).Solve(Problem.Maximise(N).SubjectTo(N.Between(0, 5))));
 }
