@@ -226,4 +226,20 @@ public abstract class SolverContract {
 
         Assert.All(starts, start => Assert.Equal(Headway, Assert.IsType<Optimal>(Solver.Solve(problem, startingFrom: start)).Solution.ObjectiveValue, precision: Precision));
     }
+
+    [Fact]
+    public void ObjectivesAreMetInOrderOfPriority() {
+        var constraint = Horizon & ConflictFree & OccupiesA & OccupiesB;
+        var earliestThenAFirst = Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint).Then(Objective.Minimise(DepartureA));
+        var earliestThenBFirst = Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint).Then(Objective.Minimise(DepartureB));
+        var withinAMinuteThenFarApart = Problem.Lexicographic([Objective.Minimise(DepartureA + DepartureB, absoluteTolerance: 60), Objective.Maximise(DepartureB - DepartureA)], subjectTo: constraint);
+
+        Assert.Equal((0, Headway), Departures(Assert.IsType<Optimal>(Solver.Solve(earliestThenAFirst))));
+        Assert.Equal((Headway, 0), Departures(Assert.IsType<Optimal>(Solver.Solve(earliestThenBFirst))));
+        Assert.Equal((0, Headway + 60), Departures(Assert.IsType<Optimal>(Solver.Solve(withinAMinuteThenFarApart))));
+        Assert.Equal(Headway + 60, Assert.IsType<Optimal>(Solver.Solve(withinAMinuteThenFarApart)).Solution.ObjectiveValue, precision: Precision);
+    }
+
+    private static (double, double) Departures(Optimal result) =>
+        (Math.Round(result.Solution.Value(DepartureA), Precision), Math.Round(result.Solution.Value(DepartureB), Precision));
 }

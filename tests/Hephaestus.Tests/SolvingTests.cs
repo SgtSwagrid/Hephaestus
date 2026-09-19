@@ -157,4 +157,88 @@ public sealed class SolvingTests {
         Assert.Equal(0, start.Values[A]);
         Assert.Throws<ArgumentException>(() => Solution.Empty.With(departure + dwell, origin));
     }
+
+    /// <summary>Solves with the exhaustive backend, and remembers what each solve was asked and where it started from.</summary>
+    private sealed record WatchedBackend(List<(MilpProblem Problem, IReadOnlyDictionary<IVariable, double> Start)> Solves) : IMilpBackend {
+        public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
+            Solves.Add((problem, start));
+            return new ExhaustiveBackend().Solve(problem, start, options, cancellationToken);
+        }
+    }
+
+    private static readonly IBooleanExpression Linked = Domain & (N <= M + 1);
+
+    [Fact]
+    public void ALaterObjectiveOnlyChoosesAmongTheBestForTheEarlierOnes() {
+        var solution = Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M, subjectTo: Linked).Then(Objective.Maximise(N)))).Solution;
+
+        Assert.Equal((0, 1), (solution.Value(M), solution.Value(N)));
+        Assert.Equal(0, solution.ObjectiveValue);
+    }
+
+    [Fact]
+    public void ATolerancedObjectiveGivesGroundToThoseAfterIt() {
+        var byAmount = Problem.Lexicographic([Objective.Minimise(M, absoluteTolerance: 2), Objective.Maximise(N)], subjectTo: Linked);
+        var byFraction = Problem.Lexicographic([Objective.Maximise(M + 5, relativeTolerance: 0.2), Objective.Minimise(N)], subjectTo: Linked & (N >= M - 1));
+
+        Assert.Equal((2, 3), Read(Assert.IsType<Optimal>(Solver.Solve(byAmount)).Solution));
+        Assert.Equal((3, 2), Read(Assert.IsType<Optimal>(Solver.Solve(byFraction)).Solution));
+    }
+
+    private static (double, double) Read(Solution solution) => (solution.Value(M), solution.Value(N));
+
+    [Fact]
+    public void ObjectivesCanBeChainedAtLength() {
+        var problem = Problem.Satisfy(Linked).Then(Objective.Maximise(M + N)).Then(Objective.Minimise(M)).Then(Objective.Maximise(A)).Then(Objective.Minimise(N));
+
+        var solution = Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
+
+        Assert.Equal(4, problem.Objectives.Length);
+        Assert.Equal((5, 5), Read(solution));
+        Assert.Equal(10, solution.ObjectiveValue);
+    }
+
+    [Fact]
+    public void EachStageStartsFromTheSolutionBeforeAndIsHeldToItsValue() {
+        var backend = new WatchedBackend([]);
+
+        new MilpSolver(backend).Solve(Problem.Minimise(M, subjectTo: Linked).Then(Objective.Maximise(N)), startingFrom: Solution.Empty.With(M, 4));
+
+        Assert.Equal([4.0], backend.Solves[0].Start.Values);
+        Assert.Equal([0.0, 0.0], backend.Solves[1].Start.OrderBy(entry => entry.Key.Name).Select(entry => entry.Value));
+        Assert.Equal(0, backend.Solves[1].Problem.Columns.Single(column => column.Variable.Equals(M)).UpperBound, precision: 6);
+    }
+
+    [Fact]
+    public void WithoutASolutionTheFirstStagesOutcomeStands() {
+        Assert.IsType<Infeasible>(Solver.Solve(Problem.Minimise(M, subjectTo: Linked & (M >= 9)).Then(Objective.Maximise(N))));
+        Assert.IsType<Optimal>(Solver.Solve(Problem.Lexicographic([], subjectTo: Linked)));
+    }
+
+    /// <summary>Gives up on every solve after its first.</summary>
+    private sealed record FlaggingBackend(List<int> Count) : IMilpBackend {
+        public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
+            Count.Add(0);
+            return Count.Count == 1 ? new ExhaustiveBackend().Solve(problem, start, options, cancellationToken) : new Unknown("Out of time.");
+        }
+    }
+
+    [Fact]
+    public void AStageThatGivesUpLeavesTheSolutionBeforeItUnproven() {
+        var result = new MilpSolver(new FlaggingBackend([])).Solve(Problem.Minimise(M, subjectTo: Linked).Then(Objective.Maximise(N)).Then(Objective.Maximise(A)));
+
+        Assert.Equal(0, Assert.IsType<Feasible>(result).Solution.Value(M));
+    }
+
+    [Fact]
+    public void TypedObjectivesTakeTypedTolerances() {
+        var origin = new DateTime(2026, 9, 19, 8, 0, 0);
+        var delay = Variable.TimeSpan("delay", unit: TimeSpan.FromMinutes(1));
+        var departure = Variable.DateTime("departure", origin);
+
+        Assert.Equal(new Objective(ObjectiveSense.Minimise, delay.Expression, 1.5), Objective.Minimise(delay, tolerance: TimeSpan.FromSeconds(90)));
+        Assert.Equal(new Objective(ObjectiveSense.Maximise, delay.Expression, 0, 0.1), Objective.Maximise(delay, relativeTolerance: 0.1));
+        Assert.Equal(new Objective(ObjectiveSense.Minimise, departure.Expression, 30), Objective.Minimise(departure, tolerance: TimeSpan.FromSeconds(30)));
+        Assert.Equal(new Objective(ObjectiveSense.Maximise, departure.Expression), Objective.Maximise(departure));
+    }
 }

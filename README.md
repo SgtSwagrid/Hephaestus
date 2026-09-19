@@ -218,6 +218,18 @@ result.RelativeGap                                // how far a Feasible result m
 
 `TimeLimit`, `RelativeGap`, `AbsoluteGap`, `Threads` and `Seed` mean the same to every solver that has them. `Parameters` go to the solver verbatim, and one it does not recognise is an error rather than a silent no-op. Every result carries `Statistics`, whatever its outcome; a figure that a solver does not report is null (Z3 proves optimality without bounds, so it has no gap to give). Gurobi and CP-SAT deliver their log to `Log`; the others can only write to standard output, and do so when it is set.
 
+### Several objectives
+
+```csharp
+var problem = Problem.Minimise(totalDelay, subjectTo: constraint)
+    .Then(Objective.Minimise(platformChanges))
+    .Then(Objective.Maximise(slack));
+
+var result = solver.Solve(problem);
+```
+
+Objectives that are to be traded off against each other need nothing special: weigh them into one expression. Objectives in order of priority are a `LexicographicProblem`: each is optimised in turn, among the solutions that are best for those before it. That is done with a sequence of ordinary solves, so it works with every solver: each stage is held to the values already found and starts from the solution before. An objective can give ground to those after it (`Objective.Minimise(totalDelay, relativeTolerance: 0.01)`, or a typed `tolerance: Duration.FromMinutes(2)`); `Problem.Lexicographic([...], subjectTo: ...)` takes the whole list at once. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
+
 ### Warm starts
 
 ```csharp
