@@ -94,7 +94,7 @@ public static class PiecewiseLowering {
     private static LinearisedProblem Lower(ISingleObjectiveProblem problem, EncodingOptions options) {
         var start = new Lifting(ImmutableDictionary<object, IVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options, 0);
         var constraint = Lift(new Step<IBooleanExpression>(problem.Constraint, start));
-        var objective = Lift(new Step<ILinearExpression>(problem.Objective, constraint.State));
+        var objective = Lift(new Step<ILinearExpression>(problem.Objective.Expression, constraint.State));
         return objective.State.Definitions.IsEmpty
             ? new LinearisedProblem(problem, [])
             : Defined(problem.With(objective.Expression, constraint.Expression), objective.State.Definitions, options);
@@ -102,10 +102,10 @@ public static class PiecewiseLowering {
 
     private static LinearisedProblem Defined(ISingleObjectiveProblem lifted, ImmutableList<IDefinition> definitions, EncodingOptions options) {
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
-        var demands = DemandsOf(lifted.Constraint, auxiliaries, options).Aggregate(DemandsOf(lifted.Objective.Normalise(), lifted.Sense, auxiliaries), Record);
+        var demands = DemandsOf(lifted.Constraint, auxiliaries, options).Aggregate(DemandsOf(lifted.Objective.Expression.Normalise(), lifted.Sense, auxiliaries), Record);
         // An inner maximum is only leant on by the problem and by maxima introduced after it, so going backwards meets every demand in time.
         var tied = definitions.Reverse().Aggregate(new Tying(demands, []), (tying, definition) => Tie(tying, definition, auxiliaries, options));
-        return new LinearisedProblem(lifted.With(lifted.Objective, lifted.Constraint & tied.Constraints.AllOf()), [.. definitions]);
+        return new LinearisedProblem(lifted.With(lifted.Objective.Expression, lifted.Constraint & tied.Constraints.AllOf()), [.. definitions]);
     }
 
     private sealed record Tying(

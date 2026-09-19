@@ -49,7 +49,7 @@ public sealed class NumberQuantityTests {
     [Fact]
     public void TheyTakeTheirPlaceInStartsObjectivesAndSums() {
         Assert.Equal(6, Solution.Empty.With(Trains, 6).Values[TrainsUnderneath]);
-        Assert.Equal(new Objective(ObjectiveSense.Minimise, TrainsUnderneath, 2), Objective.Minimise(Trains, tolerance: 2));
+        Assert.Equal(new Prioritised(Objective.Minimise(TrainsUnderneath), 2), Objective.Minimise(Trains, tolerance: 2));
         Assert.Equal((TrainsUnderneath + PlatformsUnderneath).Normalise(), new[] { Trains, Platforms }.Sum().Expression.Normalise());
         Assert.Equal((TrainsUnderneath / 4).Normalise(), Trains.In(4).Normalise());
     }

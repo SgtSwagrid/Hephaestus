@@ -24,14 +24,14 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
         using var interruption = cancellationToken.Register(context.Interrupt);
 
         var symbols = new Symbols(context, problem.Variables.ToImmutableDictionary(variable => variable, variable => Declare(context, variable)));
-        var objective = Linear(symbols, problem.Objective.Normalise());
+        var objective = Linear(symbols, problem.Objective.Expression.Normalise());
         var optimiser = context.MkOptimize();
         Configure(context, optimiser, Options ?? SolverOptions.Default);
         optimiser.Assert([.. symbols.Constants.Keys.OfType<BinaryVariable>().Select(variable => Domain(symbols, variable))]);
         optimiser.Assert(Boolean(new Step(symbols, problem.Constraint)));
-        var handle = problem switch {
-            Minimisation => optimiser.MkMinimize(objective),
-            Maximisation => optimiser.MkMaximize(objective),
+        var handle = problem.Objective switch {
+            Optimisation { Sense: ObjectiveSense.Minimise } => optimiser.MkMinimize(objective),
+            Optimisation { Sense: ObjectiveSense.Maximise } => optimiser.MkMaximize(objective),
             _ => null,
         };
 
@@ -145,7 +145,7 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
             symbols.Constants
                 .Where(entry => !auxiliaries.Contains(entry.Key))
                 .ToImmutableSortedDictionary(entry => entry.Key, entry => AsDouble(model.Eval(entry.Value, completion: true)), VariableOrder.Comparer),
-            problem.Objective);
+            problem.Objective.Expression);
 
     private static double AsDouble(Expr value) =>
         value switch {

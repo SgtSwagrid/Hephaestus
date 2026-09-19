@@ -276,7 +276,18 @@ var problem = Problem.Minimise(totalDelay, platformChanges)       // in order of
 var result = solver.Solve(problem);
 ```
 
-Objectives that are to be traded off against each other need nothing special: weigh them into one expression. Several expressions given to `Minimise` or `Maximise` are objectives in order of priority, as are those added with `ThenMinimise` and `ThenMaximise`. Either way the result is an `IMultipleObjectiveProblem`, where a problem with one objective or none is an `ISingleObjectiveProblem`; both are `IProblem`s, and `solver.Solve` and `FindConflict` take either. With several objectives, each is optimised in turn, among the solutions that are best for those before it. That is done with a sequence of ordinary solves, so it works with every solver: each stage is held to the values already found and starts from the solution before. An objective can give ground to those after it: `.ThenMinimise(changes, relativeTolerance: 0.01)`, or, for the general case, `.Then(objective)` with an `Objective` of its own, which is a sense, an expression and its tolerances, and can be typed (`Objective.Minimise(delay, tolerance: Duration.FromMinutes(2))`). `Problem.Lexicographic([...])` takes the whole list at once, which is also how the first objective is given a tolerance. `SubjectTo` may come anywhere in the chain. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
+Objectives that are to be traded off against each other need nothing special: weigh them into one expression. Several expressions given to `Minimise` or `Maximise` are objectives in order of priority, as are those added with `ThenMinimise` and `ThenMaximise`. Either way the result is an `IMultipleObjectiveProblem`, where a problem with one objective or none is an `ISingleObjectiveProblem`; both are `IProblem`s, and `solver.Solve` and `FindConflict` take either. With several objectives, each is optimised in turn, among the solutions that are best for those before it. That is done with a sequence of ordinary solves, so it works with every solver: each stage is held to the values already found and starts from the solution before. An objective can give ground to those after it: `.ThenMinimise(changes, relativeTolerance: 0.01)`, or, for the general case, `.Then(Objective.Minimise(delay, tolerance: Duration.FromMinutes(2)))`. `Problem.Lexicographic([...])` takes the whole list at once, which is also how the first objective is given a tolerance. `SubjectTo` may come anywhere in the chain.
+
+An objective is a value in its own right, so it can be built once and set against one set of constraints after another:
+
+```csharp
+var punctualThenCheap = Objective.Minimise(totalDelay).Then(Objective.Minimise(cost, relativeTolerance: 0.05));
+
+var baseline = solver.Solve(Problem.Optimise(punctualThenCheap).SubjectTo(timetable));
+var blockade = solver.Solve(Problem.Optimise(punctualThenCheap).SubjectTo(timetable, trackTwoIsClosed));
+```
+
+The kinds of objective are the kinds of problem. An `ISingleObjective` is `NoObjective` or an `Optimisation` (a sense and an expression); an `ILexicographicObjective` is a list of those, each with the tolerance that only makes sense among several. A problem is its objective and its constraint, and is an `ISingleObjectiveProblem` or an `IMultipleObjectiveProblem` accordingly. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
 
 ### Writing a model to a file
 

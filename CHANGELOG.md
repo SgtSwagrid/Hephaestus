@@ -7,6 +7,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ### Changed
 
 - Problems are built fluently: `Problem.Minimise(objective).SubjectTo(constraint)` takes the place of `Problem.Minimise(objective, subjectTo: constraint)`, and likewise for `Maximise` and `Lexicographic`. `SubjectTo` can be repeated or given several constraints at once, `Minimise(a, b, c)` takes objectives in order of priority, and `ThenMinimise` / `ThenMaximise` add more.
+- Objectives are values with a hierarchy of their own: `IObjective` is an `ISingleObjective` (`NoObjective`, `Optimisation`) or an `ILexicographicObjective` (a list of `Prioritised` objectives, which is where tolerances live). A problem is an objective and a constraint (`SingleObjectiveProblem`, `MultipleObjectiveProblem`); the records `Satisfaction`, `Minimisation`, `Maximisation`, `LexicographicProblem` and `Objective` are gone, and `Objective` is now the factory (`Objective.Minimise(x).Then(...)`, `Problem.Optimise(objective)`).
 - `IProblem` is now the common type of `ISingleObjectiveProblem` (what it used to be called: `Satisfaction`, `Minimisation`, `Maximisation`) and `IMultipleObjectiveProblem` (`LexicographicProblem`). `ISolver` implementations solve the former; `solver.Solve(IProblem)` dispatches.
 - `ISolver.Solve` and the two backend interfaces take a starting solution, so a cancellation token passed positionally must now be named.
 - The objective value of a solution is now the objective as written, read off the solution, rather than the solver's own figure.

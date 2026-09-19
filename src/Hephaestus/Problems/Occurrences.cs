@@ -22,7 +22,7 @@ public static class Occurrences {
     extension(ISingleObjectiveProblem problem) {
         /// <summary>Every variable mentioned in the problem, in the standard order.</summary>
         /// <exception cref="ModellingException">Two variables of different kinds share a name.</exception>
-        public ImmutableSortedSet<IVariable> Variables => DistinctlyNamed(problem.Constraint.Variables.Union(problem.Objective.Variables));
+        public ImmutableSortedSet<IVariable> Variables => DistinctlyNamed(problem.Constraint.Variables.Union(problem.Objective.Expression.Variables));
     }
 
     private static ImmutableSortedSet<IVariable> Empty { get; } = ImmutableSortedSet.Create(VariableOrder.Comparer);

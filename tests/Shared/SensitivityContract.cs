@@ -28,7 +28,7 @@ public abstract class SensitivityContract {
 
     /// <summary>The rate at which the optimum moves as <paramref name="loosened"/> takes the place of <paramref name="constraint"/>.</summary>
     private double Rate(ISingleObjectiveProblem problem, IBooleanExpression constraint, IBooleanExpression loosened) =>
-        (Optimum(problem.With(problem.Objective, problem.Constraint.Conjuncts.Replace(constraint, loosened).AllOf())) - Optimum(problem)) / Step;
+        (Optimum(Problem.Optimise(problem.Objective).SubjectTo(problem.Constraint.Conjuncts.Replace(constraint, loosened))) - Optimum(problem)) / Step;
 
     [Fact]
     public void ThePricesOfATextbookLinearProgrammeAreItsDualValues() {
