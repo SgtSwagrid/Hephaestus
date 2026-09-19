@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using Highs;
 
 namespace Hephaestus.Highs;
@@ -10,7 +11,7 @@ public sealed record HighsBackend : IMilpBackend {
     public ISolveResult Solve(MilpProblem problem, SolverOptions options, CancellationToken cancellationToken) {
         cancellationToken.ThrowIfCancellationRequested();
         using var solver = new HighsLpSolver();
-        Require(solver.setBoolOptionValue("output_flag", 0), "silence the log");
+        Require(solver.setBoolOptionValue("output_flag", options.Log is null ? 0 : 1), "direct the log");
         Configure(solver, options);
         Require(solver.passMip(AsModel(problem)), "load the model");
         Require(solver.run(), "solve");
@@ -46,7 +47,21 @@ public sealed record HighsBackend : IMilpBackend {
         if (options.RelativeGap is { } gap) {
             Require(solver.setDoubleOptionValue("mip_rel_gap", gap), "set the gap");
         }
+        if (options.AbsoluteGap is { } absoluteGap) {
+            Require(solver.setDoubleOptionValue("mip_abs_gap", absoluteGap), "set the absolute gap");
+        }
+        if (options.Seed is { } seed) {
+            Require(solver.setIntOptionValue("random_seed", seed), "set the seed");
+        }
+        (options.Parameters ?? ImmutableSortedDictionary<string, string>.Empty).ToList().ForEach(parameter => Require(Set(solver, parameter.Key, parameter.Value), $"set the option '{parameter.Key}' to '{parameter.Value}'"));
     }
+
+    /// <summary>HiGHS options are typed, and only the setter of the right type accepts a value, so each is tried in turn.</summary>
+    private static HighsStatus Set(HighsLpSolver solver, string name, string value) =>
+        bool.TryParse(value, out var flag) && solver.setBoolOptionValue(name, flag ? 1 : 0) != HighsStatus.kError ? HighsStatus.kOk
+        : int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var whole) && solver.setIntOptionValue(name, whole) != HighsStatus.kError ? HighsStatus.kOk
+        : double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) && solver.setDoubleOptionValue(name, number) != HighsStatus.kError ? HighsStatus.kOk
+        : solver.setStringOptionValue(name, value);
 
     /// <summary>Presolve sometimes cannot tell infeasible from unbounded; solving again without it settles which.</summary>
     private static HighsModelStatus Settled(HighsLpSolver solver) {
@@ -59,13 +74,19 @@ public sealed record HighsBackend : IMilpBackend {
 
     private static ISolveResult AsResult(HighsModelStatus status, HighsLpSolver solver, MilpProblem problem) =>
         status switch {
-            HighsModelStatus.kOptimal => new Optimal(ReadSolution(solver, problem)),
-            HighsModelStatus.kInfeasible => new Infeasible(),
-            HighsModelStatus.kUnbounded => new Unbounded(),
+            HighsModelStatus.kOptimal => new Optimal(ReadSolution(solver, problem)) { Statistics = ReadStatistics(solver, problem) },
+            HighsModelStatus.kInfeasible => new Infeasible { Statistics = ReadStatistics(solver, problem) },
+            HighsModelStatus.kUnbounded => new Unbounded { Statistics = ReadStatistics(solver, problem) },
             // Without an incumbent HiGHS reports an infinite objective.
-            _ when double.IsFinite(solver.getInfo().ObjectiveValue) && solver.getSolution().colvalue.Length == problem.Columns.Length => new Feasible(ReadSolution(solver, problem)),
-            _ => new Unknown($"HiGHS stopped with status {status} and no solution."),
+            _ when double.IsFinite(solver.getInfo().ObjectiveValue) && solver.getSolution().colvalue.Length == problem.Columns.Length => new Feasible(ReadSolution(solver, problem)) { Statistics = ReadStatistics(solver, problem) },
+            _ => new Unknown($"HiGHS stopped with status {status} and no solution.") { Statistics = ReadStatistics(solver, problem) },
         };
+
+    /// <summary>The dual bound and node count are those of the branch and bound, so a programme without whole numbers has neither.</summary>
+    private static SolveStatistics ReadStatistics(HighsLpSolver solver, MilpProblem problem) =>
+        solver.getInfo() is var info && problem.Columns.Any(column => column.Variable.IsIntegral)
+            ? SolveStatistics.None with { BestBound = double.IsFinite(info.DualBound) ? info.DualBound : null, Nodes = info.NodeCount, Iterations = info.SimplexIterationCount }
+            : SolveStatistics.None with { Iterations = info.SimplexIterationCount };
 
     private static Solution ReadSolution(HighsLpSolver solver, MilpProblem problem) {
         var values = solver.getSolution().colvalue;

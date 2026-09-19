@@ -22,6 +22,9 @@ public sealed record CpSatBackend : IIndicatorBackend {
         Declare(model, bounded, variables);
 
         var solver = new CpSolver { StringParameters = Parameters(options) };
+        if (options.Log is { } log) {
+            solver.SetLogCallback(new StringToVoidDelegate(log));
+        }
         using var interruption = cancellationToken.Register(solver.StopSearch);
         return AsResult(solver.Solve(model), solver, model, bounded, variables);
     }
@@ -96,19 +99,30 @@ public sealed record CpSatBackend : IIndicatorBackend {
     private static double Dust(double value) => 1e-9 + 1e-13 * Math.Abs(value);
 
     private static string Parameters(SolverOptions options) =>
-        string.Join(' ', new[] {
+        string.Join(' ', ((IEnumerable<string?>)[
             options.TimeLimit is { } timeLimit ? $"max_time_in_seconds:{timeLimit.TotalSeconds.ToString("R", CultureInfo.InvariantCulture)}" : null,
             options.Threads is { } threads ? $"num_workers:{threads}" : null,
             options.RelativeGap is { } gap ? $"relative_gap_limit:{gap.ToString("R", CultureInfo.InvariantCulture)}" : null,
-        }.OfType<string>());
+            options.AbsoluteGap is { } absoluteGap ? $"absolute_gap_limit:{absoluteGap.ToString("R", CultureInfo.InvariantCulture)}" : null,
+            options.Seed is { } seed ? $"random_seed:{seed}" : null,
+            options.Log is null ? null : "log_search_progress:true log_to_stdout:false",
+            .. (options.Parameters ?? ImmutableSortedDictionary<string, string>.Empty).Select(parameter => $"{parameter.Key}:{parameter.Value}"),
+        ]).OfType<string>());
 
     private static ISolveResult AsResult(CpSolverStatus status, CpSolver solver, CpModel model, IndicatorProblem problem, ImmutableDictionary<IVariable, IntVar> variables) =>
         status switch {
-            CpSolverStatus.Optimal => new Optimal(ReadSolution(solver, problem, variables)),
-            CpSolverStatus.Feasible => new Feasible(ReadSolution(solver, problem, variables)),
-            CpSolverStatus.Infeasible => new Infeasible(),
+            CpSolverStatus.Optimal => new Optimal(ReadSolution(solver, problem, variables)) { Statistics = ReadStatistics(solver, problem, hasSolution: true) },
+            CpSolverStatus.Feasible => new Feasible(ReadSolution(solver, problem, variables)) { Statistics = ReadStatistics(solver, problem, hasSolution: true) },
+            CpSolverStatus.Infeasible => new Infeasible { Statistics = ReadStatistics(solver, problem, hasSolution: false) },
             CpSolverStatus.ModelInvalid => new Unknown($"CP-SAT rejected the model: {model.Validate()}"),
-            _ => new Unknown("CP-SAT stopped without a solution."),
+            _ => new Unknown("CP-SAT stopped without a solution.") { Statistics = ReadStatistics(solver, problem, hasSolution: false) },
+        };
+
+    /// <summary>CP-SAT bounds the objective it was given, which was scaled to whole coefficients and shorn of its constant.</summary>
+    private static SolveStatistics ReadStatistics(CpSolver solver, IndicatorProblem problem, bool hasSolution) =>
+        SolveStatistics.None with {
+            BestBound = hasSolution && !problem.Objective.IsConstant ? solver.BestObjectiveBound / Scale(problem.Objective) + problem.Objective.Constant : null,
+            Nodes = solver.NumBranches(),
         };
 
     private static Solution ReadSolution(CpSolver solver, IndicatorProblem problem, ImmutableDictionary<IVariable, IntVar> variables) {

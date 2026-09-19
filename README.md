@@ -204,6 +204,20 @@ new Z3Solver()
 
 The test suite runs one contract against SCIP, CBC, HiGHS (standalone and through OR-Tools), Gurobi (both formulations) and Z3, and a second, whole-number contract against those and CP-SAT. The Gurobi tests are skipped where no licence is found.
 
+### Tuning a solve, and what it reports
+
+```csharp
+var options = new SolverOptions(TimeLimit: TimeSpan.FromMinutes(5), RelativeGap: 0.01, Seed: 7, Log: Console.Write)
+    .With("MIPFocus", "1");                       // the solver's own parameters, by its own names
+
+var result = GurobiSolver.Create(options: options).Solve(problem);
+
+result.Statistics.SolvingTime                     // and EncodingTime, BestBound, Nodes, Iterations
+result.RelativeGap                                // how far a Feasible result might be from optimal
+```
+
+`TimeLimit`, `RelativeGap`, `AbsoluteGap`, `Threads` and `Seed` mean the same to every solver that has them. `Parameters` go to the solver verbatim, and one it does not recognise is an error rather than a silent no-op. Every result carries `Statistics`, whatever its outcome; a figure that a solver does not report is null (Z3 proves optimality without bounds, so it has no gap to give). Gurobi and CP-SAT deliver their log to `Log`; the others can only write to standard output, and do so when it is set.
+
 ## ⚠️ Things worth knowing
 
 - Sum and conjoin collections with `Sum()`, `AllOf()` and `AnyOf()` rather than folding `+` or `&` yourself. (Folding still works: deep trees are handled without overflowing the stack. It is merely slower, and the records' built-in `ToString`/`Equals` do recurse.)

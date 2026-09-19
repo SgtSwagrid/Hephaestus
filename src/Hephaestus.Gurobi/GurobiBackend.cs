@@ -25,6 +25,7 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
         singlyGuarded.Rows.ToList().ForEach(row => Declare(model, row, variables));
         model.SetObjective(Linear(singlyGuarded.Objective, variables), singlyGuarded.Sense == ObjectiveSense.Maximise ? GRB.MAXIMIZE : GRB.MINIMIZE);
         Configure(model, options);
+        using var logging = Logging(model, options.Log);
         model.Optimize();
 
         return AsResult(Settled(model), model, variables);
@@ -76,6 +77,36 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
         if (options.RelativeGap is { } gap) {
             model.Parameters.MIPGap = gap;
         }
+        if (options.AbsoluteGap is { } absoluteGap) {
+            model.Parameters.MIPGapAbs = absoluteGap;
+        }
+        if (options.Seed is { } seed) {
+            model.Parameters.Seed = seed;
+        }
+        (options.Parameters ?? ImmutableSortedDictionary<string, string>.Empty).ToList().ForEach(parameter => model.Set(parameter.Key, parameter.Value));
+    }
+
+    /// <summary>Gurobi only produces its log while output is on, so it is turned on, but kept off the console.</summary>
+    private static LogCallback? Logging(GRBModel model, Action<string>? log) {
+        if (log is null) {
+            return null;
+        }
+        model.Parameters.OutputFlag = 1;
+        model.Parameters.LogToConsole = 0;
+        var callback = new LogCallback(log);
+        model.SetCallback(callback);
+        return callback;
+    }
+
+    /// <summary>Gurobi's callbacks are by inheritance, hence a class. Disposing is only there for the <c>using</c> that keeps it alive.</summary>
+    private sealed class LogCallback(Action<string> log) : GRBCallback, IDisposable {
+        protected override void Callback() {
+            if (where == GRB.Callback.MESSAGE) {
+                log(GetStringInfo(GRB.Callback.MSG_STRING));
+            }
+        }
+
+        public void Dispose() { }
     }
 
     /// <summary>
@@ -92,12 +123,28 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
 
     private static ISolveResult AsResult(int status, GRBModel model, ImmutableDictionary<IVariable, GRBVar> variables) =>
         status switch {
-            GRB.Status.OPTIMAL => new Optimal(ReadSolution(model, variables)),
-            GRB.Status.INFEASIBLE => new Infeasible(),
-            GRB.Status.UNBOUNDED => new Unbounded(),
-            _ when model.SolCount > 0 => new Feasible(ReadSolution(model, variables)),
-            _ => new Unknown($"Gurobi stopped with status {status} and no solution."),
+            GRB.Status.OPTIMAL => new Optimal(ReadSolution(model, variables)) { Statistics = ReadStatistics(model) },
+            GRB.Status.INFEASIBLE => new Infeasible { Statistics = ReadStatistics(model) },
+            GRB.Status.UNBOUNDED => new Unbounded { Statistics = ReadStatistics(model) },
+            _ when model.SolCount > 0 => new Feasible(ReadSolution(model, variables)) { Statistics = ReadStatistics(model) },
+            _ => new Unknown($"Gurobi stopped with status {status} and no solution.") { Statistics = ReadStatistics(model) },
         };
+
+    private static SolveStatistics ReadStatistics(GRBModel model) =>
+        SolveStatistics.None with {
+            BestBound = Attribute(() => model.ObjBound) is { } bound && Math.Abs(bound) < GRB.INFINITY ? bound : null,
+            Nodes = (long?)Attribute(() => model.NodeCount),
+            Iterations = (long?)Attribute(() => model.IterCount),
+        };
+
+    /// <summary>Which attributes exist depends on the kind of model and how far the solve got; one that is not there is simply not reported.</summary>
+    private static double? Attribute(Func<double> read) {
+        try {
+            return read();
+        } catch (GRBException) {
+            return null;
+        }
+    }
 
     private static Solution ReadSolution(GRBModel model, ImmutableDictionary<IVariable, GRBVar> variables) =>
         new(

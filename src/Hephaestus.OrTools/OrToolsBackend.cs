@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 using Google.OrTools.LinearSolver;
 
 namespace Hephaestus.OrTools;
@@ -72,7 +73,7 @@ public sealed record OrToolsBackend(string SolverId = OrToolsSolverId.Scip) : IM
         objective.SetOptimizationDirection(maximize: problem.Sense == ObjectiveSense.Maximise);
     }
 
-    private static void Configure(Solver solver, MPSolverParameters parameters, SolverOptions options) {
+    private void Configure(Solver solver, MPSolverParameters parameters, SolverOptions options) {
         if (options.TimeLimit is { } timeLimit) {
             solver.SetTimeLimit((long)timeLimit.TotalMilliseconds);
         }
@@ -82,15 +83,41 @@ public sealed record OrToolsBackend(string SolverId = OrToolsSolverId.Scip) : IM
         if (options.RelativeGap is { } gap) {
             parameters.SetDoubleParam(MPSolverParameters.DoubleParam.RELATIVE_MIP_GAP, gap);
         }
+        if (options.Log is not null) {
+            solver.EnableOutput();
+        }
+        if (SpecificParameters(options) is { Length: > 0 } specific && !solver.SetSolverSpecificParametersAsString(specific)) {
+            throw new ArgumentException($"The solver rejected the parameters '{specific.ReplaceLineEndings("; ")}'.");
+        }
     }
+
+    /// <summary>
+    /// OR-Tools has no absolute gap or seed of its own, so for SCIP they go by SCIP's names; the other
+    /// solvers it drives go without. The caller's parameters follow, one <c>name = value</c> to a line,
+    /// which is the form SCIP reads.
+    /// </summary>
+    private string SpecificParameters(SolverOptions options) =>
+        string.Join('\n', ((IEnumerable<string?>)[
+            options.AbsoluteGap is { } gap && SolverId == OrToolsSolverId.Scip ? $"limits/absgap = {gap.ToString("R", CultureInfo.InvariantCulture)}" : null,
+            options.Seed is { } seed && SolverId == OrToolsSolverId.Scip ? $"randomization/randomseedshift = {seed}" : null,
+            .. (options.Parameters ?? ImmutableSortedDictionary<string, string>.Empty).Select(parameter => $"{parameter.Key} = {parameter.Value}"),
+        ]).OfType<string>());
 
     private static ISolveResult AsResult(Solver.ResultStatus status, Solver solver, ImmutableDictionary<IVariable, Google.OrTools.LinearSolver.Variable> variables) =>
         status switch {
-            Solver.ResultStatus.OPTIMAL => new Optimal(ReadSolution(solver, variables)),
-            Solver.ResultStatus.FEASIBLE => new Feasible(ReadSolution(solver, variables)),
-            Solver.ResultStatus.INFEASIBLE => new Infeasible(),
-            Solver.ResultStatus.UNBOUNDED => new Unbounded(),
-            _ => new Unknown($"OR-Tools reported {status}."),
+            Solver.ResultStatus.OPTIMAL => new Optimal(ReadSolution(solver, variables)) { Statistics = ReadStatistics(solver, hasSolution: true) },
+            Solver.ResultStatus.FEASIBLE => new Feasible(ReadSolution(solver, variables)) { Statistics = ReadStatistics(solver, hasSolution: true) },
+            Solver.ResultStatus.INFEASIBLE => new Infeasible { Statistics = ReadStatistics(solver, hasSolution: false) },
+            Solver.ResultStatus.UNBOUNDED => new Unbounded { Statistics = ReadStatistics(solver, hasSolution: false) },
+            _ => new Unknown($"OR-Tools reported {status}.") { Statistics = ReadStatistics(solver, hasSolution: false) },
+        };
+
+    /// <summary>OR-Tools answers -1 for a count the underlying solver does not keep, and only has a bound once it has a solution.</summary>
+    private static SolveStatistics ReadStatistics(Solver solver, bool hasSolution) =>
+        SolveStatistics.None with {
+            BestBound = hasSolution && solver.IsMip() && double.IsFinite(solver.Objective().BestBound()) ? solver.Objective().BestBound() : null,
+            Nodes = solver.Nodes() >= 0 ? solver.Nodes() : null,
+            Iterations = solver.Iterations() >= 0 ? solver.Iterations() : null,
         };
 
     private static Solution ReadSolution(Solver solver, ImmutableDictionary<IVariable, Google.OrTools.LinearSolver.Variable> variables) =>

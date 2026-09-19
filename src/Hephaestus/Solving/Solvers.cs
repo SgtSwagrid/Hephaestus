@@ -39,9 +39,10 @@ public sealed record MilpSolver(
 ) : ISolver {
     /// <inheritdoc/>
     public ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default) =>
-        problem.Encode(Encoding) is var encoded && encoded.IsTriviallyInfeasible
-            ? new Infeasible()
-            : Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken).Select(solution => solution.Presentable(encoded.Columns, problem.Objective));
+        Timed.Run(() => problem.Encode(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
+            ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
+            : Timed.Run(() => Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken))
+                .Presentable(encoded.Columns, problem.Objective, encodingTime);
 }
 
 /// <summary>
@@ -55,9 +56,10 @@ public sealed record IndicatorSolver(
 ) : ISolver {
     /// <inheritdoc/>
     public ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default) =>
-        problem.EncodeLogic(Encoding) is var encoded && encoded.IsTriviallyInfeasible
-            ? new Infeasible()
-            : Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken).Select(solution => solution.Presentable(encoded.Columns, problem.Objective));
+        Timed.Run(() => problem.EncodeLogic(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
+            ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
+            : Timed.Run(() => Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken))
+                .Presentable(encoded.Columns, problem.Objective, encodingTime);
 }
 
 /// <summary>Functions over solve results.</summary>
@@ -85,10 +87,50 @@ public static class SolveResults {
         /// <summary>The same outcome with its solution, if any, transformed.</summary>
         public ISolveResult Select(Func<Solution, Solution> selector) =>
             result switch {
-                Optimal found => new Optimal(selector(found.Solution)),
-                Feasible found => new Feasible(selector(found.Solution)),
+                Optimal found => found with { Solution = selector(found.Solution) },
+                Feasible found => found with { Solution = selector(found.Solution) },
                 _ => result,
             };
+
+        /// <summary>The same outcome with other statistics.</summary>
+        public ISolveResult With(SolveStatistics statistics) =>
+            result switch {
+                Optimal found => found with { Statistics = statistics },
+                Feasible found => found with { Statistics = statistics },
+                Infeasible found => found with { Statistics = statistics },
+                Unbounded found => found with { Statistics = statistics },
+                Unknown found => found with { Statistics = statistics },
+                _ => throw new NotSupportedException($"Unknown kind of solve result: {result.GetType().Name}."),
+            };
+
+        /// <summary>
+        /// How far the solution might be from optimal, as the solver's bound has it; null without a
+        /// solution or a bound. Zero, or as good as, for an <see cref="Optimal"/> result.
+        /// </summary>
+        public double? AbsoluteGap =>
+            result.SolutionOrNull is { } solution && result.Statistics.BestBound is { } bound
+                ? Math.Abs(solution.ObjectiveValue - bound)
+                : null;
+
+        /// <summary>The absolute gap as a fraction of the objective value.</summary>
+        public double? RelativeGap =>
+            result.AbsoluteGap is { } gap && result.SolutionOrNull is { } solution
+                ? gap / Math.Max(Math.Abs(solution.ObjectiveValue), 1e-10)
+                : null;
+    }
+
+    extension((ISolveResult Result, TimeSpan Elapsed) solved) {
+        /// <summary>What a backend returned, as the modeller should see it, with the times filled in.</summary>
+        public ISolveResult Presentable(ImmutableArray<Column> columns, ILinearExpression objective, TimeSpan encodingTime) =>
+            solved.Result
+                .Select(solution => solution.Presentable(columns, objective))
+                .With(solved.Result.Statistics with { EncodingTime = encodingTime, SolvingTime = solved.Elapsed });
+    }
+
+    extension(SolverOptions options) {
+        /// <summary>These options with one more of the solver's own parameters.</summary>
+        public SolverOptions With(string parameter, string value) =>
+            options with { Parameters = (options.Parameters ?? ImmutableSortedDictionary<string, string>.Empty).SetItem(parameter, value) };
     }
 
     extension(Solution solution) {

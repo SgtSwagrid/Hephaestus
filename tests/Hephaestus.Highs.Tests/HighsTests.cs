@@ -25,4 +25,21 @@ public sealed class HighsBackendTests {
     [Fact]
     public void ACancelledSolveNeverStarts() =>
         Assert.Throws<OperationCanceledException>(() => HighsSolver.Create().Solve(Problem.Satisfy(X >= 0), new CancellationToken(canceled: true)));
+
+    [Fact]
+    public void AnOptimalResultIsTightAgainstItsBound() {
+        var result = Assert.IsType<Optimal>(HighsSolver.Create(options: new SolverOptions(AbsoluteGap: 0, Seed: 7)).Solve(Problem.Maximise(X + N, subjectTo: X.Between(0, 1.5) & N.Between(0, 5) & (X + N <= 5.25))));
+
+        Assert.Equal(5.25, result.Statistics.BestBound!.Value, precision: 6);
+        Assert.Equal(0, result.RelativeGap!.Value, precision: 6);
+        Assert.True(result.Statistics.SolvingTime > TimeSpan.Zero);
+    }
+
+    [Fact]
+    public void ItsOwnOptionsAreAcceptedWhateverTheirType() =>
+        Assert.IsType<Optimal>(HighsSolver.Create(options: SolverOptions.Default.With("mip_heuristic_effort", "0.1").With("mip_max_nodes", "1000").With("presolve", "off").With("mip_detect_symmetry", "false")).Solve(Problem.Maximise(N, subjectTo: N.Between(0, 5))));
+
+    [Fact]
+    public void AnOptionItDoesNotKnowIsAnError() =>
+        Assert.Contains("no_such_option", Assert.Throws<InvalidOperationException>(() => HighsSolver.Create(options: SolverOptions.Default.With("no_such_option", "1")).Solve(Problem.Satisfy(X >= 0))).Message);
 }
