@@ -8,16 +8,25 @@ namespace Hephaestus.Highs;
 public sealed record HighsBackend : IMilpBackend {
     /// <inheritdoc/>
     /// <remarks>HiGHS cannot be interrupted through this wrapper, so cancellation is honoured only before the solve starts; use a time limit.</remarks>
-    public ISolveResult Solve(MilpProblem problem, SolverOptions options, CancellationToken cancellationToken) {
+    public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
         cancellationToken.ThrowIfCancellationRequested();
         using var solver = new HighsLpSolver();
         Require(solver.setBoolOptionValue("output_flag", options.Log is null ? 0 : 1), "direct the log");
         Configure(solver, options);
         Require(solver.passMip(AsModel(problem)), "load the model");
+        if (StartByIndex(problem, start) is { Count: > 0 } startByIndex) {
+            Require(solver.setSparseSolution(startByIndex), "set the starting solution");
+        }
         Require(solver.run(), "solve");
 
         return AsResult(Settled(solver), solver, problem);
     }
+
+    private static Dictionary<int, double> StartByIndex(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start) =>
+        problem.Columns
+            .Select((column, index) => (column.Variable, Index: index))
+            .Where(entry => start.ContainsKey(entry.Variable))
+            .ToDictionary(entry => entry.Index, entry => start[entry.Variable]);
 
     /// <summary>The programme in the row-wise sparse form that HiGHS takes.</summary>
     private static HighsModel AsModel(MilpProblem problem) {

@@ -33,6 +33,24 @@ public static class Evaluation {
         public T Value<T, TDelta>(Point<T, TDelta> point, int decimalPlaces = 5) =>
             point.Projection.Decode(Math.Round(solution.Value(point.Expression), decimalPlaces));
 
+        /// <summary>This solution with a value for one more variable.</summary>
+        public Solution With(IVariable variable, double value) => solution with { Values = solution.Values.SetItem(variable, value) };
+
+        /// <summary>This solution with a binary variable set or not.</summary>
+        public Solution With(BinaryVariable variable, bool value) => solution.With(variable, value ? 1 : 0);
+
+        /// <summary>This solution with a value for a typed variable.</summary>
+        /// <exception cref="ArgumentException">The quantity is a compound expression rather than a variable, so no one value can be given to it.</exception>
+        public Solution With<T>(Quantity<T> variable, T value) => solution.With(variable.Expression, variable.Projection.Encode(value));
+
+        /// <inheritdoc cref="With{T}(Solution, Quantity{T}, T)"/>
+        public Solution With<T, TDelta>(Point<T, TDelta> variable, T value) => solution.With(variable.Expression, variable.Projection.Encode(value));
+
+        private Solution With(ILinearExpression expression, double value) =>
+            expression is IVariable variable
+                ? solution.With(variable, value)
+                : throw new ArgumentException($"A starting value can be given to a variable, but '{expression.Format()}' is a compound expression.", nameof(expression));
+
         private double ValueOf(IVariable variable) =>
             solution.Values.TryGetValue(variable, out var value)
                 ? value
