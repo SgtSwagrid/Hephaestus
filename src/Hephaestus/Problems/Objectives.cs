@@ -16,7 +16,7 @@ public interface IObjective;
 /// </summary>
 public interface ISingleObjective : IObjective;
 
-/// <summary>Nothing is to be optimised: any assignment under which the constraint holds will do.</summary>
+/// <summary>Nothing is to be optimised: any assignment under which the constraint holds will do. Written <see cref="Objective.None"/>.</summary>
 public sealed record NoObjective : ISingleObjective;
 
 /// <summary>An expression to be made as small or as large as possible.</summary>
@@ -58,6 +58,9 @@ public sealed record LexicographicObjective(ImmutableArray<Prioritised> Prioriti
 /// is one that takes its place among several.
 /// </summary>
 public static class Objective {
+    /// <summary>The objective of optimising nothing: any assignment under which the constraint holds will do.</summary>
+    public static NoObjective None { get; } = new();
+
     /// <summary>The objective of making <paramref name="expression"/> as small as possible.</summary>
     public static Optimisation Minimise(ILinearExpression expression) => new(ObjectiveSense.Minimise, expression);
 
@@ -116,6 +119,22 @@ public static class Objectives {
 
         /// <summary>This objective with another after it, which matters only among the solutions that are best for this one.</summary>
         public ILexicographicObjective Then(Prioritised next) => new LexicographicObjective(objective.Priorities.Add(next));
+
+        /// <summary>This objective with further ones after it, to be made small, in order.</summary>
+        public ILexicographicObjective ThenMinimise(params IEnumerable<ILinearExpression> expressions) =>
+            expressions.Aggregate(Objective.InOrder(objective.Priorities), (chained, expression) => chained.Then(Objective.Minimise(expression)));
+
+        /// <summary>This objective with further ones after it, to be made large, in order.</summary>
+        public ILexicographicObjective ThenMaximise(params IEnumerable<ILinearExpression> expressions) =>
+            expressions.Aggregate(Objective.InOrder(objective.Priorities), (chained, expression) => chained.Then(Objective.Maximise(expression)));
+
+        /// <summary>This objective with another after it, to be made small, which may give up so much of its optimum for the sake of those after it in turn.</summary>
+        public ILexicographicObjective ThenMinimise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
+            objective.Then(Objective.Minimise(expression, absoluteTolerance, relativeTolerance));
+
+        /// <summary>This objective with another after it, to be made large, which may give up so much of its optimum for the sake of those after it in turn.</summary>
+        public ILexicographicObjective ThenMaximise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
+            objective.Then(Objective.Maximise(expression, absoluteTolerance, relativeTolerance));
     }
 
     extension(ISingleObjective objective) {

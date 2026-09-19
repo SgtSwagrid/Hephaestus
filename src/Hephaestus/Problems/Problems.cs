@@ -52,7 +52,7 @@ public sealed record MultipleObjectiveProblem(
 /// </summary>
 public static class Problem {
     /// <summary>The problem of finding any assignment under which the constraint holds.</summary>
-    public static ISingleObjectiveProblem Satisfy(IBooleanExpression constraint) => new SingleObjectiveProblem(new NoObjective(), constraint);
+    public static ISingleObjectiveProblem Satisfy(IBooleanExpression constraint) => Optimise(Objective.None).SubjectTo(constraint);
 
     /// <summary>The problem of pursuing <paramref name="objective"/>, as yet unconstrained.</summary>
     public static ISingleObjectiveProblem Optimise(ISingleObjective objective) => new SingleObjectiveProblem(objective, BooleanConstant.True);
@@ -112,24 +112,25 @@ public static class ProblemBuilding {
         /// <summary>The same problem with several further constraints, all of which must hold: <c>SubjectTo(a, b, c)</c> is <c>SubjectTo(a &amp; b &amp; c)</c>.</summary>
         public IProblem SubjectTo(params IEnumerable<IBooleanExpression> constraints) => problem.SubjectTo(constraints.AllOf());
 
+        // A problem is an objective and a constraint. As SubjectTo refines the one, these refine the other, and they are
+        // defined by what they do to it: problem.ThenMinimise(x) is the problem of problem.Objective.ThenMinimise(x).
+
         /// <summary>The same problem with a further objective, which matters only among the solutions that are best for those it has.</summary>
         public IMultipleObjectiveProblem Then(Prioritised objective) => new MultipleObjectiveProblem(problem.Objective.Then(objective), problem.Constraint);
 
         /// <summary>The same problem with further objectives, to be made small, in order, among the solutions that are best for those it has.</summary>
-        public IMultipleObjectiveProblem ThenMinimise(params IEnumerable<ILinearExpression> expressions) =>
-            new MultipleObjectiveProblem(expressions.Aggregate(Objective.InOrder(problem.Objective.Priorities), (objective, expression) => objective.Then(Objective.Minimise(expression))), problem.Constraint);
+        public IMultipleObjectiveProblem ThenMinimise(params IEnumerable<ILinearExpression> expressions) => new MultipleObjectiveProblem(problem.Objective.ThenMinimise(expressions), problem.Constraint);
 
         /// <summary>The same problem with further objectives, to be made large, in order, among the solutions that are best for those it has.</summary>
-        public IMultipleObjectiveProblem ThenMaximise(params IEnumerable<ILinearExpression> expressions) =>
-            new MultipleObjectiveProblem(expressions.Aggregate(Objective.InOrder(problem.Objective.Priorities), (objective, expression) => objective.Then(Objective.Maximise(expression))), problem.Constraint);
+        public IMultipleObjectiveProblem ThenMaximise(params IEnumerable<ILinearExpression> expressions) => new MultipleObjectiveProblem(problem.Objective.ThenMaximise(expressions), problem.Constraint);
 
         /// <summary>The same problem with a further objective, to be made small, which may give up so much of its optimum for the sake of those after it.</summary>
         public IMultipleObjectiveProblem ThenMinimise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
-            problem.Then(new Prioritised(Objective.Minimise(expression), absoluteTolerance, relativeTolerance));
+            new MultipleObjectiveProblem(problem.Objective.ThenMinimise(expression, absoluteTolerance, relativeTolerance), problem.Constraint);
 
         /// <summary>The same problem with a further objective, to be made large, which may give up so much of its optimum for the sake of those after it.</summary>
         public IMultipleObjectiveProblem ThenMaximise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
-            problem.Then(new Prioritised(Objective.Maximise(expression), absoluteTolerance, relativeTolerance));
+            new MultipleObjectiveProblem(problem.Objective.ThenMaximise(expression, absoluteTolerance, relativeTolerance), problem.Constraint);
     }
 
     extension(ISingleObjectiveProblem problem) {
