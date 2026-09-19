@@ -23,7 +23,7 @@ and are lowered to whichever solver is plugged in. The [README](README.md) recor
 - The solver contracts live in [tests/Shared](tests/Shared) and are compiled into each solver test project. [tests/Hephaestus.Solvers.Tests](tests/Hephaestus.Solvers.Tests) runs them against every backend but one; add new backends to it.
 - The exception is standalone HiGHS, in [tests/Hephaestus.Highs.Tests](tests/Hephaestus.Highs.Tests): `Highs.Native` and `Google.OrTools` both ship a native `highs.dll`, so the two can never share an output folder.
 - Backends join at one of three seams: `ISolver` (takes logic as it stands, e.g. Z3), `IIndicatorBackend` (takes rows guarded by literals, no big-M, e.g. Gurobi and CP-SAT) or `IMilpBackend` (linear rows only, e.g. HiGHS). `problem.Encode()` is `EncodeLogic()` then `RelaxGuards()`.
-- The Gurobi tests skip themselves when no valid licence is found. The Gurobi NuGet package bundles no fallback licence, so they do not run in CI; run them on a machine with a licence after touching [src/Hephaestus.Gurobi](src/Hephaestus.Gurobi).
+- The Gurobi tests skip themselves when no valid licence is found. The Gurobi NuGet package bundles no fallback licence, so they do not run in CI; run them on a machine with a licence after touching [src/Hephaestus.Gurobi](src/Hephaestus.Gurobi). They were last verified against a real solver on 2026-09-19, with a size-limited demo licence; [GurobiTests.cs](tests/Hephaestus.Solvers.Tests/GurobiTests.cs) covers what the shared contracts do not.
 
 ### Design invariants
 
@@ -42,6 +42,10 @@ Don't change them here; change `src/Directory.Build.props`, `tests/Directory.Bui
 or else propose the change upstream.
 
 ## Instructions
+
+### Workflow
+
+- Open a pull request for finished, verified work by default, without asking first. Merging and releasing still need the say-so of a human.
 
 ### Compilation and Diagnostics
 
