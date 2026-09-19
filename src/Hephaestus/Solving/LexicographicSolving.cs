@@ -26,9 +26,9 @@ public static class LexicographicSolving {
         /// The solver's limits apply to each stage separately; the statistics are totals.
         /// </returns>
         public ISolveResult Solve(IMultipleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
-            problem.Objectives.IsEmpty
+            problem.Objective.Priorities.IsEmpty
                 ? solver.Solve(Problem.Satisfy(problem.Constraint), startingFrom, cancellationToken)
-                : Concluded(problem, problem.Objectives.Aggregate(new Progress(problem.Constraint, startingFrom, []), (progress, objective) => Advance(solver, progress, objective, cancellationToken)).Stages);
+                : Concluded(problem, problem.Objective.Priorities.Aggregate(new Progress(problem.Constraint, startingFrom, []), (progress, objective) => Advance(solver, progress, objective, cancellationToken)).Stages);
     }
 
     private sealed record Progress(
@@ -38,12 +38,12 @@ public static class LexicographicSolving {
     );
 
     /// <summary>Once a stage has ended without a solution there is nothing for the later ones to build on.</summary>
-    private static Progress Advance(ISolver solver, Progress progress, Objective objective, CancellationToken cancellationToken) =>
+    private static Progress Advance(ISolver solver, Progress progress, Prioritised objective, CancellationToken cancellationToken) =>
         progress.Stages.Count > 0 && progress.Stages[^1].SolutionOrNull is null
             ? progress
-            : Advanced(progress, objective, solver.Solve(objective.SubjectTo(progress.Constraint), progress.Start, cancellationToken));
+            : Advanced(progress, objective, solver.Solve(Problem.Optimise(objective.Objective).SubjectTo(progress.Constraint), progress.Start, cancellationToken));
 
-    private static Progress Advanced(Progress progress, Objective objective, ISolveResult stage) =>
+    private static Progress Advanced(Progress progress, Prioritised objective, ISolveResult stage) =>
         stage.SolutionOrNull is { } solution
             ? new Progress(progress.Constraint & objective.NoWorseThan(solution.ObjectiveValue), solution, progress.Stages.Add(stage))
             : progress with { Stages = progress.Stages.Add(stage) };
@@ -52,13 +52,13 @@ public static class LexicographicSolving {
         Outcome(problem, stages, stages[^1]).With(Total(stages));
 
     private static ISolveResult Outcome(IMultipleObjectiveProblem problem, ImmutableList<ISolveResult> stages, ISolveResult last) =>
-        last.SolutionOrNull is { } found ? Found(found, problem, isProven: stages.Count == problem.Objectives.Length && stages.All(stage => stage is Optimal))
+        last.SolutionOrNull is { } found ? Found(found, problem, isProven: stages.Count == problem.Objective.Priorities.Length && stages.All(stage => stage is Optimal))
         // An unbounded objective is a fact about the model, wherever it comes in the order; it is not to be papered over.
         : last is Unbounded || stages.Count == 1 ? last
         : Found(stages[^2].SolutionOrNull!, problem, isProven: false);
 
     private static ISolveResult Found(Solution solution, IMultipleObjectiveProblem problem, bool isProven) =>
-        Found(solution with { ObjectiveValue = solution.Value(problem.Objectives[0].Expression) }, isProven);
+        Found(solution with { ObjectiveValue = solution.Value(problem.Objective.Priorities[0].Objective.Expression) }, isProven);
 
     private static ISolveResult Found(Solution solution, bool isProven) => isProven ? new Optimal(solution) : new Feasible(solution);
 

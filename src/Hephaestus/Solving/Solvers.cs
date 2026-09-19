@@ -57,7 +57,7 @@ public sealed record MilpSolver(
         Timed.Run(() => problem.Encode(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
             : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
-                .Presentable(encoded.Columns, problem.Objective, encodingTime);
+                .Presentable(encoded.Columns, problem.Objective.Expression, encodingTime);
 
     /// <inheritdoc/>
     /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
@@ -79,7 +79,7 @@ public sealed record IndicatorSolver(
         Timed.Run(() => problem.EncodeLogic(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
             : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
-                .Presentable(encoded.Columns, problem.Objective, encodingTime);
+                .Presentable(encoded.Columns, problem.Objective.Expression, encodingTime);
 
     /// <inheritdoc/>
     /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>

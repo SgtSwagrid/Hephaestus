@@ -116,8 +116,8 @@ public sealed class ProjectionTests {
 
     [Fact]
     public void TypedObjectivesUnwrapToTheirUnderlyingExpressions() {
-        Assert.Equal(new Minimisation(Dwell.Expression, BooleanConstant.True), Problem.Minimise(Dwell).SubjectTo(BooleanConstant.True));
-        Assert.Equal(new Maximisation(Departure.Expression, BooleanConstant.True), Problem.Maximise(Departure).SubjectTo(BooleanConstant.True));
+        Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(Dwell.Expression), BooleanConstant.True), Problem.Minimise(Dwell).SubjectTo(BooleanConstant.True));
+        Assert.Equal(new SingleObjectiveProblem(Objective.Maximise(Departure.Expression), BooleanConstant.True), Problem.Maximise(Departure).SubjectTo(BooleanConstant.True));
     }
 
     [Fact]

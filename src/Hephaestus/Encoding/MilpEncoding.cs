@@ -22,25 +22,6 @@ public static class MilpEncoding {
         /// </summary>
         /// <exception cref="ModellingException">Two different variables share a name, or an expression is not finite.</exception>
         public IndicatorProblem EncodeLogic(EncodingOptions? options = null) => Lower(problem, options ?? EncodingOptions.Default);
-
-        /// <summary>The expression being optimised; constantly zero for a <see cref="Satisfaction"/> problem.</summary>
-        public ILinearExpression Objective =>
-            problem switch {
-                Minimisation minimisation => minimisation.Objective,
-                Maximisation maximisation => maximisation.Objective,
-                _ => new Constant(0),
-            };
-
-        /// <summary>Whether the objective is to be made small or large.</summary>
-        public ObjectiveSense Sense => problem is Maximisation ? ObjectiveSense.Maximise : ObjectiveSense.Minimise;
-
-        /// <summary>A problem of the same kind with another objective and constraint. (A <see cref="Satisfaction"/> problem has no objective to replace.)</summary>
-        public ISingleObjectiveProblem With(ILinearExpression objective, IBooleanExpression constraint) =>
-            problem switch {
-                Minimisation => new Minimisation(objective, constraint),
-                Maximisation => new Maximisation(objective, constraint),
-                _ => new Satisfaction(constraint),
-            };
     }
 
     private static IndicatorProblem Lower(ISingleObjectiveProblem original, EncodingOptions options) {
@@ -60,7 +41,7 @@ public static class MilpEncoding {
             ],
             [.. program.Rows.Where(row => !IsStatedBound(row)).SelectMany(Tidied)],
             problem.Sense,
-            problem.Objective.Normalise())));
+            problem.Objective.Expression.Normalise())));
     }
 
     /// <summary>One side of a variable's bounds, as one constraint states it.</summary>

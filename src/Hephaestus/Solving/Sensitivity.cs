@@ -77,7 +77,7 @@ public static class Sensitivity {
         Active(new Step(conjunct, true, solution)).SelectMany(comparison => AsRow(comparison, solution)).Select(row => new PricedRow(name, row));
 
     private static MilpProblem Programme(ISingleObjectiveProblem problem, ImmutableArray<PricedRow> rows, Solution solution) {
-        var objective = Continuous(problem.Objective.Normalise(), solution);
+        var objective = Continuous(problem.Objective.Expression.Normalise(), solution);
         return new MilpProblem(
             [.. rows.SelectMany(row => row.Row.Coefficients.Keys).Concat(objective.Coefficients.Keys).Distinct().Order(VariableOrder.Comparer).Select(variable => new Column(variable, double.NegativeInfinity, double.PositiveInfinity, IsAuxiliary: false))],
             [.. rows.Select(row => row.Row)],
