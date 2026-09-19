@@ -19,3 +19,5 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - A third backend seam, `IIndicatorBackend`, over the new `IndicatorProblem`; `Encode()` is now `EncodeLogic()` followed by `RelaxGuards()`.
 - `Hephaestus.Optimisation.NodaTime`: projections and typed variables for the NodaTime types.
 - `Piecewise.Max`, `Piecewise.Min` and `Piecewise.Abs`, over plain and typed expressions. They are lowered to linear form when a problem is encoded (`problem.Linearise()`), spending a binary variable only where the problem rewards a larger maximum.
+- `ISolveResult.Statistics` (encoding and solving times, best bound, nodes, iterations) on every outcome, with `result.AbsoluteGap` and `result.RelativeGap`.
+- `SolverOptions.AbsoluteGap`, `Seed`, `Log` and `Parameters` (the solver's own parameters, by its own names).

@@ -12,8 +12,12 @@ namespace Hephaestus.Z3;
 /// </summary>
 public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(IProblem original, CancellationToken cancellationToken = default) {
-        var linearised = original.Linearise();
+    public ISolveResult Solve(IProblem original, CancellationToken cancellationToken = default) =>
+        Timed.Run(() => original.Linearise()) is var (linearised, encodingTime) && Timed.Run(() => Solve(original, linearised, cancellationToken)) is var (result, solvingTime)
+            ? result.With(new SolveStatistics(encodingTime, solvingTime))
+            : throw new InvalidOperationException();
+
+    private ISolveResult Solve(IProblem original, LinearisedProblem linearised, CancellationToken cancellationToken) {
         var problem = linearised.Problem;
         using var context = new Context();
         using var interruption = cancellationToken.Register(context.Interrupt);
@@ -55,11 +59,26 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
             symbols.Context.MkGe(symbols.Constants[variable], symbols.Context.MkInt(0)),
             symbols.Context.MkLe(symbols.Constants[variable], symbols.Context.MkInt(1)));
 
+    /// <summary>Z3 is exact and single-threaded here, so gaps and thread counts mean nothing to it; its optimiser takes no seed, and its log cannot be captured.</summary>
     private static void Configure(Context context, Optimize optimiser, SolverOptions options) {
+        var parameters = context.MkParams();
         if (options.TimeLimit is { } timeLimit) {
-            var parameters = context.MkParams();
             parameters.Add("timeout", (uint)timeLimit.TotalMilliseconds);
-            optimiser.Parameters = parameters;
+        }
+        (options.Parameters ?? ImmutableSortedDictionary<string, string>.Empty).ToList().ForEach(parameter => Add(parameters, parameter.Key, parameter.Value));
+        optimiser.Parameters = parameters;
+    }
+
+    /// <summary>Z3 parameters are typed, so the value is read as the most specific type it parses as.</summary>
+    private static void Add(Params parameters, string name, string value) {
+        if (bool.TryParse(value, out var flag)) {
+            parameters.Add(name, flag);
+        } else if (uint.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var whole)) {
+            parameters.Add(name, whole);
+        } else if (double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number)) {
+            parameters.Add(name, number);
+        } else {
+            parameters.Add(name, value);
         }
     }
 
