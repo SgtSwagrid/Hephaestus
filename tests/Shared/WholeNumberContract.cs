@@ -144,4 +144,16 @@ public abstract class WholeNumberContract {
 
         Assert.All(starts, start => Assert.Equal(120, Assert.IsType<Optimal>(solver.Solve(problem, startingFrom: start)).Solution.ObjectiveValue));
     }
+
+    [Fact]
+    public void ObjectivesAreMetInOrderOfPriority() {
+        var constraint = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Separated(DepartureA, DepartureB);
+
+        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB, subjectTo: constraint).Then(Objective.Minimise(DepartureB)).Then(Objective.Maximise(N)), N.Between(0, 3));
+
+        Assert.Equal((120, 0, 3), (solution.Value(DepartureA), solution.Value(DepartureB), solution.Value(N)));
+    }
+
+    private Solution Optimum(LexicographicProblem problem, IBooleanExpression also) =>
+        Assert.IsType<Optimal>(Solver.Solve(problem with { Constraint = problem.Constraint & also })).Solution;
 }

@@ -78,7 +78,7 @@ public sealed record OrToolsBackend(string SolverId = OrToolsSolverId.Scip) : IM
         row.Coefficients.ToList().ForEach(term => constraint.SetCoefficient(variables[term.Key], term.Value));
     }
 
-    private static void Declare(Objective objective, MilpProblem problem, ImmutableDictionary<IVariable, Google.OrTools.LinearSolver.Variable> variables) {
+    private static void Declare(Google.OrTools.LinearSolver.Objective objective, MilpProblem problem, ImmutableDictionary<IVariable, Google.OrTools.LinearSolver.Variable> variables) {
         problem.Objective.Coefficients.ToList().ForEach(term => objective.SetCoefficient(variables[term.Key], term.Value));
         objective.SetOffset(problem.Objective.Constant);
         objective.SetOptimizationDirection(maximize: problem.Sense == ObjectiveSense.Maximise);
