@@ -37,7 +37,9 @@ There are no auxiliary booleans to declare, no gadget factories, and no big-M to
 | Package | What it is |
 | --- | --- |
 | `Hephaestus.Optimisation` | The core: expressions, problems, the MILP encoding, the solver interfaces. No native dependencies. |
-| `Hephaestus.Optimisation.OrTools` | MILP backend on Google OR-Tools. SCIP, CBC and HiGHS are bundled and tested; Gurobi and Xpress are picked up if installed and licensed. Pure LP solvers (GLOP, CLP, PDLP) are accepted only for problems that need no whole-number variables. |
+| `Hephaestus.Optimisation.Gurobi` | Native Gurobi backend. Conditional constraints become Gurobi indicator constraints, so no big-M is involved; the classic big-M formulation is available too. Needs a Gurobi licence. |
+| `Hephaestus.Optimisation.Highs` | Standalone HiGHS backend: the leading permissively licensed MILP solver, in a few megabytes. |
+| `Hephaestus.Optimisation.OrTools` | Google OR-Tools: CP-SAT through its own interface (whole-number problems, no big-M, often the fastest choice for either-or scheduling), plus SCIP, CBC and HiGHS as MILP solvers. Pure LP solvers (GLOP, CLP, PDLP) are accepted only for problems that need no whole-number variables. |
 | `Hephaestus.Optimisation.Z3` | SMT backend on Microsoft Z3: native boolean structure, exact arithmetic, no encoding at all. |
 | `Hephaestus.Optimisation.NodaTime` | Typed variables and expressions for the NodaTime types. |
 
@@ -128,7 +130,7 @@ The MILP encoding runs in four pure steps:
 
 If some `M` is infinite, encoding fails with an error naming the variables that lack bounds. That is deliberate: a guessed big-M that is too small silently cuts off solutions, and the whole point is that wrong constraints should not fail silently. If you really want a guess, opt in with `new EncodingOptions(FallbackBigM: 1e6)`.
 
-`problem.Encode().Format()` prints the resulting programme. The Z3 backend skips all of this, because an SMT solver takes the boolean structure as it stands.
+The first two steps are `problem.EncodeLogic()`, giving an `IndicatorProblem`; the last two are `.RelaxGuards()`, giving a `MilpProblem`; `problem.Encode()` is both. Either result can be printed with `.Format()`. Solvers with indicator or half-reified constraints (Gurobi, CP-SAT) stop after the first half and never see a big-M, and the Z3 backend skips all of it, because an SMT solver takes the boolean structure as it stands.
 
 ### Strictness
 
@@ -169,19 +171,35 @@ Supporting another type means writing one small record that implements `IProject
 
 ### Swapping the solver
 
-`ISolver` is the seam: `ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default)`.
+`ISolver` is the seam: `ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default)`. A backend joins at whichever level suits the solver:
 
-- A backend that understands logic natively implements `ISolver` directly, as `Z3Solver` does.
-- A MILP backend implements the much smaller `IMilpBackend`, which sees only a `MilpProblem` (bounded columns, linear rows, a linear objective), and is wrapped in a `MilpSolver`, which encodes, solves, hides the auxiliaries and snaps whole-number variables. `OrToolsBackend` is about a hundred lines.
+| A solver that takes... | implements | and sees | Examples |
+| --- | --- | --- | --- |
+| logic as it stands | `ISolver` | the `IProblem` itself | `Z3Solver` |
+| conditional linear constraints | `IIndicatorBackend` | an `IndicatorProblem`: linear rows guarded by literals, no big-M | `GurobiBackend`, `CpSatBackend` |
+| linear constraints only | `IMilpBackend` | a `MilpProblem`: bounded columns, linear rows, a linear objective | `HighsBackend`, `OrToolsBackend` |
 
-The test suite runs one contract against SCIP, CBC, HiGHS and Z3.
+`IndicatorSolver` and `MilpSolver` wrap the latter two into an `ISolver`: they encode, solve, hide the auxiliaries and snap whole-number variables. A backend is about a hundred lines.
+
+```csharp
+GurobiSolver.Create()                       // indicator constraints, no big-M
+GurobiSolver.Create(useIndicators: false)   // classic big-M, derived per row
+CpSatSolver.Create()                        // whole-number problems only
+HighsSolver.Create()
+OrToolsSolver.Create(OrToolsSolverId.Scip)
+new Z3Solver()
+```
+
+The test suite runs one contract against SCIP, CBC, HiGHS (standalone and through OR-Tools), Gurobi (both formulations) and Z3, and a second, whole-number contract against those and CP-SAT. The Gurobi tests are skipped where no licence is found.
 
 ## ⚠️ Things worth knowing
 
 - Sum and conjoin collections with `Sum()`, `AllOf()` and `AnyOf()` rather than folding `+` or `&` yourself. (Folding still works: deep trees are handled without overflowing the stack. It is merely slower, and the records' built-in `ToString`/`Equals` do recurse.)
 - An equivalence duplicates its operands when negations are pushed inwards, so *deeply nested* `Iff`s grow exponentially. Name the inner ones with binary variables.
 - Variables are identified by name and kind. Two variables of different kinds sharing a name is an error.
-- HiGHS, as driven by OR-Tools, prints a one-line banner to standard output on every solve. That is upstream behaviour; the other solvers are silent.
+- Do not reference `Hephaestus.Optimisation.Highs` and `Hephaestus.Optimisation.OrTools` from the same application. Both upstream packages ship a native `highs.dll`, of different versions, and whichever is copied last breaks the other.
+- CP-SAT works in whole numbers over finite domains. It refuses continuous variables by name, needs every variable bounded (directly or by implication), and scales fractional coefficients by a power of ten, refusing those that none makes whole (a third, say).
+- HiGHS, as driven by OR-Tools, prints a one-line banner to standard output on every solve. That is upstream behaviour; the standalone HiGHS backend and the other solvers are silent.
 
 ## 🛠️ Building
 
