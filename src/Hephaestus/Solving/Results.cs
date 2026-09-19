@@ -6,7 +6,10 @@ namespace Hephaestus;
 public sealed record Solution(
     ImmutableSortedDictionary<IVariable, double> Values,
     double ObjectiveValue
-);
+) {
+    /// <summary>The solution that says nothing: the seed for a starting solution built by hand with <c>With</c>.</summary>
+    public static Solution Empty { get; } = new(ImmutableSortedDictionary.Create<IVariable, double>(VariableOrder.Comparer), 0);
+}
 
 /// <summary>What a solve cost and how far it got, whatever its outcome. A figure the solver does not report is null.</summary>
 /// <param name="EncodingTime">The time spent lowering the problem to the form the solver takes.</param>

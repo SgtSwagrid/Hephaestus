@@ -10,11 +10,11 @@ namespace Hephaestus.Gurobi;
 /// </summary>
 public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
     /// <inheritdoc/>
-    public ISolveResult Solve(MilpProblem problem, SolverOptions options, CancellationToken cancellationToken) =>
-        Solve(problem.AsIndicatorProblem(), options, cancellationToken);
+    public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>
+        Solve(problem.AsIndicatorProblem(), start, options, cancellationToken);
 
     /// <inheritdoc/>
-    public ISolveResult Solve(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) {
+    public ISolveResult Solve(IndicatorProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
         using var environment = Quietly();
         using var model = new GRBModel(environment);
         using var interruption = cancellationToken.Register(model.Terminate);
@@ -23,6 +23,8 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
         var singlyGuarded = problem.WithSingleGuards();
         var variables = singlyGuarded.Columns.ToImmutableDictionary(column => column.Variable, column => Declare(model, column));
         singlyGuarded.Rows.ToList().ForEach(row => Declare(model, row, variables));
+        // Gurobi completes a start that leaves variables out, so the auxiliaries need no values.
+        start.Where(entry => variables.ContainsKey(entry.Key)).ToList().ForEach(entry => variables[entry.Key].Start = entry.Value);
         model.SetObjective(Linear(singlyGuarded.Objective, variables), singlyGuarded.Sense == ObjectiveSense.Maximise ? GRB.MAXIMIZE : GRB.MINIMIZE);
         Configure(model, options);
         using var logging = Logging(model, options.Log);

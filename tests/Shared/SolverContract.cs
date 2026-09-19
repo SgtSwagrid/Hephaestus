@@ -212,4 +212,18 @@ public abstract class SolverContract {
         Assert.True(Optimum(Problem.Maximise(Y, subjectTo: constraint)).Value(Flag));
         Assert.Equal(10 - 20, Optimum(Problem.Maximise(Y - 20 * Flag, subjectTo: constraint & (Y >= 5))).ObjectiveValue, precision: Precision);
     }
+
+    [Fact]
+    public void AStartingSolutionChangesNothingButTheRoute() {
+        var problem = Problem.Minimise(DepartureA + DepartureB, subjectTo: Horizon & ConflictFree & OccupiesA & OccupiesB);
+        var optimum = Optimum(problem);
+        var starts = new[] {
+            optimum,
+            Solution.Empty.With(DepartureA, 500).With(DepartureB, 1000).With(OccupiesA, true).With(OccupiesB, true),
+            Solution.Empty.With(DepartureB, 1000),
+            Solution.Empty.With(DepartureA, 10).With(DepartureB, 20).With(X, 3),
+        };
+
+        Assert.All(starts, start => Assert.Equal(Headway, Assert.IsType<Optimal>(Solver.Solve(problem, startingFrom: start)).Solution.ObjectiveValue, precision: Precision));
+    }
 }

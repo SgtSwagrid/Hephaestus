@@ -9,14 +9,25 @@ namespace Hephaestus;
 /// <see cref="MilpSolver"/>.
 /// </summary>
 public interface ISolver {
-    /// <summary>Solves the problem. Solving is a function of the problem: nothing is mutated and nothing is remembered.</summary>
-    ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default);
+    /// <summary>Solves the problem. Solving is a function of its arguments: nothing is mutated and nothing is remembered.</summary>
+    /// <param name="problem">The problem to solve.</param>
+    /// <param name="startingFrom">
+    /// A solution to start the search from: that of an earlier, similar problem, or one built by hand
+    /// from <see cref="Solution.Empty"/>. It is a hint and nothing more. It may cover only some of the
+    /// variables, or mention others, or not be feasible at all; the answer is the same, only perhaps sooner.
+    /// </param>
+    /// <param name="cancellationToken">Stops the solve early.</param>
+    ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>A solver for plain mixed-integer linear programmes.</summary>
 public interface IMilpBackend {
     /// <summary>Solves the programme, reporting values for every column.</summary>
-    ISolveResult Solve(MilpProblem problem, SolverOptions options, CancellationToken cancellationToken);
+    /// <param name="problem">The programme to solve.</param>
+    /// <param name="start">Values to start the search from, for some of the columns, all of them or none.</param>
+    /// <param name="options">Limits and tuning.</param>
+    /// <param name="cancellationToken">Stops the solve early.</param>
+    ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -25,7 +36,11 @@ public interface IMilpBackend {
 /// </summary>
 public interface IIndicatorBackend {
     /// <summary>Solves the problem, reporting values for every column.</summary>
-    ISolveResult Solve(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken);
+    /// <param name="problem">The problem to solve.</param>
+    /// <param name="start">Values to start the search from, for some of the columns, all of them or none.</param>
+    /// <param name="options">Limits and tuning.</param>
+    /// <param name="cancellationToken">Stops the solve early.</param>
+    ISolveResult Solve(IndicatorProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -38,10 +53,10 @@ public sealed record MilpSolver(
     SolverOptions? Options = null
 ) : ISolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default) =>
+    public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => problem.Encode(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
-            : Timed.Run(() => Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken))
+            : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
                 .Presentable(encoded.Columns, problem.Objective, encodingTime);
 }
 
@@ -55,10 +70,10 @@ public sealed record IndicatorSolver(
     SolverOptions? Options = null
 ) : ISolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default) =>
+    public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => problem.EncodeLogic(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
-            : Timed.Run(() => Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken))
+            : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
                 .Presentable(encoded.Columns, problem.Objective, encodingTime);
 }
 
@@ -133,6 +148,18 @@ public static class SolveResults {
             options with { Parameters = (options.Parameters ?? ImmutableSortedDictionary<string, string>.Empty).SetItem(parameter, value) };
     }
 
+    extension(Solution? start) {
+        /// <summary>
+        /// The part of a starting solution that a backend can use: its values for the columns of the
+        /// encoded problem, whole where the column is. Auxiliary columns are left for the solver to
+        /// fill in, which it does readily once the modeller's own variables are given.
+        /// </summary>
+        public IReadOnlyDictionary<IVariable, double> Over(ImmutableArray<Column> columns) =>
+            columns
+                .Where(column => start is not null && start.Values.ContainsKey(column.Variable))
+                .ToImmutableDictionary(column => column.Variable, column => column.Variable.IsIntegral ? Math.Round(start!.Values[column.Variable]) : start!.Values[column.Variable]);
+    }
+
     extension(Solution solution) {
         /// <summary>
         /// The solution as the modeller should see it: without auxiliary columns, with whole-number
@@ -154,7 +181,7 @@ public static class SolveResults {
 
     extension(ISolver solver) {
         /// <summary>Solves on a background thread, for callers that must not block.</summary>
-        public Task<ISolveResult> SolveAsync(IProblem problem, CancellationToken cancellationToken = default) =>
-            Task.Run(() => solver.Solve(problem, cancellationToken), cancellationToken);
+        public Task<ISolveResult> SolveAsync(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+            Task.Run(() => solver.Solve(problem, startingFrom, cancellationToken), cancellationToken);
     }
 }

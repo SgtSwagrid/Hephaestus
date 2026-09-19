@@ -12,7 +12,8 @@ namespace Hephaestus.Z3;
 /// </summary>
 public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(IProblem original, CancellationToken cancellationToken = default) =>
+    /// <remarks>Z3 has no use for a starting solution, and ignores it.</remarks>
+    public ISolveResult Solve(IProblem original, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => original.Linearise()) is var (linearised, encodingTime) && Timed.Run(() => Solve(original, linearised, cancellationToken)) is var (result, solvingTime)
             ? result.With(new SolveStatistics(encodingTime, solvingTime))
             : throw new InvalidOperationException();

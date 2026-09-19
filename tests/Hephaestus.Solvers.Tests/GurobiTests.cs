@@ -58,4 +58,17 @@ public sealed class GurobiTests {
 
         Assert.Equal("", captured.ToString());
     }
+
+    [Fact]
+    public void AStartingSolutionIsTakenUpEvenThoughItLeavesTheAuxiliariesOut() {
+        var slots = Enumerable.Range(0, 6).Select(index => Variable.Continuous($"slot{index}")).ToList();
+        var separated = slots.SelectMany((first, index) => slots.Skip(index + 1).Select(second => (first + 90 <= second) | (second + 90 <= first)));
+        var problem = Problem.Minimise(slots.Sum(), subjectTo: slots.AllOf(slot => slot.Between(0, 3600)) & separated.AllOf());
+        var start = slots.Select((slot, index) => (slot, index)).Aggregate(Solution.Empty, (solution, entry) => solution.With(entry.slot, 100.0 * entry.index));
+        var log = new System.Collections.Concurrent.ConcurrentQueue<string>();
+
+        Assert.IsType<Optimal>(GurobiLicence.Require(GurobiSolver.Create(options: new SolverOptions(Log: log.Enqueue))).Solve(problem, startingFrom: start));
+
+        Assert.Contains(log, line => line.Contains("MIP start", StringComparison.OrdinalIgnoreCase) && line.Contains("1500"));
+    }
 }
