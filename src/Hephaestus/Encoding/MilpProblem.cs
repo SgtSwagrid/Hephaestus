@@ -28,6 +28,9 @@ public sealed record LinearRow(
     double LowerBound,
     double UpperBound
 ) {
+    /// <inheritdoc cref="GuardedRow.Origin"/>
+    public IBooleanExpression? Origin { get; init; }
+
     /// <summary>The row in mathematical notation, since the default rendering of a dictionary says nothing.</summary>
     public override string ToString() => this.Format();
 }

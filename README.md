@@ -274,6 +274,16 @@ var result = solver.Solve(problem);
 
 Objectives that are to be traded off against each other need nothing special: weigh them into one expression. Objectives in order of priority are a `LexicographicProblem`: each is optimised in turn, among the solutions that are best for those before it. That is done with a sequence of ordinary solves, so it works with every solver: each stage is held to the values already found and starts from the solution before. An objective can give ground to those after it (`Objective.Minimise(totalDelay, relativeTolerance: 0.01)`, or a typed `tolerance: Duration.FromMinutes(2)`); `Problem.Lexicographic([...], subjectTo: ...)` takes the whole list at once. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
 
+### Writing a model to a file
+
+```csharp
+File.WriteAllText("timetable.lp",  problem.Encode().ToLp());        // big-M rows
+File.WriteAllText("timetable.mps", problem.Encode().ToMps());
+File.WriteAllText("timetable.lp",  problem.EncodeLogic().ToLp());   // indicator constraints, no big-M
+```
+
+LP and MPS are the formats that every solver reads, so a model can be opened in `gurobi_cl`, tuned with `grbtune`, kept as a benchmark, or sent to a solver's support desk. Rows know which constraint they were encoded from (`row.Origin`): a constraint that was given a name lends it to its rows, and in LP the constraint as written sits in a comment above each. Names are reduced to letters, digits and underscores and kept unique, since neither format allows much more. The files are tested by reading them back with HiGHS and Gurobi and reaching the same optimum.
+
 ### Warm starts
 
 ```csharp

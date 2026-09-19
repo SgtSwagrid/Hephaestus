@@ -71,4 +71,31 @@ public sealed class GurobiTests {
 
         Assert.Contains(log, line => line.Contains("MIP start", StringComparison.OrdinalIgnoreCase) && line.Contains("1500"));
     }
+
+    [Fact]
+    public void GurobiReadsBackModelFilesIndicatorsIncluded() {
+        var slots = Enumerable.Range(0, 5).Select(index => Variable.Continuous($"slot {index}")).ToList();
+        var separated = slots.SelectMany((first, index) => slots.Skip(index + 1).Select(second => ((first + 90 <= second) | (second + 90 <= first)).WithName($"headway {first.Name}/{second.Name}")));
+        var problem = Problem.Minimise(slots.Sum() + A * slots[0] + 3, subjectTo: slots.AllOf(slot => slot.Between(0, 3600)) & separated.AllOf() & (!(A & B & C) | (slots[0] >= 50)) & A & B & C);
+        var expected = Optimum(GurobiSolver.Create(), problem);
+
+        Assert.Equal(expected, SolveFile(problem.EncodeLogic().ToLp(), "lp"), precision: 4);
+        Assert.Equal(expected, SolveFile(problem.Encode().ToLp(), "lp"), precision: 4);
+        Assert.Equal(expected, SolveFile(problem.Encode().ToMps(), "mps"), precision: 4);
+    }
+
+    private static double SolveFile(string contents, string extension) {
+        var path = Path.Combine(Path.GetTempPath(), $"hephaestus-{Guid.NewGuid():N}.{extension}");
+        File.WriteAllText(path, contents);
+        try {
+            using var environment = new global::Gurobi.GRBEnv(empty: true);
+            environment.Set(global::Gurobi.GRB.IntParam.OutputFlag, 0);
+            environment.Start();
+            using var model = new global::Gurobi.GRBModel(environment, path);
+            model.Optimize();
+            return model.ObjVal;
+        } finally {
+            File.Delete(path);
+        }
+    }
 }

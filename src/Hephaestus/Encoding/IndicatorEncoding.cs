@@ -12,6 +12,9 @@ internal sealed record IndicatorProgram(
     ImmutableList<BinaryVariable> Auxiliaries,
     int NextAuxiliaryIndex
 ) {
+    /// <summary>The constraint being encoded, which every row added meanwhile is put down to.</summary>
+    public IBooleanExpression? Origin { get; init; }
+
     public static IndicatorProgram Empty { get; } = new([], ImmutableDictionary<INormalForm, Literal>.Empty, [], 0);
 }
 
@@ -33,6 +36,14 @@ internal sealed record AuxiliaryNaming(
 internal static class IndicatorEncoding {
     public static IndicatorProgram Encode(INormalForm formula, AuxiliaryNaming naming) =>
         Enforce(IndicatorProgram.Empty, formula, [], naming);
+
+    /// <summary>
+    /// Encodes a conjunction one conjunct at a time, so that every row knows which it came from. The
+    /// result is the same as for the conjunction as a whole: the auxiliaries are shared and numbered
+    /// alike, since the conjuncts are met in the same order.
+    /// </summary>
+    public static IndicatorProgram Encode(IEnumerable<(IBooleanExpression Origin, INormalForm Formula)> conjuncts, AuxiliaryNaming naming) =>
+        conjuncts.Aggregate(IndicatorProgram.Empty, (program, conjunct) => Enforce(program with { Origin = conjunct.Origin }, conjunct.Formula, [], naming));
 
     /// <summary>The 0/1-valued affine form of a literal.</summary>
     public static AffineForm AsAffine(Literal literal) =>
@@ -98,5 +109,5 @@ internal static class IndicatorEncoding {
 
     private static Literal Negated(Literal literal) => literal with { IsPositive = !literal.IsPositive };
 
-    private static IndicatorProgram WithRow(IndicatorProgram program, GuardedRow row) => program with { Rows = program.Rows.Add(row) };
+    private static IndicatorProgram WithRow(IndicatorProgram program, GuardedRow row) => program with { Rows = program.Rows.Add(row with { Origin = program.Origin }) };
 }

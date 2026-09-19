@@ -10,7 +10,14 @@ public sealed record GuardedRow(
     ImmutableList<Literal> Guards,
     AffineForm Expression,
     bool IsEquality
-);
+) {
+    /// <summary>
+    /// The constraint of the problem (a conjunct of its one constraint) that this row was encoded
+    /// from, if it is known. A row is named after it when a model is written to a file. It is kept by
+    /// reference and costs nothing until it is asked for its name.
+    /// </summary>
+    public IBooleanExpression? Origin { get; init; }
+}
 
 /// <summary>
 /// A problem with its logic encoded but no big-M in sight: bounded columns, a linear objective, and
@@ -84,7 +91,7 @@ public static class IndicatorProblems {
                 problem.Columns,
                 [
                     .. problem.Rows
-                        .SelectMany(row => BigM.Relax(row, bounds, options))
+                        .SelectMany(row => BigM.Relax(row, bounds, options).Select(relaxed => relaxed with { Origin = row.Origin }))
                         .Where(row => !(row.Coefficients.IsEmpty && row.LowerBound <= 0 && 0 <= row.UpperBound)),
                 ],
                 problem.Sense,
@@ -114,7 +121,7 @@ public static class IndicatorProblems {
                 Conjunctions = state.Conjunctions.Add(Key(row.Guards), all),
                 NextIndex = index + 1,
             },
-            [IndicatorEncoding.AtLeastOne([all], row.Guards), row with { Guards = [all] }]);
+            [IndicatorEncoding.AtLeastOne([all], row.Guards) with { Origin = row.Origin }, row with { Guards = [all] }]);
     }
 
     private static Conjoining WithRows(Conjoining state, ImmutableArray<GuardedRow> rows) =>
@@ -125,9 +132,9 @@ public static class IndicatorProblems {
 
     private static IEnumerable<GuardedRow> Unguarded(LinearRow row) =>
         new AffineForm(row.Coefficients, 0) is var body && row.LowerBound == row.UpperBound
-            ? [new GuardedRow([], body.Plus(-row.UpperBound), IsEquality: true)]
+            ? [new GuardedRow([], body.Plus(-row.UpperBound), IsEquality: true) { Origin = row.Origin }]
             : [
-                .. double.IsPositiveInfinity(row.UpperBound) ? (GuardedRow[])[] : [new GuardedRow([], body.Plus(-row.UpperBound), IsEquality: false)],
-                .. double.IsNegativeInfinity(row.LowerBound) ? (GuardedRow[])[] : [new GuardedRow([], body.Negated.Plus(row.LowerBound), IsEquality: false)],
+                .. double.IsPositiveInfinity(row.UpperBound) ? (GuardedRow[])[] : [new GuardedRow([], body.Plus(-row.UpperBound), IsEquality: false) { Origin = row.Origin }],
+                .. double.IsNegativeInfinity(row.LowerBound) ? (GuardedRow[])[] : [new GuardedRow([], body.Negated.Plus(row.LowerBound), IsEquality: false) { Origin = row.Origin }],
             ];
 }
