@@ -139,6 +139,9 @@ public abstract class WholeNumberContract {
         var problem = Problem.Minimise(DepartureA + DepartureB, subjectTo: DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Separated(DepartureA, DepartureB));
         var starts = new[] { Solution.Empty.With(DepartureA, 300).With(DepartureB, 600), Solution.Empty.With(DepartureA, 0.4), Solution.Empty.With(DepartureA, 5).With(DepartureB, 6) };
 
-        Assert.All(starts, start => Assert.Equal(120, Assert.IsType<Optimal>(Solver.Solve(problem, startingFrom: start)).Solution.ObjectiveValue));
+        // The solver is fetched first, because a solver that has to be skipped says so by throwing, which Assert.All would count as a failure.
+        var solver = Solver;
+
+        Assert.All(starts, start => Assert.Equal(120, Assert.IsType<Optimal>(solver.Solve(problem, startingFrom: start)).Solution.ObjectiveValue));
     }
 }
