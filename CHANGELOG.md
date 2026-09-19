@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Changed
+
+- The objective value of a solution is now the objective as written, read off the solution, rather than the solver's own figure.
+
 ### Added
 
 - Core (`Hephaestus.Optimisation`): immutable linear and boolean expression records with C# 14 extension operators; problems as a single constraint with an optional objective; normalisation to affine and negation normal forms; MILP encoding with guarded rows, bound propagation and per-row derived big-M values; typed `Quantity<T>` and `Point<T, TDelta>` expressions with projections for `TimeSpan`, `DateTime` and `DateTimeOffset`; the `ISolver` and `IMilpBackend` seams.
@@ -14,3 +18,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - CP-SAT through its own interface (`CpSatSolver`), in `Hephaestus.Optimisation.OrTools`, for whole-number problems without any big-M.
 - A third backend seam, `IIndicatorBackend`, over the new `IndicatorProblem`; `Encode()` is now `EncodeLogic()` followed by `RelaxGuards()`.
 - `Hephaestus.Optimisation.NodaTime`: projections and typed variables for the NodaTime types.
+- `Piecewise.Max`, `Piecewise.Min` and `Piecewise.Abs`, over plain and typed expressions. They are lowered to linear form when a problem is encoded (`problem.Linearise()`), spending a binary variable only where the problem rewards a larger maximum.

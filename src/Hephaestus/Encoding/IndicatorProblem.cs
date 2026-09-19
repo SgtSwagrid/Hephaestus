@@ -39,10 +39,19 @@ public static class IndicatorProblems {
         /// The same problem with every column's bounds tightened to what the unconditional rows imply
         /// (feasibility-based bound tightening). For solvers that need finite domains.
         /// </summary>
-        public IndicatorProblem WithPropagatedBounds(int rounds = 10) {
-            var bounds = DerivedBounds(problem, rounds);
-            return problem with { Columns = [.. problem.Columns.Select(column => column with { LowerBound = bounds.Of(column.Variable).Lower, UpperBound = bounds.Of(column.Variable).Upper })] };
-        }
+        public IndicatorProblem WithPropagatedBounds(int rounds = 10) =>
+            problem.WithColumnBounds(problem.DerivedBounds(rounds), [.. problem.Columns.Select(column => column.Variable)]);
+
+        /// <summary>The same problem with the columns of the given variables bounded as stated.</summary>
+        internal IndicatorProblem WithColumnBounds(ImmutableDictionary<IVariable, Interval> bounds, ImmutableHashSet<IVariable> variables) =>
+            problem with { Columns = [.. problem.Columns.Select(column => variables.Contains(column.Variable) ? column with { LowerBound = bounds.Of(column.Variable).Lower, UpperBound = bounds.Of(column.Variable).Upper } : column)] };
+
+        /// <summary>The bounds of every variable that follow from the column bounds and the unconditional rows.</summary>
+        internal ImmutableDictionary<IVariable, Interval> DerivedBounds(int rounds) =>
+            BoundPropagation.Propagate(
+                [.. problem.Rows.Where(row => row.Guards.IsEmpty)],
+                problem.Columns.ToImmutableDictionary(column => column.Variable, column => new Interval(column.LowerBound, column.UpperBound)),
+                rounds);
 
         /// <summary>
         /// The same problem with at most one guard per row, for solvers whose indicator constraints
@@ -68,14 +77,9 @@ public static class IndicatorProblems {
     internal static bool IsSatisfied(GuardedRow row) =>
         row.IsEquality ? row.Expression.Constant == 0 : row.Expression.Constant <= 0;
 
-    private static ImmutableDictionary<IVariable, Interval> DerivedBounds(IndicatorProblem problem, int rounds) =>
-        BoundPropagation.Propagate(
-            [.. problem.Rows.Where(row => row.Guards.IsEmpty)],
-            problem.Columns.ToImmutableDictionary(column => column.Variable, column => new Interval(column.LowerBound, column.UpperBound)),
-            rounds);
 
     private static MilpProblem Relax(IndicatorProblem problem, EncodingOptions options) {
-        var bounds = DerivedBounds(problem, options.BoundPropagationRounds);
+        var bounds = problem.DerivedBounds(options.BoundPropagationRounds);
         return new MilpProblem(
                 problem.Columns,
                 [

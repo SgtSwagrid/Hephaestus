@@ -5,7 +5,7 @@ public static class Evaluation {
     extension(Solution solution) {
         /// <summary>The value of a linear expression under this solution.</summary>
         /// <exception cref="KeyNotFoundException">The expression mentions a variable the solved problem did not.</exception>
-        public double Value(ILinearExpression expression) => expression.Normalise().Evaluate(solution.ValueOf);
+        public double Value(ILinearExpression expression) => Evaluate(new LinearStep(solution, expression));
 
         /// <summary>Whether a binary variable is set. (Read it as a number with <c>Value((ILinearExpression)variable)</c>.)</summary>
         public bool Value(BinaryVariable variable) => solution.ValueOf(variable) > 0.5;
@@ -38,6 +38,25 @@ public static class Evaluation {
                 ? value
                 : throw new KeyNotFoundException($"The solution has no value for '{variable.Name}': the variable does not occur in the problem that was solved.");
     }
+
+    private sealed record LinearStep(
+        Solution Solution,
+        ILinearExpression Expression
+    );
+
+    private static double Evaluate(LinearStep step) => DeepRecursion.Guard(EvaluateUnguarded, step);
+
+    private static double EvaluateUnguarded(LinearStep step) =>
+        step.Expression switch {
+            Constant constant => constant.Value,
+            IVariable variable => step.Solution.ValueOf(variable),
+            Product product => product.Coefficient * Evaluate(step with { Expression = product.Expression }),
+            Sum sum => Evaluate(step with { Expression = sum.Left }) + Evaluate(step with { Expression = sum.Right }),
+            Maximum maximum => Math.Max(Evaluate(step with { Expression = maximum.Left }), Evaluate(step with { Expression = maximum.Right })),
+            Minimum minimum => Math.Min(Evaluate(step with { Expression = minimum.Left }), Evaluate(step with { Expression = minimum.Right })),
+            AbsoluteValue absolute => Math.Abs(Evaluate(step with { Expression = absolute.Operand })),
+            _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
+        };
 
     private sealed record Step(
         Solution Solution,

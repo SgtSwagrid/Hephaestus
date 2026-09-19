@@ -4,7 +4,7 @@ namespace Hephaestus;
 public static class LinearNormalisation {
     extension(ILinearExpression expression) {
         /// <summary>The normal form of this expression.</summary>
-        /// <exception cref="ModellingException">The expression contains a NaN or infinite number.</exception>
+        /// <exception cref="ModellingException">The expression contains a NaN or infinite number, or a piecewise-linear function, which has no affine form.</exception>
         public AffineForm Normalise() => Checked(expression, Accumulate(new Step(expression, 1, AffineForm.Zero)));
     }
 
@@ -22,6 +22,7 @@ public static class LinearNormalisation {
             IVariable variable => step.Into.PlusTerm(variable, step.Scale),
             Product product => Accumulate(step with { Expression = product.Expression, Scale = step.Scale * product.Coefficient }),
             Sum sum => Accumulate(step with { Expression = sum.Right, Into = Accumulate(step with { Expression = sum.Left }) }),
+            Maximum or Minimum or AbsoluteValue => throw new ModellingException($"The expression '{step.Expression.Format()}' is piecewise linear, so it has no affine form of its own. It is lowered to linear form when the problem that contains it is encoded."),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
 

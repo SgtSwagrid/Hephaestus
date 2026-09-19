@@ -89,8 +89,14 @@ public static class Formatting {
             Sum { Right: Product { Coefficient: < 0 } subtracted } sum => WriteLinear(new LinearStep(new Product(-subtracted.Coefficient, subtracted.Expression), WriteLinear(step with { Expression = sum.Left }).Add(" - "))),
             Sum { Right: Constant { Value: < 0 } subtracted } sum => WriteLinear(step with { Expression = sum.Left }).Add(" - ").Add(Number(-subtracted.Value)),
             Sum sum => WriteLinear(new LinearStep(sum.Right, WriteLinear(step with { Expression = sum.Left }).Add(" + "))),
+            Maximum maximum => WriteCall(step.Tokens.Add("max("), maximum.Left, maximum.Right),
+            Minimum minimum => WriteCall(step.Tokens.Add("min("), minimum.Left, minimum.Right),
+            AbsoluteValue absolute => WriteLinear(new LinearStep(absolute.Operand, step.Tokens.Add("abs("))).Add(")"),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
+
+    private static ImmutableList<string> WriteCall(ImmutableList<string> tokens, ILinearExpression left, ILinearExpression right) =>
+        WriteLinear(new LinearStep(right, WriteLinear(new LinearStep(left, tokens)).Add(", "))).Add(")");
 
     /// <summary>Writes the operand of a product or subtraction, in brackets if it would otherwise be misread.</summary>
     private static ImmutableList<string> WriteOperand(ILinearExpression operand, ImmutableList<string> tokens) =>

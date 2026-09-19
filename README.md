@@ -140,6 +140,18 @@ Over whole-valued expressions, `n < 5` is exactly `n <= 4`. Over the reals a MIL
 
 To use the truth of a constraint as a number (say, to count violated soft constraints), tie it to a binary variable yourself: `isLate.Iff(arrival >= deadline)`, then use `isLate` in the objective. `Iff` binds in both directions.
 
+### Min, max and absolute value
+
+```csharp
+using static Hephaestus.Piecewise;
+
+var isPunctual = Abs(arrival - booked) <= tolerance;
+var makespan   = Max(finishes);
+var problem    = Problem.Minimise(makespan + 10 * Abs(arrival - booked), subjectTo: ...);
+```
+
+`Max`, `Min` and `Abs` are records like everything else, and work on plain and typed expressions alike. When a problem is encoded, each becomes an auxiliary variable tied to its operands (all three are maxima: `min(a, b) = -max(-a, -b)` and `|e| = max(e, -e)`), and equal ones share a variable. How it is tied depends on how the problem leans on it. Minimising a maximum, or bounding an absolute value from above, only tempts the solver to make the variable too small, so `m >= a & m >= b` is enough and no binary variable is spent; that is the usual linear-programming idiom, found for you. Only a use that rewards a larger value (`Abs(x - y) >= 5`, or maximising a maximum) adds `m <= a | m <= b`, which costs one binary. The variable is bounded by the bounds of its operands, so its big-M is derived like any other.
+
 ### Typed expressions
 
 A `Quantity<T>` is a linear expression read as an *amount* of type `T` (a duration); a `Point<T, TDelta>` is one read as a *position* (a date-time) whose differences are amounts of `TDelta`. Each pairs an ordinary `ILinearExpression` with an `IProjection<T>`, an affine map between `T` and the solver's number line ("seconds since 08:00").

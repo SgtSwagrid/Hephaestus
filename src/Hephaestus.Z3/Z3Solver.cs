@@ -12,7 +12,9 @@ namespace Hephaestus.Z3;
 /// </summary>
 public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default) {
+    public ISolveResult Solve(IProblem original, CancellationToken cancellationToken = default) {
+        var linearised = original.Linearise();
+        var problem = linearised.Problem;
         using var context = new Context();
         using var interruption = cancellationToken.Register(context.Interrupt);
 
@@ -29,7 +31,7 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
         };
 
         return optimiser.Check() switch {
-            Status.SATISFIABLE => AsResult(handle?.Value.ToString() ?? "", ReadSolution(symbols, optimiser.Model, problem)),
+            Status.SATISFIABLE => AsResult(handle?.Value.ToString() ?? "", ReadSolution(symbols, optimiser.Model, original, linearised.Auxiliaries)),
             Status.UNSATISFIABLE => new Infeasible(),
             _ => new Unknown($"Z3 gave up: {optimiser.ReasonUnknown}."),
         };
@@ -117,13 +119,12 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
             ? (mantissa * BigInteger.Pow(2, exponent)).ToString(CultureInfo.InvariantCulture)
             : $"{mantissa.ToString(CultureInfo.InvariantCulture)}/{BigInteger.Pow(2, -exponent).ToString(CultureInfo.InvariantCulture)}";
 
-    private static Solution ReadSolution(Symbols symbols, Model model, IProblem problem) {
-        var values = symbols.Constants.ToImmutableSortedDictionary(
-            entry => entry.Key,
-            entry => AsDouble(model.Eval(entry.Value, completion: true)),
-            VariableOrder.Comparer);
-        return new Solution(values, problem.Objective.Normalise().Evaluate(variable => values[variable]));
-    }
+    private static Solution ReadSolution(Symbols symbols, Model model, IProblem problem, ImmutableSortedSet<IVariable> auxiliaries) =>
+        new Solution(ImmutableSortedDictionary.Create<IVariable, double>(VariableOrder.Comparer), 0).WithValues(
+            symbols.Constants
+                .Where(entry => !auxiliaries.Contains(entry.Key))
+                .ToImmutableSortedDictionary(entry => entry.Key, entry => AsDouble(model.Eval(entry.Value, completion: true)), VariableOrder.Comparer),
+            problem.Objective);
 
     private static double AsDouble(Expr value) =>
         value switch {

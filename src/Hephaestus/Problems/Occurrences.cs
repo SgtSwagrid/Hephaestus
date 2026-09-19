@@ -45,6 +45,9 @@ public static class Occurrences {
             IVariable variable => step.Found.Add(variable),
             Product product => CollectLinear(step with { Expression = product.Expression }),
             Sum sum => CollectLinear(new LinearStep(sum.Right, CollectLinear(step with { Expression = sum.Left }))),
+            Maximum maximum => CollectLinear(new LinearStep(maximum.Right, CollectLinear(step with { Expression = maximum.Left }))),
+            Minimum minimum => CollectLinear(new LinearStep(minimum.Right, CollectLinear(step with { Expression = minimum.Left }))),
+            AbsoluteValue absolute => CollectLinear(step with { Expression = absolute.Operand }),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
 
