@@ -8,7 +8,8 @@
     <PackageVersion Include="Google.OrTools" Version="9.15.6755" />
     <PackageVersion Include="Gurobi.Optimizer" Version="13.0.3" />
     <PackageVersion Include="Highs.Native" Version="1.15.1" />
-    <PackageVersion Include="Microsoft.Z3" Version="4.12.2" />
+    <!-- 4.11.2 is the last release of Microsoft.Z3 on nuget.org with a Linux binary; 4.12.x ships only Windows and macOS. -->
+    <PackageVersion Include="Microsoft.Z3" Version="4.11.2" />
     <PackageVersion Include="NodaTime" Version="3.3.4" />
   </ItemGroup>
 
