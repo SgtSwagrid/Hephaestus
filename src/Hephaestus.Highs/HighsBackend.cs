@@ -101,7 +101,9 @@ public sealed record HighsBackend : IMilpBackend {
         var values = solver.getSolution().colvalue;
         return new Solution(
             problem.Columns.Select((column, index) => (column.Variable, Value: values[index])).ToImmutableSortedDictionary(entry => entry.Variable, entry => entry.Value, VariableOrder.Comparer),
-            solver.getInfo().ObjectiveValue);
+            solver.getInfo().ObjectiveValue) {
+            RowDuals = problem.Columns.Any(column => column.Variable.IsIntegral) ? [] : [.. solver.getSolution().rowdual],
+        };
     }
 
     private static void Require(HighsStatus status, string action) {

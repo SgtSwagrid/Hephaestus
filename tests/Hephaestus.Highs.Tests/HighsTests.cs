@@ -10,6 +10,12 @@ public sealed class HighsWholeNumberContract : WholeNumberContract {
     protected override ISolver Solver => HighsSolver.Create();
 }
 
+public sealed class HighsSensitivityContract : SensitivityContract {
+    protected override ISolver Solver => HighsSolver.Create();
+
+    protected override IMilpBackend Backend => new HighsBackend();
+}
+
 public sealed class HighsBackendTests {
     private static readonly ContinuousVariable X = Variable.Continuous("x");
     private static readonly IntegerVariable N = Variable.Integer("n");
