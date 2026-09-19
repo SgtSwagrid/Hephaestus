@@ -55,10 +55,12 @@ public static class MilpEncoding {
     private static IndicatorProblem Lower(IProblem original, EncodingOptions options) {
         var (problem, definitions) = original.Linearise(options);
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet();
-        var formula = problem.Constraint.Normalise(options.StrictnessEpsilon);
+        // Lowering keeps the conjuncts in order and adds its own after them, so a row can be put down to the constraint as it was written.
+        var written = original.Constraint.Conjuncts;
+        var conjuncts = problem.Constraint.Conjuncts.Select((lowered, index) => (Origin: index < written.Length ? written[index] : lowered, Formula: lowered.Normalise(options.StrictnessEpsilon)));
         // A maximum that the problem turns out not to lean on is never tied down, and would take its operands with it.
         var variables = problem.Variables.Union(original.Variables);
-        var program = IndicatorEncoding.Encode(formula, new AuxiliaryNaming([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix));
+        var program = IndicatorEncoding.Encode(conjuncts, new AuxiliaryNaming([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix));
         var stated = BoundPropagation.Sweep(program.Rows.Where(IsStatedBound), ImmutableDictionary<IVariable, Interval>.Empty);
         return WithBounds(definitions, options.BoundPropagationRounds, new IndicatorProblem(
             [
@@ -96,7 +98,7 @@ public static class MilpEncoding {
     private static IEnumerable<GuardedRow> Tidied(GuardedRow row) =>
         !row.Expression.IsConstant ? [row]
         : IndicatorProblems.IsSatisfied(row) ? []
-        : [IndicatorEncoding.AtLeastOne([], row.Guards)];
+        : [IndicatorEncoding.AtLeastOne([], row.Guards) with { Origin = row.Origin }];
 
     /// <summary>An unconditional row over a single variable is a bound, and is handed to the solver as one.</summary>
     private static bool IsStatedBound(GuardedRow row) => row.Guards.IsEmpty && row.Expression.Coefficients.Count == 1;

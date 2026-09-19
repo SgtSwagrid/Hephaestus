@@ -27,3 +27,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Several objectives in order of priority: `Problem.Minimise(a, subjectTo: c).Then(Objective.Maximise(b))`, solved with any solver as a sequence of ordinary solves.
 - Names for expressions (`WithName`, `Name`), `constraint.Conjuncts`, and `solver.FindConflict(problem)`, which explains an infeasible problem with any solver.
 - Shadow prices: `problem.ShadowPrices(solution, backend)`, quoted per named constraint, for problems with logic and whole numbers too (as the prices of the linear programme in force at the solution).
+- LP and MPS export: `problem.Encode().ToLp()`, `.ToMps()` and `problem.EncodeLogic().ToLp()` (indicator constraints). Rows carry the constraint they were encoded from (`row.Origin`) and are named after it.
