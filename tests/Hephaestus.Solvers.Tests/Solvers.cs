@@ -36,7 +36,7 @@ public sealed class GurobiBigMContract : SolverContract {
 internal static class GurobiLicence {
     private static readonly Lazy<string?> Missing = new(() => {
         try {
-            return new GurobiBackend().Solve(Problem.Satisfy(BooleanConstant.True).EncodeLogic(), SolverOptions.Default, CancellationToken.None) is null ? "unreachable" : null;
+            return new GurobiBackend().Solve(Problem.Satisfy(BooleanConstant.True).EncodeLogic(), Solution.Empty.Values, SolverOptions.Default, CancellationToken.None) is null ? "unreachable" : null;
         } catch (global::Gurobi.GRBException exception) {
             return exception.Message;
         }

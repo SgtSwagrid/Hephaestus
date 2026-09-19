@@ -8,7 +8,7 @@ namespace Hephaestus.Tests;
 /// </summary>
 public sealed class SolvingTests {
     private sealed record ExhaustiveBackend : IMilpBackend {
-        public ISolveResult Solve(MilpProblem problem, SolverOptions options, CancellationToken cancellationToken) =>
+        public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>
             Assignments(problem.Columns)
                 .Where(assignment => problem.Rows.All(row => Holds(row, assignment)))
                 .Select(assignment => new Solution(assignment, problem.Objective.Evaluate(variable => assignment[variable])))
@@ -105,7 +105,7 @@ public sealed class SolvingTests {
 
     [Fact]
     public async Task SolvingCanBeAwaited() =>
-        Assert.IsType<Optimal>(await Solver.SolveAsync(Problem.Maximise(M, subjectTo: Domain), TestContext.Current.CancellationToken));
+        Assert.IsType<Optimal>(await Solver.SolveAsync(Problem.Maximise(M, subjectTo: Domain), cancellationToken: TestContext.Current.CancellationToken));
 
     [Fact]
     public void ProblemsAreValuesSoExtendingOneLeavesTheOriginalIntact() {
@@ -114,5 +114,47 @@ public sealed class SolvingTests {
 
         Assert.Equal(0, Assert.IsType<Optimal>(Solver.Solve(original)).Solution.ObjectiveValue);
         Assert.Equal(3, Assert.IsType<Optimal>(Solver.Solve(tightened)).Solution.ObjectiveValue);
+    }
+
+    /// <summary>Solves nothing, but remembers what it was asked to start from.</summary>
+    private sealed record RecordingBackend(List<IReadOnlyDictionary<IVariable, double>> Starts) : IMilpBackend {
+        public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
+            Starts.Add(start);
+            return new Unknown("Nothing was solved.");
+        }
+    }
+
+    [Fact]
+    public void AStartingSolutionReachesTheBackendAsValuesForItsOwnColumns() {
+        var backend = new RecordingBackend([]);
+        var start = Solution.Empty.With(M, 2.2).With(A, true).With(Variable.Integer("stranger"), 9);
+
+        new MilpSolver(backend).Solve(Problem.Minimise(M, subjectTo: Domain & ((M >= 2) | A)), startingFrom: start);
+
+        // The stranger is dropped, the whole-number variable is rounded, and n and the auxiliary binary are left to the solver.
+        Assert.Equal([KeyValuePair.Create<IVariable, double>(A, 1), KeyValuePair.Create<IVariable, double>(M, 2)], backend.Starts.Single().OrderBy(entry => entry.Key.Name));
+    }
+
+    [Fact]
+    public void WithoutAStartingSolutionTheBackendStartsFromNothing() {
+        var backend = new RecordingBackend([]);
+
+        new MilpSolver(backend).Solve(Problem.Minimise(M, subjectTo: Domain));
+
+        Assert.Empty(backend.Starts.Single());
+    }
+
+    [Fact]
+    public void AStartingSolutionCanBeBuiltByHandInTheTypesOfTheModel() {
+        var origin = new DateTime(2026, 9, 19, 8, 0, 0);
+        var departure = Variable.DateTime("departure", origin);
+        var dwell = Variable.TimeSpan("dwell", unit: TimeSpan.FromMinutes(1));
+
+        var start = Solution.Empty.With(departure, origin.AddMinutes(5)).With(dwell, TimeSpan.FromSeconds(90)).With(A, false);
+
+        Assert.Equal(300, start.Values[Variable.Continuous("departure")]);
+        Assert.Equal(1.5, start.Values[Variable.Continuous("dwell")]);
+        Assert.Equal(0, start.Values[A]);
+        Assert.Throws<ArgumentException>(() => Solution.Empty.With(departure + dwell, origin));
     }
 }

@@ -24,7 +24,7 @@ public sealed class HighsBackendTests {
 
     [Fact]
     public void ACancelledSolveNeverStarts() =>
-        Assert.Throws<OperationCanceledException>(() => HighsSolver.Create().Solve(Problem.Satisfy(X >= 0), new CancellationToken(canceled: true)));
+        Assert.Throws<OperationCanceledException>(() => HighsSolver.Create().Solve(Problem.Satisfy(X >= 0), cancellationToken: new CancellationToken(canceled: true)));
 
     [Fact]
     public void AnOptimalResultIsTightAgainstItsBound() {

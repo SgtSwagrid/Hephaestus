@@ -218,6 +218,17 @@ result.RelativeGap                                // how far a Feasible result m
 
 `TimeLimit`, `RelativeGap`, `AbsoluteGap`, `Threads` and `Seed` mean the same to every solver that has them. `Parameters` go to the solver verbatim, and one it does not recognise is an error rather than a silent no-op. Every result carries `Statistics`, whatever its outcome; a figure that a solver does not report is null (Z3 proves optimality without bounds, so it has no gap to give). Gurobi and CP-SAT deliver their log to `Log`; the others can only write to standard output, and do so when it is set.
 
+### Warm starts
+
+```csharp
+var yesterday = solver.Solve(timetable).SolutionOrNull;
+var today     = solver.Solve(timetableWithOneMoreTrain, startingFrom: yesterday);
+
+var byHand    = Solution.Empty.With(departureA, start.PlusMinutes(5)).With(occupiesA, true);
+```
+
+A starting solution is a hint and nothing more: it may cover only some of the variables, mention ones the problem lacks, or be infeasible, and the answer is the same, only perhaps sooner. Only the modeller's own variables are passed on; the auxiliaries of the encoding are left for the solver to fill in, which keeps a start valid across problems whose encodings differ. Gurobi, CP-SAT, SCIP, CBC and standalone HiGHS take the hint; Z3 has no use for one.
+
 ## ⚠️ Things worth knowing
 
 - Sum and conjoin collections with `Sum()`, `AllOf()` and `AnyOf()` rather than folding `+` or `&` yourself. (Folding still works: deep trees are handled without overflowing the stack. It is merely slower, and the records' built-in `ToString`/`Equals` do recurse.)

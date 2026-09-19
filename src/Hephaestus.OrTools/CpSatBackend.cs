@@ -14,12 +14,13 @@ public sealed record CpSatBackend : IIndicatorBackend {
     /// <inheritdoc/>
     /// <exception cref="NotSupportedException">The problem has a continuous variable, or a coefficient that no power of ten makes whole.</exception>
     /// <exception cref="ModellingException">A variable has no finite bounds, stated or implied.</exception>
-    public ISolveResult Solve(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) {
+    public ISolveResult Solve(IndicatorProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
         var bounded = Bounded(Whole(problem).WithPropagatedBounds());
         var model = new CpModel();
         var variables = bounded.Columns.ToImmutableDictionary(column => column.Variable, column => Declare(model, column));
         bounded.Rows.ToList().ForEach(row => Declare(model, row, variables));
         Declare(model, bounded, variables);
+        start.Where(entry => variables.ContainsKey(entry.Key)).ToList().ForEach(entry => model.AddHint(variables[entry.Key], (long)Math.Round(entry.Value)));
 
         var solver = new CpSolver { StringParameters = Parameters(options) };
         if (options.Log is { } log) {

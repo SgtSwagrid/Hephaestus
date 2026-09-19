@@ -6,6 +6,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ### Changed
 
+- `ISolver.Solve` and the two backend interfaces take a starting solution, so a cancellation token passed positionally must now be named.
 - The objective value of a solution is now the objective as written, read off the solution, rather than the solver's own figure.
 
 ### Added
@@ -21,3 +22,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - `Piecewise.Max`, `Piecewise.Min` and `Piecewise.Abs`, over plain and typed expressions. They are lowered to linear form when a problem is encoded (`problem.Linearise()`), spending a binary variable only where the problem rewards a larger maximum.
 - `ISolveResult.Statistics` (encoding and solving times, best bound, nodes, iterations) on every outcome, with `result.AbsoluteGap` and `result.RelativeGap`.
 - `SolverOptions.AbsoluteGap`, `Seed`, `Log` and `Parameters` (the solver's own parameters, by its own names).
+- Warm starts: `solver.Solve(problem, startingFrom: solution)`, with `Solution.Empty.With(variable, value)` to build a start by hand.

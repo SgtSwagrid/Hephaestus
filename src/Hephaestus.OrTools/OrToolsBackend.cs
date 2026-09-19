@@ -31,7 +31,7 @@ public static class OrToolsSolverId {
 /// <summary>Solves mixed-integer linear programmes with a solver driven through Google OR-Tools.</summary>
 public sealed record OrToolsBackend(string SolverId = OrToolsSolverId.Scip) : IMilpBackend {
     /// <inheritdoc/>
-    public ISolveResult Solve(MilpProblem problem, SolverOptions options, CancellationToken cancellationToken) {
+    public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
         using var solver = SupportingWholeNumbers(
             Solver.CreateSolver(SolverId) ?? throw new NotSupportedException($"OR-Tools cannot provide the solver '{SolverId}'. It may need a separate installation or licence."),
             problem);
@@ -41,6 +41,7 @@ public sealed record OrToolsBackend(string SolverId = OrToolsSolverId.Scip) : IM
         var variables = problem.Columns.ToImmutableDictionary(column => column.Variable, column => Declare(solver, column));
         problem.Rows.ToList().ForEach(row => Declare(solver, row, variables));
         Declare(solver.Objective(), problem, variables);
+        Hint(solver, [.. start.Where(entry => variables.ContainsKey(entry.Key))], variables);
         Configure(solver, parameters, options);
 
         return AsResult(solver.Solve(parameters), solver, variables);
@@ -58,6 +59,16 @@ public sealed record OrToolsBackend(string SolverId = OrToolsSolverId.Scip) : IM
                 + $"({string.Join(", ", problem.Columns.Where(column => column.Variable.IsIntegral).Take(5).Select(column => column.Variable.Name))}"
                 + $"{(problem.Columns.Count(column => column.Variable.IsIntegral) > 5 ? ", ..." : "")}), "
                 + "whether its own or the auxiliaries that encode its logic. OR-Tools would relax them without warning; use a MILP solver such as SCIP or HiGHS.");
+
+    /// <summary>
+    /// Only SCIP and CBC are given the hint. OR-Tools offers it to any solver, but its HiGHS interface
+    /// crashes the process on receiving one, so the list is of those known to be safe.
+    /// </summary>
+    private void Hint(Solver solver, ImmutableArray<KeyValuePair<IVariable, double>> start, ImmutableDictionary<IVariable, Google.OrTools.LinearSolver.Variable> variables) {
+        if (!start.IsEmpty && SolverId is OrToolsSolverId.Scip or OrToolsSolverId.Cbc) {
+            solver.SetHint([.. start.Select(entry => variables[entry.Key])], [.. start.Select(entry => entry.Value)]);
+        }
+    }
 
     private static Google.OrTools.LinearSolver.Variable Declare(Solver solver, Column column) =>
         solver.MakeVar(column.LowerBound, column.UpperBound, column.Variable.IsIntegral, column.Variable.Name);
