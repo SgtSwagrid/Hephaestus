@@ -214,6 +214,8 @@ Point<LocalDateTime, Duration>   release  = start + dwell;                // pla
 
 Plain values of the right type are welcome wherever an expression is, on either side (`Duration.FromMinutes(2) + departure`, `start <= departure`, `dwell.Between(minimum, arrival - departure)`), and `delay.In(Duration.FromMinutes(1))` turns a quantity back into a plain linear expression ("delay in minutes") for a cost function.
 
+Plain numbers can be typed too: `Variable.Integer<int>("trains")` is a `Quantity<int>` and `Variable.Continuous<decimal>("cost")` a `Quantity<decimal>`, for any integer or floating-point type. A count then reads back as an `int`, already made whole (a solver's 2.9999999 is a three), and kinds of number do not mix: `trains + 1.5` does not compile. Where they must mix, `trains.Expression` is the ordinary expression underneath.
+
 Solutions are read back in the same types: `solution.Value(arrival)` is a `LocalDateTime`, and so is `solution.Value(departure + dwell)`; any expression can be read, not just variables. Expressions under different projections (minutes against seconds, different origins) are reconciled automatically.
 
 The core ships projections for `TimeSpan`, `DateTime` and `DateTimeOffset`; `Hephaestus.Optimisation.NodaTime` adds `Duration`, `Instant`, `LocalDateTime`, `LocalDate` (in `Period`s of whole days), `LocalTime`, `OffsetDateTime` and `ZonedDateTime`:

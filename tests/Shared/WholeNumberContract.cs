@@ -165,4 +165,16 @@ public abstract class WholeNumberContract {
         Assert.Equal(200, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N), subjectTo: domain)).ObjectiveValue);
         Assert.Equal(3, Optimum(Problem.Minimise(If(DepartureA >= 50, N + 3, DepartureA), subjectTo: domain & (DepartureA >= 10))).ObjectiveValue);
     }
+
+    [Fact]
+    public void CountsAreSolvedAndReadBackAsWholeNumbersOfTheirOwnType() {
+        var (trains, platforms) = (Variable.Integer<int>("trains"), Variable.Integer<int>("platforms"));
+        var passengers = Variable.Integer<long>("passengers");
+        var constraint = trains.Between(0, 40) & platforms.Between(1, 6) & (trains <= 6 * platforms) & (passengers.Expression <= 850 * trains.Expression) & (passengers >= 9000L);
+
+        var solution = Optimum(Problem.Minimise(100 * platforms.Expression + 7 * trains.Expression, subjectTo: constraint));
+
+        Assert.Equal((11, 2, 9000L), (solution.Value(trains), solution.Value(platforms), solution.Value(passengers)));
+        Assert.IsType<int>(solution.Value(trains));
+    }
 }
