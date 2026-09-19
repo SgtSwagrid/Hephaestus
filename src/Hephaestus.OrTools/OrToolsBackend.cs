@@ -134,7 +134,10 @@ public sealed record OrToolsBackend(string SolverId = OrToolsSolverId.Scip) : IM
     private static Solution ReadSolution(Solver solver, ImmutableDictionary<IVariable, Google.OrTools.LinearSolver.Variable> variables) =>
         new(
             variables.ToImmutableSortedDictionary(entry => entry.Key, entry => entry.Value.SolutionValue(), VariableOrder.Comparer),
-            solver.Objective().Value());
+            solver.Objective().Value()) {
+            // Only the pure LP solvers (GLOP, CLP, PDLP) have dual values to give. Rows were declared in order.
+            RowDuals = solver.IsMip() ? [] : [.. solver.constraints().Select(constraint => constraint.DualValue())],
+        };
 }
 
 /// <summary>Ready-made solvers backed by OR-Tools.</summary>

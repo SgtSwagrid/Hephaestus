@@ -11,7 +11,20 @@ namespace Hephaestus.Gurobi;
 public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
     /// <inheritdoc/>
     public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>
-        Solve(problem.AsIndicatorProblem(), start, options, cancellationToken);
+        Solve(problem.AsIndicatorProblem(), start, options, cancellationToken).Select(solution => solution with { RowDuals = PerRow(problem, solution.RowDuals) });
+
+    /// <summary>
+    /// A row reaches Gurobi as an equation, or as its upper side followed by its lower side negated,
+    /// whichever of those it has. So the dual of a row is that of its upper side less that of its lower.
+    /// </summary>
+    private static ImmutableArray<double> PerRow(MilpProblem problem, ImmutableArray<double> duals) =>
+        duals.IsEmpty
+            ? duals
+            : [.. problem.Rows.Aggregate((Next: 0, Duals: ImmutableList<double>.Empty), (taken, row) => (taken.Next + Signs(row).Length, taken.Duals.Add(Signs(row).Select((sign, part) => sign * duals[taken.Next + part]).Sum()))).Duals];
+
+    private static ImmutableArray<int> Signs(LinearRow row) =>
+        row.LowerBound == row.UpperBound ? [1]
+        : [.. double.IsPositiveInfinity(row.UpperBound) ? (int[])[] : [1], .. double.IsNegativeInfinity(row.LowerBound) ? (int[])[] : [-1]];
 
     /// <inheritdoc/>
     public ISolveResult Solve(IndicatorProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) {
@@ -151,7 +164,10 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
     private static Solution ReadSolution(GRBModel model, ImmutableDictionary<IVariable, GRBVar> variables) =>
         new(
             variables.ToImmutableSortedDictionary(entry => entry.Key, entry => entry.Value.X, VariableOrder.Comparer),
-            model.ObjVal);
+            model.ObjVal) {
+            // A linear programme has one Gurobi constraint to a row, in order, because a row with two finite sides is never passed on as one.
+            RowDuals = model.IsMIP == 0 && model.Status == GRB.Status.OPTIMAL ? [.. model.GetConstrs().Select(constraint => constraint.Pi)] : [],
+        };
 }
 
 /// <summary>Ready-made solvers backed by Gurobi.</summary>

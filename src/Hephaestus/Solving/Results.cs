@@ -7,6 +7,13 @@ public sealed record Solution(
     ImmutableSortedDictionary<IVariable, double> Values,
     double ObjectiveValue
 ) {
+    /// <summary>
+    /// The dual value of every row of the programme that a backend solved, in order, where that was a
+    /// linear programme and the backend reports them; empty otherwise. This is for
+    /// <c>problem.ShadowPrices(...)</c>, which quotes them by constraint instead.
+    /// </summary>
+    public ImmutableArray<double> RowDuals { get; init; } = [];
+
     /// <summary>The solution that says nothing: the seed for a starting solution built by hand with <c>With</c>.</summary>
     public static Solution Empty { get; } = new(ImmutableSortedDictionary.Create<IVariable, double>(VariableOrder.Comparer), 0);
 }

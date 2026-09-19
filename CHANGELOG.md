@@ -25,3 +25,4 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Warm starts: `solver.Solve(problem, startingFrom: solution)`, with `Solution.Empty.With(variable, value)` to build a start by hand.
 - Several objectives in order of priority: `Problem.Minimise(a, subjectTo: c).Then(Objective.Maximise(b))`, solved with any solver as a sequence of ordinary solves.
 - Names for expressions (`WithName`, `Name`), `constraint.Conjuncts`, and `solver.FindConflict(problem)`, which explains an infeasible problem with any solver.
+- Shadow prices: `problem.ShadowPrices(solution, backend)`, quoted per named constraint, for problems with logic and whole numbers too (as the prices of the linear programme in force at the solution).

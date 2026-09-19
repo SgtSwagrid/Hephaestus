@@ -137,6 +137,21 @@ if (solver.Solve(problem) is Infeasible) {
 
 `FindConflict` returns conjuncts that cannot all hold and none of which can be spared: drop any one and the rest can. It asks nothing of a solver but to tell feasible from infeasible, so it works with every backend, and takes about `k · log(n / k)` solves to find `k` constraints among `n`. Bounds take part like any other constraint, since that is all they are.
 
+### Shadow prices
+
+```csharp
+var platformFree = (departure >= release).WithName("platform free");
+var problem      = Problem.Minimise(totalDelay, subjectTo: platformFree & ...);
+
+var solution = solver.Solve(problem).SolutionOrNull!;
+var prices   = problem.ShadowPrices(solution, new GurobiBackend());
+
+prices.Of(platformFree)      // seconds of total delay per second by which `release` is raised
+prices.ByName                // every constraint, by name
+```
+
+The price of a constraint `lhs <= rhs` (or `>=`, or `==`) is the change in the optimal objective for each unit by which its right-hand side, as written, is raised; a constraint that is not binding has a price of zero. Prices belong to linear programmes, and a problem with logic or whole numbers is not one, but at a solution it comes down to one: every disjunction has a side that holds, and every whole-number variable has its value. Keep those, and what is left is the linear programme of the continuous variables; its dual values are the prices. They say what each constraint costs given the discrete choices that were made, not what it would cost if those could be made again. The backend that supplies the dual values need not be the solver that found the solution: Gurobi, HiGHS and OR-Tools' GLOP (`new OrToolsBackend(OrToolsSolverId.Glop)`) report them, and a solution found by Z3 or CP-SAT can be priced by any of them.
+
 ### Variables have no bounds; bounds are constraints
 
 A variable is a name and a kind (`Continuous`, `Integer`, `Binary`). `0 <= x & x <= 3600` is a constraint like any other. The encoder recognises unconditional single-variable constraints and hands them to the solver as native column bounds, so this costs nothing.
