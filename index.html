@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>⚒️ Hephaestus | Hephaestus </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="⚒️ Hephaestus | Hephaestus ">
+      
+      
+      <link rel="icon" href="favicon.ico">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/SgtSwagrid/Hephaestus/blob/v0.1.0-beta.1/docs/index.md/#L1">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="index.html">
+            <img id="logo" class="svg" src="logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+
+      <div class="content">
+        <div class="actionbar">
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="">
+
+<div align="center">
+  <h1>⚒️ Hephaestus</h1>
+  <p>A purely functional modelling layer for MILP and SMT solvers, for C# 14 / .NET 10.</p>
+  <span>
+    <a href="https://github.com/SgtSwagrid/Hephaestus/actions/workflows/build-integrity.yml"><img src="https://github.com/SgtSwagrid/Hephaestus/actions/workflows/build-integrity.yml/badge.svg" alt="Build status"></a>
+    <a href="https://www.nuget.org/packages/Hephaestus.Optimisation"><img src="https://img.shields.io/nuget/vpre/Hephaestus.Optimisation.svg" alt="NuGet"></a>
+    <a href="https://alecdorrington.com/Hephaestus"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Documentation"></a>
+  </span>
+</div>
+<h2 id="-overview">💡 Overview</h2>
+<br>
+<blockquote>
+<p>&quot;Nothing at all takes place in the universe in which some rule of maximum or minimum does not appear.&quot; — Leonhard Euler.</p>
+</blockquote>
+<br>
+<p>Optimisation models are specified as mathematics. Hephaestus lets the code <em>be</em> that mathematics, so that reviewing a constraint is a direct comparison with its specification:</p>
+<pre><code>occ_A ∧ occ_B  ⟹  (dep_A + h ≤ dep_B) ∨ (dep_B + h ≤ dep_A)
+</code></pre>
+<pre><code class="lang-csharp">var isSeparated    = (departureA + headway &lt;= departureB) | (departureB + headway &lt;= departureA);
+var isConflictFree = !(occupiesA &amp; occupiesB) | isSeparated;
+</code></pre>
+<p>There are no auxiliary booleans to declare, no gadget factories, and no big-M to work out by hand: the boolean structure is lowered to linear constraints automatically, and every big-M is derived from the bounds your constraints already state. The solver underneath is swappable.</p>
+<h2 id="-installation">⬇️ Installation</h2>
+<table>
+<thead>
+<tr>
+<th>Package</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Hephaestus.Optimisation</code></td>
+<td>The core: expressions, problems, the MILP encoding, the solver interfaces. No native dependencies.</td>
+</tr>
+<tr>
+<td><code>Hephaestus.Optimisation.Gurobi</code></td>
+<td>Native Gurobi backend. Conditional constraints become Gurobi indicator constraints, so no big-M is involved; the classic big-M formulation is available too. Needs a Gurobi licence.</td>
+</tr>
+<tr>
+<td><code>Hephaestus.Optimisation.Highs</code></td>
+<td>Standalone HiGHS backend: the leading permissively licensed MILP solver, in a few megabytes.</td>
+</tr>
+<tr>
+<td><code>Hephaestus.Optimisation.OrTools</code></td>
+<td>Google OR-Tools: CP-SAT through its own interface (whole-number problems, no big-M, often the fastest choice for either-or scheduling), plus SCIP, CBC and HiGHS as MILP solvers. Pure LP solvers (GLOP, CLP, PDLP) are accepted only for problems that need no whole-number variables.</td>
+</tr>
+<tr>
+<td><code>Hephaestus.Optimisation.Z3</code></td>
+<td>SMT backend on Microsoft Z3: native boolean structure, exact arithmetic, no encoding at all.</td>
+</tr>
+<tr>
+<td><code>Hephaestus.Optimisation.NodaTime</code></td>
+<td>Typed variables and expressions for the NodaTime types.</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="lang-bash">dotnet add package Hephaestus.Optimisation --prerelease
+dotnet add package Hephaestus.Optimisation.OrTools --prerelease
+</code></pre>
+<p>Hephaestus is in beta, so <code>--prerelease</code> is needed for now, and the API may change between versions.</p>
+<p>(The bare name <code>Hephaestus</code> was already taken on nuget.org, hence <code>Hephaestus.Optimisation</code>. The namespace is simply <code>Hephaestus</code>.) Operators are C# 14 extension members, so consumers need the .NET 10 SDK.</p>
+<h2 id="-a-complete-example">📖 A complete example</h2>
+<pre><code class="lang-csharp">using Hephaestus;
+using Hephaestus.OrTools;
+
+var departureA = Variable.Continuous(&quot;departureA&quot;);
+var departureB = Variable.Continuous(&quot;departureB&quot;);
+var occupiesA  = Variable.Binary(&quot;occupiesA&quot;);
+var occupiesB  = Variable.Binary(&quot;occupiesB&quot;);
+const double headway = 120;
+
+var withinTheHour  = departureA.Between(0, 3600) &amp; departureB.Between(0, 3600);
+var isSeparated    = (departureA + headway &lt;= departureB) | (departureB + headway &lt;= departureA);
+var isConflictFree = !(occupiesA &amp; occupiesB) | isSeparated;
+
+var problem = Problem.Minimise(
+    departureA + departureB,
+    subjectTo: withinTheHour &amp; isConflictFree &amp; occupiesA &amp; occupiesB);
+
+var summary = OrToolsSolver.Create().Solve(problem).Match(
+    optimal:    solution =&gt; $&quot;A leaves at {solution.Value(departureA)}, B at {solution.Value(departureB)}&quot;,
+    feasible:   solution =&gt; $&quot;best found: {solution.ObjectiveValue}&quot;,
+    infeasible: () =&gt; &quot;no timetable exists&quot;,
+    unbounded:  () =&gt; &quot;unbounded&quot;,
+    unknown:    reason =&gt; $&quot;the solver gave up: {reason}&quot;);
+</code></pre>
+<p>Swap <code>OrToolsSolver.Create()</code> for <code>OrToolsSolver.Create(OrToolsSolverId.Highs)</code> or <code>new Z3Solver()</code> and nothing else changes. <code>samples/TrainHeadway</code> is a slightly larger version in NodaTime types.</p>
+<h2 id="-the-ideas">🧠 The ideas</h2>
+<h3 id="expressions-are-data-operators-only-build-it">Expressions are data; operators only build it</h3>
+<p>There are two algebraic data types, each an interface with a handful of sealed records:</p>
+<ul>
+<li><code>ILinearExpression</code>: <code>Constant</code>, <code>Sum</code>, <code>Product</code>, and the variables.</li>
+<li><code>IBooleanExpression</code>: <code>BooleanConstant</code>, <code>Comparison</code>, <code>Negation</code>, <code>Conjunction</code>, <code>Disjunction</code>, <code>Implication</code>, <code>Equivalence</code>, and <code>BinaryVariable</code>.</li>
+</ul>
+<p>Keeping them apart makes illegal compositions unrepresentable: <code>x * y</code>, <code>(x &lt;= 1) + 1</code> and <code>if (x &lt;= y)</code> do not compile. A <code>BinaryVariable</code> belongs to both types, so <code>occupiesA + occupiesB &lt;= 1</code> and <code>occupiesA &amp; occupiesB</code> are both fine.</p>
+<p>Operators (<code>+ - * /</code>, <code>&lt;= &gt;= &lt; &gt;</code>, <code>&amp; | ! ^</code>, plus <code>EqualTo</code>, <code>NotEqualTo</code>, <code>Between</code>, <code>Implies</code>, <code>Iff</code>) are extension members that do nothing but construct records: <code>a + b</code> <em>is</em> <code>new Sum(a, b)</code>. Plain values mix in on either side: <code>x + 5</code>, <code>5 + x</code>, <code>0 &lt;= x</code>, and, for constraints that depend on known data, <code>train.IsFreight.Implies(departure &gt;= curfew)</code> or <code>isPeak &amp; (headway &gt;= 180)</code>. Nothing is flattened or simplified at construction time. All interpretation happens later, in separate passes over the data:</p>
+<table>
+<thead>
+<tr>
+<th>Pass</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Normalise a linear expression to its canonical affine form</td>
+<td><code>expression.Normalise()</code></td>
+</tr>
+<tr>
+<td>Render as written, for logs and review</td>
+<td><code>expression.Format()</code></td>
+</tr>
+<tr>
+<td>Collect variables</td>
+<td><code>expression.Variables</code></td>
+</tr>
+<tr>
+<td>Lower a problem to a plain MILP</td>
+<td><code>problem.Encode()</code></td>
+</tr>
+<tr>
+<td>Read an expression off a solution</td>
+<td><code>solution.Value(expression)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Because expressions are immutable values with structural equality, a constraint can be composed from smaller named pieces, logged, compared and unit-tested without a solver or a &quot;problem&quot; object in sight. (<code>==</code> is reserved by C# for that structural equality, which is why the equality <em>constraint</em> is spelt <code>EqualTo</code>.)</p>
+<h3 id="a-problem-is-one-constraint-not-a-list">A problem is one constraint, not a list</h3>
+<pre><code class="lang-csharp">Problem.Satisfy(constraint)
+Problem.Minimise(objective, subjectTo: constraint)
+Problem.Maximise(objective, subjectTo: constraint)
+</code></pre>
+<p>A list of constraints would only duplicate what <code>&amp;</code> already means. Conjoin a collection with <code>constraints.AllOf()</code> (and <code>AnyOf()</code>, and <code>terms.Sum()</code>); these build balanced trees, so a hundred thousand constraints are no deeper than seventeen levels. Problems are records too: &quot;rollback&quot; is keeping the old value, and extending is <code>problem with { Constraint = problem.Constraint &amp; extra }</code>.</p>
+<h3 id="variables-have-no-bounds-bounds-are-constraints">Variables have no bounds; bounds are constraints</h3>
+<p>A variable is a name and a kind (<code>Continuous</code>, <code>Integer</code>, <code>Binary</code>). <code>0 &lt;= x &amp; x &lt;= 3600</code> is a constraint like any other. The encoder recognises unconditional single-variable constraints and hands them to the solver as native column bounds, so this costs nothing.</p>
+<h3 id="big-m-is-derived-never-supplied">Big-M is derived, never supplied</h3>
+<p>The MILP encoding runs in four pure steps:</p>
+<ol>
+<li><strong>Normalise</strong> to negation normal form, with comparisons as <code>affine form &lt;= 0</code> or <code>== 0</code>.</li>
+<li><strong>Encode the logic</strong> as <em>guarded rows</em>, &quot;if these literals all hold then <code>e &lt;= 0</code>&quot;, introducing as few auxiliary binaries as possible. In a disjunction the existing literals become guards, and only the compound disjuncts <em>other than the last</em> need an auxiliary. <code>(a + h &lt;= b) | (b + h &lt;= a)</code> comes out as the textbook either-or with one binary; <code>flag.Iff(x &gt;= 5)</code> needs none. Equal subformulas share one auxiliary.</li>
+<li><strong>Propagate bounds</strong> (feasibility-based bound tightening) over the unconditional rows. <code>x &lt;= 3600</code> bounds <code>x</code> directly; <code>arrival == departure + run</code> bounds <code>arrival</code> once <code>departure</code> and <code>run</code> are bounded; and so on down the line until nothing changes.</li>
+<li><strong>Relax each guard</strong> with <code>e &lt;= M · (number of guards that are off)</code>, where <code>M</code> is the largest value <code>e</code> can take inside the propagated bounds. That is the tightest valid <code>M</code>, computed separately for every row. Rows that can never bind are dropped; rows that can never hold forbid their guards outright.</li>
+</ol>
+<p>If some <code>M</code> is infinite, encoding fails with an error naming the variables that lack bounds. That is deliberate: a guessed big-M that is too small silently cuts off solutions, and the whole point is that wrong constraints should not fail silently. If you really want a guess, opt in with <code>new EncodingOptions(FallbackBigM: 1e6)</code>.</p>
+<p>The first two steps are <code>problem.EncodeLogic()</code>, giving an <code>IndicatorProblem</code>; the last two are <code>.RelaxGuards()</code>, giving a <code>MilpProblem</code>; <code>problem.Encode()</code> is both. Either result can be printed with <code>.Format()</code>. Solvers with indicator or half-reified constraints (Gurobi, CP-SAT) stop after the first half and never see a big-M, and the Z3 backend skips all of it, because an SMT solver takes the boolean structure as it stands.</p>
+<h3 id="strictness">Strictness</h3>
+<p>Over whole-valued expressions, <code>n &lt; 5</code> is exactly <code>n &lt;= 4</code>. Over the reals a MILP cannot express strictness, so <code>x &lt; 5</code> becomes <code>x + ε &lt;= 5</code> with <code>EncodingOptions.StrictnessEpsilon</code> (default <code>1e-4</code>, comfortably above solver tolerances). Negation is where this usually bites: <code>!(x &lt;= 5)</code> is <code>x &gt; 5</code>. Z3 has true strict inequalities and no epsilon.</p>
+<h3 id="reified-truth-values">Reified truth values</h3>
+<p>To use the truth of a constraint as a number (say, to count violated soft constraints), tie it to a binary variable yourself: <code>isLate.Iff(arrival &gt;= deadline)</code>, then use <code>isLate</code> in the objective. <code>Iff</code> binds in both directions.</p>
+<h3 id="typed-expressions">Typed expressions</h3>
+<p>A <code>Quantity&lt;T&gt;</code> is a linear expression read as an <em>amount</em> of type <code>T</code> (a duration); a <code>Point&lt;T, TDelta&gt;</code> is one read as a <em>position</em> (a date-time) whose differences are amounts of <code>TDelta</code>. Each pairs an ordinary <code>ILinearExpression</code> with an <code>IProjection&lt;T&gt;</code>, an affine map between <code>T</code> and the solver's number line (&quot;seconds since 08:00&quot;).</p>
+<p>The two types carry the right algebra, once, generically:</p>
+<pre><code class="lang-csharp">Quantity&lt;Duration&gt;               runTime  = arrival - departure;          // point - point
+Point&lt;LocalDateTime, Duration&gt;   earliest = departure + dwell + minimum;  // point + quantity
+IBooleanExpression               onTime   = arrival &lt;= deadline;          // compare with plain values
+Point&lt;LocalDateTime, Duration&gt;   release  = start + dwell;                // plain value + quantity
+//                                          arrival + departure           // does not compile
+//                                          2 * arrival                   // does not compile
+//                                          arrival &lt;= dwell              // does not compile
+</code></pre>
+<p>Plain values of the right type are welcome wherever an expression is, on either side (<code>Duration.FromMinutes(2) + departure</code>, <code>start &lt;= departure</code>, <code>dwell.Between(minimum, arrival - departure)</code>), and <code>delay.In(Duration.FromMinutes(1))</code> turns a quantity back into a plain linear expression (&quot;delay in minutes&quot;) for a cost function.</p>
+<p>Solutions are read back in the same types: <code>solution.Value(arrival)</code> is a <code>LocalDateTime</code>, and so is <code>solution.Value(departure + dwell)</code>; any expression can be read, not just variables. Expressions under different projections (minutes against seconds, different origins) are reconciled automatically.</p>
+<p>The core ships projections for <code>TimeSpan</code>, <code>DateTime</code> and <code>DateTimeOffset</code>; <code>Hephaestus.Optimisation.NodaTime</code> adds <code>Duration</code>, <code>Instant</code>, <code>LocalDateTime</code>, <code>LocalDate</code> (in <code>Period</code>s of whole days), <code>LocalTime</code>, <code>OffsetDateTime</code> and <code>ZonedDateTime</code>:</p>
+<pre><code class="lang-csharp">var departure = Variable.LocalDateTime(&quot;departure&quot;, origin: start);
+var dwell     = Variable.Duration(&quot;dwell&quot;, unit: Duration.FromSeconds(30), inWholeUnits: true);  // quantised
+</code></pre>
+<p>Supporting another type means writing one small record that implements <code>IProjection&lt;T&gt;</code> (or <code>IPointProjection&lt;T, TDelta&gt;</code>), plus, for a point type, the three one-line <code>T ± Quantity&lt;TDelta&gt;</code> operators that C# will not let the core declare generically (they delegate to <code>quantity.Beyond(origin, projection)</code>). Typed reads round the underlying number to five decimal places of the unit by default, so that solver noise does not turn 08:04:00 into 08:03:59.99999999.</p>
+<h3 id="swapping-the-solver">Swapping the solver</h3>
+<p><code>ISolver</code> is the seam: <code>ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default)</code>. A backend joins at whichever level suits the solver:</p>
+<table>
+<thead>
+<tr>
+<th>A solver that takes...</th>
+<th>implements</th>
+<th>and sees</th>
+<th>Examples</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>logic as it stands</td>
+<td><code>ISolver</code></td>
+<td>the <code>IProblem</code> itself</td>
+<td><code>Z3Solver</code></td>
+</tr>
+<tr>
+<td>conditional linear constraints</td>
+<td><code>IIndicatorBackend</code></td>
+<td>an <code>IndicatorProblem</code>: linear rows guarded by literals, no big-M</td>
+<td><code>GurobiBackend</code>, <code>CpSatBackend</code></td>
+</tr>
+<tr>
+<td>linear constraints only</td>
+<td><code>IMilpBackend</code></td>
+<td>a <code>MilpProblem</code>: bounded columns, linear rows, a linear objective</td>
+<td><code>HighsBackend</code>, <code>OrToolsBackend</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>IndicatorSolver</code> and <code>MilpSolver</code> wrap the latter two into an <code>ISolver</code>: they encode, solve, hide the auxiliaries and snap whole-number variables. A backend is about a hundred lines.</p>
+<pre><code class="lang-csharp">GurobiSolver.Create()                       // indicator constraints, no big-M
+GurobiSolver.Create(useIndicators: false)   // classic big-M, derived per row
+CpSatSolver.Create()                        // whole-number problems only
+HighsSolver.Create()
+OrToolsSolver.Create(OrToolsSolverId.Scip)
+new Z3Solver()
+</code></pre>
+<p>The test suite runs one contract against SCIP, CBC, HiGHS (standalone and through OR-Tools), Gurobi (both formulations) and Z3, and a second, whole-number contract against those and CP-SAT. The Gurobi tests are skipped where no licence is found.</p>
+<h2 id="-things-worth-knowing">⚠️ Things worth knowing</h2>
+<ul>
+<li>Sum and conjoin collections with <code>Sum()</code>, <code>AllOf()</code> and <code>AnyOf()</code> rather than folding <code>+</code> or <code>&amp;</code> yourself. (Folding still works: deep trees are handled without overflowing the stack. It is merely slower, and the records' built-in <code>ToString</code>/<code>Equals</code> do recurse.)</li>
+<li>An equivalence duplicates its operands when negations are pushed inwards, so <em>deeply nested</em> <code>Iff</code>s grow exponentially. Name the inner ones with binary variables.</li>
+<li>Variables are identified by name and kind. Two variables of different kinds sharing a name is an error.</li>
+<li>Do not reference <code>Hephaestus.Optimisation.Highs</code> and <code>Hephaestus.Optimisation.OrTools</code> from the same application. Both upstream packages ship a native <code>highs.dll</code>, of different versions, and whichever is copied last breaks the other.</li>
+<li>CP-SAT works in whole numbers over finite domains. It refuses continuous variables by name, needs every variable bounded (directly or by implication), and scales fractional coefficients by a power of ten, refusing those that none makes whole (a third, say).</li>
+<li>HiGHS, as driven by OR-Tools, prints a one-line banner to standard output on every solve. That is upstream behaviour; the standalone HiGHS backend and the other solvers are silent.</li>
+</ul>
+<h2 id="-building">🛠️ Building</h2>
+<pre><code class="lang-bash">dotnet build
+dotnet test
+dotnet run --project samples/TrainHeadway
+dotnet pack --configuration Release --output artefacts
+</code></pre>
+<p>The test projects use xunit.v3 on Microsoft.Testing.Platform (see <code>global.json</code>). <code>tests/Hephaestus.Tests/EncodingEquivalenceTests.cs</code> is the one to read first: it checks, exhaustively over a grid and for hundreds of random formulas, that an assignment satisfies a formula exactly when it extends to a solution of the encoded rows.</p>
+<p>Publishing a GitHub release tagged <code>v1.2.3</code> tests, packs and publishes version <code>1.2.3</code> of every package to nuget.org, and publishes the API documentation. See <a href="../CONTRIBUTING.md#-publishing-workflow">CONTRIBUTING.md</a>.</p>
+<h2 id="-licence">👮‍♂️ Licence</h2>
+<p>MIT; see <a href="../LICENSE.md">LICENSE.md</a>.</p>
+<h2 id="-see-also">👁️ See also</h2>
+<ul>
+<li>This library was made using <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.</li>
+</ul>
+
+</article>
+
+        <div class="contribution d-print-none">
+          <a href="https://github.com/SgtSwagrid/Hephaestus/blob/v0.1.0-beta.1/docs/index.md/#L1" class="edit-link">Edit this page</a>
+        </div>
+
+        <div class="next-article d-print-none border-top" id="nextArticle"></div>
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

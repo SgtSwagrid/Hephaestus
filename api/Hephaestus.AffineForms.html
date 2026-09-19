@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class AffineForms | Hephaestus </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class AffineForms | Hephaestus ">
+      
+      <meta name="description" content="Arithmetic and analysis over  and .">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Hephaestus.AffineForms">
+
+
+
+  <h1 id="Hephaestus_AffineForms" data-uid="Hephaestus.AffineForms" class="text-break">
+Class AffineForms  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Hephaestus.html">Hephaestus</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Hephaestus.Optimisation.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Arithmetic and analysis over <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a> and <a class="xref" href="Hephaestus.Interval.html">Interval</a>.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class AffineForms</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">AffineForms</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Hephaestus_AffineForms_Evaluate_" data-uid="Hephaestus.AffineForms.Evaluate*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Evaluate_Hephaestus_AffineForm_System_Func_Hephaestus_IVariable_System_Double__" data-uid="Hephaestus.AffineForms.Evaluate(Hephaestus.AffineForm,System.Func{Hephaestus.IVariable,System.Double})">
+  Evaluate(AffineForm, Func&lt;IVariable, double&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The value of the form under an assignment of its variables.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Evaluate(this AffineForm form, Func&lt;IVariable, double&gt; valueOf)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+    <dt><code>valueOf</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="Hephaestus.IVariable.html">IVariable</a>, <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_Intersect_" data-uid="Hephaestus.AffineForms.Intersect*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Intersect_Hephaestus_Interval_Hephaestus_Interval_" data-uid="Hephaestus.AffineForms.Intersect(Hephaestus.Interval,Hephaestus.Interval)">
+  Intersect(Interval, Interval)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The numbers common to both intervals.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Interval Intersect(this Interval interval, Interval other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>interval</code> <a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_Plus_" data-uid="Hephaestus.AffineForms.Plus*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Plus_Hephaestus_AffineForm_Hephaestus_AffineForm_" data-uid="Hephaestus.AffineForms.Plus(Hephaestus.AffineForm,Hephaestus.AffineForm)">
+  Plus(AffineForm, AffineForm)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The sum of two forms.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static AffineForm Plus(this AffineForm form, AffineForm other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_Plus_" data-uid="Hephaestus.AffineForms.Plus*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Plus_Hephaestus_AffineForm_System_Double_" data-uid="Hephaestus.AffineForms.Plus(Hephaestus.AffineForm,System.Double)">
+  Plus(AffineForm, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>This form shifted by a constant.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static AffineForm Plus(this AffineForm form, double constant)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+    <dt><code>constant</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_Plus_" data-uid="Hephaestus.AffineForms.Plus*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Plus_Hephaestus_Interval_Hephaestus_Interval_" data-uid="Hephaestus.AffineForms.Plus(Hephaestus.Interval,Hephaestus.Interval)">
+  Plus(Interval, Interval)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The interval of sums of a number from each interval.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Interval Plus(this Interval interval, Interval other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>interval</code> <a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_PlusTerm_" data-uid="Hephaestus.AffineForms.PlusTerm*"></a>
+
+  <h3 id="Hephaestus_AffineForms_PlusTerm_Hephaestus_AffineForm_Hephaestus_IVariable_System_Double_" data-uid="Hephaestus.AffineForms.PlusTerm(Hephaestus.AffineForm,Hephaestus.IVariable,System.Double)">
+  PlusTerm(AffineForm, IVariable, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>This form with <code class="paramref">coefficient</code> · <code class="paramref">variable</code> added.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static AffineForm PlusTerm(this AffineForm form, IVariable variable, double coefficient)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+    <dt><code>variable</code> <a class="xref" href="Hephaestus.IVariable.html">IVariable</a></dt>
+    <dd></dd>
+    <dt><code>coefficient</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_Range_" data-uid="Hephaestus.AffineForms.Range*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Range_Hephaestus_AffineForm_System_Func_Hephaestus_IVariable_Hephaestus_Interval__" data-uid="Hephaestus.AffineForms.Range(Hephaestus.AffineForm,System.Func{Hephaestus.IVariable,Hephaestus.Interval})">
+  Range(AffineForm, Func&lt;IVariable, Interval&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The tightest interval containing every value of the form, given an interval for each variable.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Interval Range(this AffineForm form, Func&lt;IVariable, Interval&gt; boundsOf)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+    <dt><code>boundsOf</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;<a class="xref" href="Hephaestus.IVariable.html">IVariable</a>, <a class="xref" href="Hephaestus.Interval.html">Interval</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_Times_" data-uid="Hephaestus.AffineForms.Times*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Times_Hephaestus_AffineForm_System_Double_" data-uid="Hephaestus.AffineForms.Times(Hephaestus.AffineForm,System.Double)">
+  Times(AffineForm, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>This form scaled by a factor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static AffineForm Times(this AffineForm form, double factor)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+    <dt><code>factor</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_Times_" data-uid="Hephaestus.AffineForms.Times*"></a>
+
+  <h3 id="Hephaestus_AffineForms_Times_Hephaestus_Interval_System_Double_" data-uid="Hephaestus.AffineForms.Times(Hephaestus.Interval,System.Double)">
+  Times(Interval, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The interval scaled by a non-zero factor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Interval Times(this Interval interval, double factor)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>interval</code> <a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+    <dt><code>factor</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_get_IntrinsicBounds_" data-uid="Hephaestus.AffineForms.get_IntrinsicBounds*"></a>
+
+  <h3 id="Hephaestus_AffineForms_get_IntrinsicBounds_Hephaestus_IVariable_" data-uid="Hephaestus.AffineForms.get_IntrinsicBounds(Hephaestus.IVariable)">
+  get_IntrinsicBounds(IVariable)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The bounds a variable has by virtue of its kind alone.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static Interval get_IntrinsicBounds(IVariable variable)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>variable</code> <a class="xref" href="Hephaestus.IVariable.html">IVariable</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_get_IsConstant_" data-uid="Hephaestus.AffineForms.get_IsConstant*"></a>
+
+  <h3 id="Hephaestus_AffineForms_get_IsConstant_Hephaestus_AffineForm_" data-uid="Hephaestus.AffineForms.get_IsConstant(Hephaestus.AffineForm)">
+  get_IsConstant(AffineForm)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Whether the form has no variables.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool get_IsConstant(AffineForm form)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_get_IsEmpty_" data-uid="Hephaestus.AffineForms.get_IsEmpty*"></a>
+
+  <h3 id="Hephaestus_AffineForms_get_IsEmpty_Hephaestus_Interval_" data-uid="Hephaestus.AffineForms.get_IsEmpty(Hephaestus.Interval)">
+  get_IsEmpty(Interval)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Whether the interval contains no numbers at all.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool get_IsEmpty(Interval interval)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>interval</code> <a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_get_IsIntegral_" data-uid="Hephaestus.AffineForms.get_IsIntegral*"></a>
+
+  <h3 id="Hephaestus_AffineForms_get_IsIntegral_Hephaestus_AffineForm_" data-uid="Hephaestus.AffineForms.get_IsIntegral(Hephaestus.AffineForm)">
+  get_IsIntegral(AffineForm)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Whether the form can only take whole-number values: whole coefficients on integral
+variables and a whole constant.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool get_IsIntegral(AffineForm form)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_get_IsIntegral_" data-uid="Hephaestus.AffineForms.get_IsIntegral*"></a>
+
+  <h3 id="Hephaestus_AffineForms_get_IsIntegral_Hephaestus_IVariable_" data-uid="Hephaestus.AffineForms.get_IsIntegral(Hephaestus.IVariable)">
+  get_IsIntegral(IVariable)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Whether the variable is restricted to whole numbers.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool get_IsIntegral(IVariable variable)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>variable</code> <a class="xref" href="Hephaestus.IVariable.html">IVariable</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_AffineForms_get_Negated_" data-uid="Hephaestus.AffineForms.get_Negated*"></a>
+
+  <h3 id="Hephaestus_AffineForms_get_Negated_Hephaestus_AffineForm_" data-uid="Hephaestus.AffineForms.get_Negated(Hephaestus.AffineForm)">
+  get_Negated(AffineForm)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>This form with every sign flipped.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static AffineForm get_Negated(AffineForm form)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>form</code> <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class Evaluation | Hephaestus </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class Evaluation | Hephaestus ">
+      
+      <meta name="description" content="Reads expressions off a solution. Any expression can be read, not just variables.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Hephaestus.Evaluation">
+
+
+
+  <h1 id="Hephaestus_Evaluation" data-uid="Hephaestus.Evaluation" class="text-break">
+Class Evaluation  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Hephaestus.html">Hephaestus</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Hephaestus.Optimisation.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Reads expressions off a solution. Any expression can be read, not just variables.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class Evaluation</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">Evaluation</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Hephaestus_Evaluation_Value_" data-uid="Hephaestus.Evaluation.Value*"></a>
+
+  <h3 id="Hephaestus_Evaluation_Value_Hephaestus_Solution_Hephaestus_BinaryVariable_" data-uid="Hephaestus.Evaluation.Value(Hephaestus.Solution,Hephaestus.BinaryVariable)">
+  Value(Solution, BinaryVariable)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Whether a binary variable is set. (Read it as a number with <code>Value((ILinearExpression)variable)</code>.)</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool Value(this Solution solution, BinaryVariable variable)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solution</code> <a class="xref" href="Hephaestus.Solution.html">Solution</a></dt>
+    <dd></dd>
+    <dt><code>variable</code> <a class="xref" href="Hephaestus.BinaryVariable.html">BinaryVariable</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_Evaluation_Value_" data-uid="Hephaestus.Evaluation.Value*"></a>
+
+  <h3 id="Hephaestus_Evaluation_Value_Hephaestus_Solution_Hephaestus_IBooleanExpression_System_Double_" data-uid="Hephaestus.Evaluation.Value(Hephaestus.Solution,Hephaestus.IBooleanExpression,System.Double)">
+  Value(Solution, IBooleanExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Whether a boolean expression holds under this solution. Comparisons are forgiven
+violations up to <code class="paramref">tolerance</code>, since solvers work in floating point.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool Value(this Solution solution, IBooleanExpression expression, double tolerance = 1E-06)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solution</code> <a class="xref" href="Hephaestus.Solution.html">Solution</a></dt>
+    <dd></dd>
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>tolerance</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_Evaluation_Value_" data-uid="Hephaestus.Evaluation.Value*"></a>
+
+  <h3 id="Hephaestus_Evaluation_Value_Hephaestus_Solution_Hephaestus_ILinearExpression_" data-uid="Hephaestus.Evaluation.Value(Hephaestus.Solution,Hephaestus.ILinearExpression)">
+  Value(Solution, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The value of a linear expression under this solution.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static double Value(this Solution solution, ILinearExpression expression)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solution</code> <a class="xref" href="Hephaestus.Solution.html">Solution</a></dt>
+    <dd></dd>
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h4 class="section">Exceptions</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.keynotfoundexception">KeyNotFoundException</a></dt>
+    <dd><p>The expression mentions a variable the solved problem did not.</p>
+</dd>
+  </dl>
+
+
+
+  <a id="Hephaestus_Evaluation_Value_" data-uid="Hephaestus.Evaluation.Value*"></a>
+
+  <h3 id="Hephaestus_Evaluation_Value__1_Hephaestus_Solution_Hephaestus_Quantity___0__System_Int32_" data-uid="Hephaestus.Evaluation.Value``1(Hephaestus.Solution,Hephaestus.Quantity{``0},System.Int32)">
+  Value&lt;T&gt;(Solution, Quantity&lt;T&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The value of a typed quantity under this solution.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static T Value&lt;T&gt;(this Solution solution, Quantity&lt;T&gt; quantity, int decimalPlaces = 5)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solution</code> <a class="xref" href="Hephaestus.Solution.html">Solution</a></dt>
+    <dd></dd>
+    <dt><code>quantity</code> <a class="xref" href="Hephaestus.Quantity-1.html">Quantity</a>&lt;T&gt;</dt>
+    <dd><p>The quantity to read.</p>
+</dd>
+    <dt><code>decimalPlaces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><p>The number of decimal places, in units of the projection, to which the underlying number is
+rounded before decoding. Solvers are accurate to about a millionth of a unit, so without
+this a departure at 240 seconds reads as 08:03:59.99999999. The unrounded number is
+<code>solution.Value(quantity.Expression)</code>.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">T</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_Evaluation_Value_" data-uid="Hephaestus.Evaluation.Value*"></a>
+
+  <h3 id="Hephaestus_Evaluation_Value__2_Hephaestus_Solution_Hephaestus_Point___0___1__System_Int32_" data-uid="Hephaestus.Evaluation.Value``2(Hephaestus.Solution,Hephaestus.Point{``0,``1},System.Int32)">
+  Value&lt;T, TDelta&gt;(Solution, Point&lt;T, TDelta&gt;, int)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The value of a typed point under this solution.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static T Value&lt;T, TDelta&gt;(this Solution solution, Point&lt;T, TDelta&gt; point, int decimalPlaces = 5)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>solution</code> <a class="xref" href="Hephaestus.Solution.html">Solution</a></dt>
+    <dd></dd>
+    <dt><code>point</code> <a class="xref" href="Hephaestus.Point-2.html">Point</a>&lt;T, TDelta&gt;</dt>
+    <dd><p>The point to read.</p>
+</dd>
+    <dt><code>decimalPlaces</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd><param name="decimalPlaces">
+            The number of decimal places, in units of the projection, to which the underlying number is
+            rounded before decoding. Solvers are accurate to about a millionth of a unit, so without
+            this a departure at 240 seconds reads as 08:03:59.99999999. The unrounded number is
+            <code>solution.Value(quantity.Expression)</code>.
+            
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">T</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+    <dt><code>TDelta</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

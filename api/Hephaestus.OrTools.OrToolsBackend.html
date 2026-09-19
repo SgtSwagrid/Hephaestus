@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class OrToolsBackend | Hephaestus </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class OrToolsBackend | Hephaestus ">
+      
+      <meta name="description" content="Solves mixed-integer linear programmes with a solver driven through Google OR-Tools.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Hephaestus.OrTools.OrToolsBackend">
+
+
+
+  <h1 id="Hephaestus_OrTools_OrToolsBackend" data-uid="Hephaestus.OrTools.OrToolsBackend" class="text-break">
+Class OrToolsBackend  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Hephaestus.html">Hephaestus</a>.<a class="xref" href="Hephaestus.OrTools.html">OrTools</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Hephaestus.Optimisation.OrTools.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Solves mixed-integer linear programmes with a solver driven through Google OR-Tools.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public sealed record OrToolsBackend : IMilpBackend, IEquatable&lt;OrToolsBackend&gt;</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">OrToolsBackend</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="Hephaestus.IMilpBackend.html">IMilpBackend</a></div>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.iequatable-1">IEquatable</a>&lt;<a class="xref" href="Hephaestus.OrTools.OrToolsBackend.html">OrToolsBackend</a>&gt;</div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="constructors">Constructors
+</h2>
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend__ctor_" data-uid="Hephaestus.OrTools.OrToolsBackend.#ctor*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend__ctor_System_String_" data-uid="Hephaestus.OrTools.OrToolsBackend.#ctor(System.String)">
+  OrToolsBackend(string)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Solves mixed-integer linear programmes with a solver driven through Google OR-Tools.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public OrToolsBackend(string SolverId = &quot;SCIP&quot;)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>SolverId</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_SolverId_" data-uid="Hephaestus.OrTools.OrToolsBackend.SolverId*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_SolverId" data-uid="Hephaestus.OrTools.OrToolsBackend.SolverId">
+  SolverId
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public string SolverId { get; init; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_Deconstruct_" data-uid="Hephaestus.OrTools.OrToolsBackend.Deconstruct*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_Deconstruct_System_String__" data-uid="Hephaestus.OrTools.OrToolsBackend.Deconstruct(System.String@)">
+  Deconstruct(out string)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Deconstruct(out string SolverId)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>SolverId</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_Equals_" data-uid="Hephaestus.OrTools.OrToolsBackend.Equals*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_Equals_Hephaestus_OrTools_OrToolsBackend_" data-uid="Hephaestus.OrTools.OrToolsBackend.Equals(Hephaestus.OrTools.OrToolsBackend)">
+  Equals(OrToolsBackend?)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool Equals(OrToolsBackend? other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>other</code> <a class="xref" href="Hephaestus.OrTools.OrToolsBackend.html">OrToolsBackend</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_Equals_" data-uid="Hephaestus.OrTools.OrToolsBackend.Equals*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_Equals_System_Object_" data-uid="Hephaestus.OrTools.OrToolsBackend.Equals(System.Object)">
+  Equals(object?)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override bool Equals(object? obj)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>obj</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_GetHashCode_" data-uid="Hephaestus.OrTools.OrToolsBackend.GetHashCode*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_GetHashCode" data-uid="Hephaestus.OrTools.OrToolsBackend.GetHashCode">
+  GetHashCode()
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override int GetHashCode()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.int32">int</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_Solve_" data-uid="Hephaestus.OrTools.OrToolsBackend.Solve*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_Solve_Hephaestus_MilpProblem_Hephaestus_SolverOptions_System_Threading_CancellationToken_" data-uid="Hephaestus.OrTools.OrToolsBackend.Solve(Hephaestus.MilpProblem,Hephaestus.SolverOptions,System.Threading.CancellationToken)">
+  Solve(MilpProblem, SolverOptions, CancellationToken)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>Solves the programme, reporting values for every column.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public ISolveResult Solve(MilpProblem problem, SolverOptions options, CancellationToken cancellationToken)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>problem</code> <a class="xref" href="Hephaestus.MilpProblem.html">MilpProblem</a></dt>
+    <dd></dd>
+    <dt><code>options</code> <a class="xref" href="Hephaestus.SolverOptions.html">SolverOptions</a></dt>
+    <dd></dd>
+    <dt><code>cancellationToken</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.threading.cancellationtoken">CancellationToken</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ISolveResult.html">ISolveResult</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_ToString_" data-uid="Hephaestus.OrTools.OrToolsBackend.ToString*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_ToString" data-uid="Hephaestus.OrTools.OrToolsBackend.ToString">
+  ToString()
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override string ToString()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.string">string</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="operators">Operators
+</h2>
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_op_Equality_" data-uid="Hephaestus.OrTools.OrToolsBackend.op_Equality*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_op_Equality_Hephaestus_OrTools_OrToolsBackend_Hephaestus_OrTools_OrToolsBackend_" data-uid="Hephaestus.OrTools.OrToolsBackend.op_Equality(Hephaestus.OrTools.OrToolsBackend,Hephaestus.OrTools.OrToolsBackend)">
+  operator ==(OrToolsBackend?, OrToolsBackend?)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool operator ==(OrToolsBackend? left, OrToolsBackend? right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.OrTools.OrToolsBackend.html">OrToolsBackend</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.OrTools.OrToolsBackend.html">OrToolsBackend</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_OrTools_OrToolsBackend_op_Inequality_" data-uid="Hephaestus.OrTools.OrToolsBackend.op_Inequality*"></a>
+
+  <h3 id="Hephaestus_OrTools_OrToolsBackend_op_Inequality_Hephaestus_OrTools_OrToolsBackend_Hephaestus_OrTools_OrToolsBackend_" data-uid="Hephaestus.OrTools.OrToolsBackend.op_Inequality(Hephaestus.OrTools.OrToolsBackend,Hephaestus.OrTools.OrToolsBackend)">
+  operator !=(OrToolsBackend?, OrToolsBackend?)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static bool operator !=(OrToolsBackend? left, OrToolsBackend? right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.OrTools.OrToolsBackend.html">OrToolsBackend</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.OrTools.OrToolsBackend.html">OrToolsBackend</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

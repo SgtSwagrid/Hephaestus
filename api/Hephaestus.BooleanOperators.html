@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class BooleanOperators | Hephaestus </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class BooleanOperators | Hephaestus ">
+      
+      <meta name="description" content="Logical operators over . As with the linear operators, these only build data; normal forms are computed later, when a model is encoded for a solver.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Hephaestus.BooleanOperators">
+
+
+
+  <h1 id="Hephaestus_BooleanOperators" data-uid="Hephaestus.BooleanOperators" class="text-break">
+Class BooleanOperators  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Hephaestus.html">Hephaestus</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Hephaestus.Optimisation.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Logical operators over <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a>. As with the linear operators, these
+only build data; normal forms are computed later, when a model is encoded for a solver.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class BooleanOperators</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">BooleanOperators</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Hephaestus_BooleanOperators_AllOf_" data-uid="Hephaestus.BooleanOperators.AllOf*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_AllOf_System_Collections_Generic_IEnumerable_Hephaestus_IBooleanExpression__" data-uid="Hephaestus.BooleanOperators.AllOf(System.Collections.Generic.IEnumerable{Hephaestus.IBooleanExpression})">
+  AllOf(IEnumerable&lt;IBooleanExpression&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The conjunction of all expressions, built as a balanced tree. An empty sequence is
+trivially true.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression AllOf(this IEnumerable&lt;IBooleanExpression&gt; expressions)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expressions</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_AllOf_" data-uid="Hephaestus.BooleanOperators.AllOf*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_AllOf__1_System_Collections_Generic_IEnumerable___0__System_Func___0_Hephaestus_IBooleanExpression__" data-uid="Hephaestus.BooleanOperators.AllOf``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,Hephaestus.IBooleanExpression})">
+  AllOf&lt;T&gt;(IEnumerable&lt;T&gt;, Func&lt;T, IBooleanExpression&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The conjunction of the expressions selected from each item.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression AllOf&lt;T&gt;(this IEnumerable&lt;T&gt; items, Func&lt;T, IBooleanExpression&gt; selector) where T : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>items</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd></dd>
+    <dt><code>selector</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;T, <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_AnyOf_" data-uid="Hephaestus.BooleanOperators.AnyOf*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_AnyOf_System_Collections_Generic_IEnumerable_Hephaestus_IBooleanExpression__" data-uid="Hephaestus.BooleanOperators.AnyOf(System.Collections.Generic.IEnumerable{Hephaestus.IBooleanExpression})">
+  AnyOf(IEnumerable&lt;IBooleanExpression&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The disjunction of all expressions, built as a balanced tree. An empty sequence is
+trivially false.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression AnyOf(this IEnumerable&lt;IBooleanExpression&gt; expressions)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expressions</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_AnyOf_" data-uid="Hephaestus.BooleanOperators.AnyOf*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_AnyOf__1_System_Collections_Generic_IEnumerable___0__System_Func___0_Hephaestus_IBooleanExpression__" data-uid="Hephaestus.BooleanOperators.AnyOf``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,Hephaestus.IBooleanExpression})">
+  AnyOf&lt;T&gt;(IEnumerable&lt;T&gt;, Func&lt;T, IBooleanExpression&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The disjunction of the expressions selected from each item.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression AnyOf&lt;T&gt;(this IEnumerable&lt;T&gt; items, Func&lt;T, IBooleanExpression&gt; selector) where T : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>items</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd></dd>
+    <dt><code>selector</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;T, <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_Iff_" data-uid="Hephaestus.BooleanOperators.Iff*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_Iff_Hephaestus_IBooleanExpression_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.Iff(Hephaestus.IBooleanExpression,Hephaestus.IBooleanExpression)">
+  Iff(IBooleanExpression, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that this expression and <code class="paramref">other</code> hold or fail together.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Iff(this IBooleanExpression expression, IBooleanExpression other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_Iff_" data-uid="Hephaestus.BooleanOperators.Iff*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_Iff_Hephaestus_IBooleanExpression_System_Boolean_" data-uid="Hephaestus.BooleanOperators.Iff(Hephaestus.IBooleanExpression,System.Boolean)">
+  Iff(IBooleanExpression, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that this expression and <code class="paramref">other</code> hold or fail together.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Iff(this IBooleanExpression expression, bool other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_Iff_" data-uid="Hephaestus.BooleanOperators.Iff*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_Iff_System_Boolean_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.Iff(System.Boolean,Hephaestus.IBooleanExpression)">
+  Iff(bool, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that <code class="paramref">other</code> holds exactly when this known condition does.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Iff(this bool condition, IBooleanExpression other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>condition</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_Implies_" data-uid="Hephaestus.BooleanOperators.Implies*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_Implies_Hephaestus_IBooleanExpression_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.Implies(Hephaestus.IBooleanExpression,Hephaestus.IBooleanExpression)">
+  Implies(IBooleanExpression, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that <code class="paramref">consequent</code> holds whenever this expression does.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Implies(this IBooleanExpression expression, IBooleanExpression consequent)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>consequent</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_Implies_" data-uid="Hephaestus.BooleanOperators.Implies*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_Implies_Hephaestus_IBooleanExpression_System_Boolean_" data-uid="Hephaestus.BooleanOperators.Implies(Hephaestus.IBooleanExpression,System.Boolean)">
+  Implies(IBooleanExpression, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that <code class="paramref">consequent</code> holds whenever this expression does.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Implies(this IBooleanExpression expression, bool consequent)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>consequent</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_Implies_" data-uid="Hephaestus.BooleanOperators.Implies*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_Implies_System_Boolean_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.Implies(System.Boolean,Hephaestus.IBooleanExpression)">
+  Implies(bool, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that <code class="paramref">consequent</code> holds if this known condition does: <code>train.IsFreight.Implies(departure &gt;= curfew)</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Implies(this bool condition, IBooleanExpression consequent)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>condition</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+    <dt><code>consequent</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_BitwiseAnd_" data-uid="Hephaestus.BooleanOperators.op_BitwiseAnd*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_BitwiseAnd_Hephaestus_IBooleanExpression_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.op_BitwiseAnd(Hephaestus.IBooleanExpression,Hephaestus.IBooleanExpression)">
+  op_BitwiseAnd(IBooleanExpression, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_BitwiseAnd(IBooleanExpression left, IBooleanExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_BitwiseAnd_" data-uid="Hephaestus.BooleanOperators.op_BitwiseAnd*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_BitwiseAnd_Hephaestus_IBooleanExpression_System_Boolean_" data-uid="Hephaestus.BooleanOperators.op_BitwiseAnd(Hephaestus.IBooleanExpression,System.Boolean)">
+  op_BitwiseAnd(IBooleanExpression, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_BitwiseAnd(IBooleanExpression left, bool right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_BitwiseAnd_" data-uid="Hephaestus.BooleanOperators.op_BitwiseAnd*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_BitwiseAnd_System_Boolean_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.op_BitwiseAnd(System.Boolean,Hephaestus.IBooleanExpression)">
+  op_BitwiseAnd(bool, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_BitwiseAnd(bool left, IBooleanExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_BitwiseOr_" data-uid="Hephaestus.BooleanOperators.op_BitwiseOr*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_BitwiseOr_Hephaestus_IBooleanExpression_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.op_BitwiseOr(Hephaestus.IBooleanExpression,Hephaestus.IBooleanExpression)">
+  op_BitwiseOr(IBooleanExpression, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_BitwiseOr(IBooleanExpression left, IBooleanExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_BitwiseOr_" data-uid="Hephaestus.BooleanOperators.op_BitwiseOr*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_BitwiseOr_Hephaestus_IBooleanExpression_System_Boolean_" data-uid="Hephaestus.BooleanOperators.op_BitwiseOr(Hephaestus.IBooleanExpression,System.Boolean)">
+  op_BitwiseOr(IBooleanExpression, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_BitwiseOr(IBooleanExpression left, bool right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_BitwiseOr_" data-uid="Hephaestus.BooleanOperators.op_BitwiseOr*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_BitwiseOr_System_Boolean_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.op_BitwiseOr(System.Boolean,Hephaestus.IBooleanExpression)">
+  op_BitwiseOr(bool, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_BitwiseOr(bool left, IBooleanExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_ExclusiveOr_" data-uid="Hephaestus.BooleanOperators.op_ExclusiveOr*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_ExclusiveOr_Hephaestus_IBooleanExpression_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.op_ExclusiveOr(Hephaestus.IBooleanExpression,Hephaestus.IBooleanExpression)">
+  op_ExclusiveOr(IBooleanExpression, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_ExclusiveOr(IBooleanExpression left, IBooleanExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_ExclusiveOr_" data-uid="Hephaestus.BooleanOperators.op_ExclusiveOr*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_ExclusiveOr_Hephaestus_IBooleanExpression_System_Boolean_" data-uid="Hephaestus.BooleanOperators.op_ExclusiveOr(Hephaestus.IBooleanExpression,System.Boolean)">
+  op_ExclusiveOr(IBooleanExpression, bool)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_ExclusiveOr(IBooleanExpression left, bool right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_ExclusiveOr_" data-uid="Hephaestus.BooleanOperators.op_ExclusiveOr*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_ExclusiveOr_System_Boolean_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.op_ExclusiveOr(System.Boolean,Hephaestus.IBooleanExpression)">
+  op_ExclusiveOr(bool, IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_ExclusiveOr(bool left, IBooleanExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.boolean">bool</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_BooleanOperators_op_LogicalNot_" data-uid="Hephaestus.BooleanOperators.op_LogicalNot*"></a>
+
+  <h3 id="Hephaestus_BooleanOperators_op_LogicalNot_Hephaestus_IBooleanExpression_" data-uid="Hephaestus.BooleanOperators.op_LogicalNot(Hephaestus.IBooleanExpression)">
+  op_LogicalNot(IBooleanExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_LogicalNot(IBooleanExpression operand)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>operand</code> <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class LinearOperators | Hephaestus </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class LinearOperators | Hephaestus ">
+      
+      <meta name="description" content="Arithmetic and comparison operators over . Operators only build data: a + b is new Sum(a, b), nothing is simplified or flattened here.">
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Hephaestus.LinearOperators">
+
+
+
+  <h1 id="Hephaestus_LinearOperators" data-uid="Hephaestus.LinearOperators" class="text-break">
+Class LinearOperators  
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Hephaestus.html">Hephaestus</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Hephaestus.Optimisation.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Arithmetic and comparison operators over <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a>. Operators only build
+data: <code>a + b</code> is <code>new Sum(a, b)</code>, nothing is simplified or flattened here.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static class LinearOperators</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object">object</a></div>
+      <div><span class="xref">LinearOperators</span></div>
+    </dd>
+  </dl>
+
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gettype">object.GetType()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.memberwiseclone">object.MemberwiseClone()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.tostring">object.ToString()</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object)">object.Equals(object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.equals#system-object-equals(system-object-system-object)">object.Equals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.referenceequals">object.ReferenceEquals(object, object)</a>
+    </div>
+    <div>
+      <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.object.gethashcode">object.GetHashCode()</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Hephaestus_LinearOperators_Between_" data-uid="Hephaestus.LinearOperators.Between*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_Between_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.Between(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  Between(ILinearExpression, ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint <code>lower &lt;= expression &lt;= upper</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Between(this ILinearExpression expression, ILinearExpression lower, ILinearExpression upper)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>lower</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>upper</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_Between_" data-uid="Hephaestus.LinearOperators.Between*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_Between_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.Between(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression,System.Double)">
+  Between(ILinearExpression, ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint <code>lower &lt;= expression &lt;= upper</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Between(this ILinearExpression expression, ILinearExpression lower, double upper)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>lower</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>upper</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_Between_" data-uid="Hephaestus.LinearOperators.Between*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_Between_Hephaestus_ILinearExpression_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.Between(Hephaestus.ILinearExpression,System.Double,Hephaestus.ILinearExpression)">
+  Between(ILinearExpression, double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint <code>lower &lt;= expression &lt;= upper</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Between(this ILinearExpression expression, double lower, ILinearExpression upper)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>lower</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>upper</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_Between_" data-uid="Hephaestus.LinearOperators.Between*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_Between_Hephaestus_ILinearExpression_System_Double_System_Double_" data-uid="Hephaestus.LinearOperators.Between(Hephaestus.ILinearExpression,System.Double,System.Double)">
+  Between(ILinearExpression, double, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint <code>lower &lt;= expression &lt;= upper</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression Between(this ILinearExpression expression, double lower, double upper)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>lower</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>upper</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_EqualTo_" data-uid="Hephaestus.LinearOperators.EqualTo*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_EqualTo_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.EqualTo(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  EqualTo(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that this expression equals <code class="paramref">other</code>. (C# reserves
+<code>==</code> on records and interfaces for structural and reference equality.)</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression EqualTo(this ILinearExpression expression, ILinearExpression other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_EqualTo_" data-uid="Hephaestus.LinearOperators.EqualTo*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_EqualTo_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.EqualTo(Hephaestus.ILinearExpression,System.Double)">
+  EqualTo(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that this expression equals <code class="paramref">other</code>. (C# reserves
+<code>==</code> on records and interfaces for structural and reference equality.)</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression EqualTo(this ILinearExpression expression, double other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_NotEqualTo_" data-uid="Hephaestus.LinearOperators.NotEqualTo*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_NotEqualTo_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.NotEqualTo(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  NotEqualTo(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that this expression differs from <code class="paramref">other</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression NotEqualTo(this ILinearExpression expression, ILinearExpression other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_NotEqualTo_" data-uid="Hephaestus.LinearOperators.NotEqualTo*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_NotEqualTo_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.NotEqualTo(Hephaestus.ILinearExpression,System.Double)">
+  NotEqualTo(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The constraint that this expression differs from <code class="paramref">other</code>.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression NotEqualTo(this ILinearExpression expression, double other)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>other</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_Sum_" data-uid="Hephaestus.LinearOperators.Sum*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_Sum_System_Collections_Generic_IEnumerable_Hephaestus_ILinearExpression__" data-uid="Hephaestus.LinearOperators.Sum(System.Collections.Generic.IEnumerable{Hephaestus.ILinearExpression})">
+  Sum(IEnumerable&lt;ILinearExpression&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The sum of all terms, built as a balanced tree so that very long sums stay shallow.
+An empty sequence sums to the constant zero.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression Sum(this IEnumerable&lt;ILinearExpression&gt; terms)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>terms</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;<a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_Sum_" data-uid="Hephaestus.LinearOperators.Sum*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_Sum__1_System_Collections_Generic_IEnumerable___0__System_Func___0_Hephaestus_ILinearExpression__" data-uid="Hephaestus.LinearOperators.Sum``1(System.Collections.Generic.IEnumerable{``0},System.Func{``0,Hephaestus.ILinearExpression})">
+  Sum&lt;T&gt;(IEnumerable&lt;T&gt;, Func&lt;T, ILinearExpression&gt;)
+  
+  </h3>
+
+  <div class="markdown level1 summary"><p>The sum of the expressions selected from each item.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression Sum&lt;T&gt;(this IEnumerable&lt;T&gt; items, Func&lt;T, ILinearExpression&gt; selector) where T : notnull</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>items</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.collections.generic.ienumerable-1">IEnumerable</a>&lt;T&gt;</dt>
+    <dd></dd>
+    <dt><code>selector</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.func-2">Func</a>&lt;T, <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Type Parameters</h4>
+  <dl class="parameters">
+    <dt><code>T</code></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Addition_" data-uid="Hephaestus.LinearOperators.op_Addition*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Addition_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_Addition(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  op_Addition(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Addition(ILinearExpression left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Addition_" data-uid="Hephaestus.LinearOperators.op_Addition*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Addition_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_Addition(Hephaestus.ILinearExpression,System.Double)">
+  op_Addition(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Addition(ILinearExpression left, double right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Addition_" data-uid="Hephaestus.LinearOperators.op_Addition*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Addition_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_Addition(System.Double,Hephaestus.ILinearExpression)">
+  op_Addition(double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Addition(double left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Division_" data-uid="Hephaestus.LinearOperators.op_Division*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Division_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_Division(Hephaestus.ILinearExpression,System.Double)">
+  op_Division(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Division(ILinearExpression expression, double divisor)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>divisor</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_GreaterThan_" data-uid="Hephaestus.LinearOperators.op_GreaterThan*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_GreaterThan_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_GreaterThan(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  op_GreaterThan(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_GreaterThan(ILinearExpression left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_GreaterThan_" data-uid="Hephaestus.LinearOperators.op_GreaterThan*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_GreaterThan_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_GreaterThan(Hephaestus.ILinearExpression,System.Double)">
+  op_GreaterThan(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_GreaterThan(ILinearExpression left, double right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_GreaterThan_" data-uid="Hephaestus.LinearOperators.op_GreaterThan*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_GreaterThan_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_GreaterThan(System.Double,Hephaestus.ILinearExpression)">
+  op_GreaterThan(double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_GreaterThan(double left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_GreaterThanOrEqual_" data-uid="Hephaestus.LinearOperators.op_GreaterThanOrEqual*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_GreaterThanOrEqual_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_GreaterThanOrEqual(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  op_GreaterThanOrEqual(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_GreaterThanOrEqual(ILinearExpression left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_GreaterThanOrEqual_" data-uid="Hephaestus.LinearOperators.op_GreaterThanOrEqual*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_GreaterThanOrEqual_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_GreaterThanOrEqual(Hephaestus.ILinearExpression,System.Double)">
+  op_GreaterThanOrEqual(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_GreaterThanOrEqual(ILinearExpression left, double right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_GreaterThanOrEqual_" data-uid="Hephaestus.LinearOperators.op_GreaterThanOrEqual*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_GreaterThanOrEqual_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_GreaterThanOrEqual(System.Double,Hephaestus.ILinearExpression)">
+  op_GreaterThanOrEqual(double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_GreaterThanOrEqual(double left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_LessThan_" data-uid="Hephaestus.LinearOperators.op_LessThan*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_LessThan_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_LessThan(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  op_LessThan(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_LessThan(ILinearExpression left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_LessThan_" data-uid="Hephaestus.LinearOperators.op_LessThan*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_LessThan_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_LessThan(Hephaestus.ILinearExpression,System.Double)">
+  op_LessThan(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_LessThan(ILinearExpression left, double right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_LessThan_" data-uid="Hephaestus.LinearOperators.op_LessThan*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_LessThan_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_LessThan(System.Double,Hephaestus.ILinearExpression)">
+  op_LessThan(double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_LessThan(double left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_LessThanOrEqual_" data-uid="Hephaestus.LinearOperators.op_LessThanOrEqual*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_LessThanOrEqual_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_LessThanOrEqual(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  op_LessThanOrEqual(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_LessThanOrEqual(ILinearExpression left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_LessThanOrEqual_" data-uid="Hephaestus.LinearOperators.op_LessThanOrEqual*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_LessThanOrEqual_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_LessThanOrEqual(Hephaestus.ILinearExpression,System.Double)">
+  op_LessThanOrEqual(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_LessThanOrEqual(ILinearExpression left, double right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_LessThanOrEqual_" data-uid="Hephaestus.LinearOperators.op_LessThanOrEqual*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_LessThanOrEqual_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_LessThanOrEqual(System.Double,Hephaestus.ILinearExpression)">
+  op_LessThanOrEqual(double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static IBooleanExpression op_LessThanOrEqual(double left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Multiply_" data-uid="Hephaestus.LinearOperators.op_Multiply*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Multiply_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_Multiply(Hephaestus.ILinearExpression,System.Double)">
+  op_Multiply(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Multiply(ILinearExpression expression, double coefficient)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>coefficient</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Multiply_" data-uid="Hephaestus.LinearOperators.op_Multiply*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Multiply_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_Multiply(System.Double,Hephaestus.ILinearExpression)">
+  op_Multiply(double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Multiply(double coefficient, ILinearExpression expression)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>coefficient</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>expression</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Subtraction_" data-uid="Hephaestus.LinearOperators.op_Subtraction*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Subtraction_Hephaestus_ILinearExpression_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_Subtraction(Hephaestus.ILinearExpression,Hephaestus.ILinearExpression)">
+  op_Subtraction(ILinearExpression, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Subtraction(ILinearExpression left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Subtraction_" data-uid="Hephaestus.LinearOperators.op_Subtraction*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Subtraction_Hephaestus_ILinearExpression_System_Double_" data-uid="Hephaestus.LinearOperators.op_Subtraction(Hephaestus.ILinearExpression,System.Double)">
+  op_Subtraction(ILinearExpression, double)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Subtraction(ILinearExpression left, double right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_Subtraction_" data-uid="Hephaestus.LinearOperators.op_Subtraction*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_Subtraction_System_Double_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_Subtraction(System.Double,Hephaestus.ILinearExpression)">
+  op_Subtraction(double, ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_Subtraction(double left, ILinearExpression right)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>left</code> <a class="xref" href="https://learn.microsoft.com/dotnet/api/system.double">double</a></dt>
+    <dd></dd>
+    <dt><code>right</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Hephaestus_LinearOperators_op_UnaryNegation_" data-uid="Hephaestus.LinearOperators.op_UnaryNegation*"></a>
+
+  <h3 id="Hephaestus_LinearOperators_op_UnaryNegation_Hephaestus_ILinearExpression_" data-uid="Hephaestus.LinearOperators.op_UnaryNegation(Hephaestus.ILinearExpression)">
+  op_UnaryNegation(ILinearExpression)
+  
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public static ILinearExpression op_UnaryNegation(ILinearExpression operand)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>operand</code> <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

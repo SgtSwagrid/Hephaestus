@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Namespace Hephaestus | Hephaestus </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Namespace Hephaestus | Hephaestus ">
+      
+      
+      <link rel="icon" href="../favicon.ico">
+      <link rel="stylesheet" href="../public/docfx.min.css">
+      <link rel="stylesheet" href="../public/main.css">
+      <meta name="docfx:navrel" content="../toc.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="../">
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      <script type="module" src="./../public/docfx.min.js"></script>
+
+      <script>
+        const theme = localStorage.getItem('theme') || 'auto'
+        document.documentElement.setAttribute('data-bs-theme', theme === 'auto' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : theme)
+      </script>
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="../index.html">
+            <img id="logo" class="svg" src="../logo.svg" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Hephaestus">
+
+  <h1 id="Hephaestus" data-uid="Hephaestus" class="text-break">Namespace Hephaestus</h1>
+  <div class="markdown level0 summary"></div>
+  <div class="markdown level0 conceptual"></div>
+  <div class="markdown level0 remarks"></div>
+
+    <h3 id="classes">
+Classes
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a></dt>
+      <dd><p>The normal form of a linear expression: <code>constant + Σ coefficient · variable</code>, with
+variables in a fixed order and no zero coefficients. Two linear expressions denote the same
+function exactly when their affine forms are equal, so <code>x + y</code> and <code>y + x</code> normalise
+to equal values even though the expressions themselves differ.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.AffineForms.html">AffineForms</a></dt>
+      <dd><p>Arithmetic and analysis over <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a> and <a class="xref" href="Hephaestus.Interval.html">Interval</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Anchoring.html">Anchoring</a></dt>
+      <dd><p>Building points out of plain values and quantities: <code>start + dwell</code>. These cannot be
+generic operators, because no operand is a <a class="xref" href="Hephaestus.Point-2.html">Point&lt;T, TDelta&gt;</a> and generic code does
+not know how a <code>TDelta</code> is added to a <code>T</code>; so each point type declares its own
+<code>T + Quantity&lt;TDelta&gt;</code> operators beside its projection, in terms of these.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.BinaryVariable.html">BinaryVariable</a></dt>
+      <dd><p>A variable that is either 0 or 1. It is both a linear expression (its 0/1 value) and a boolean
+expression (true exactly when it is 1), so it can be summed and scaled as well as combined with
+<code>&amp;</code>, <code>|</code> and <code>!</code>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.BooleanConstant.html">BooleanConstant</a></dt>
+      <dd><p>A fixed truth value.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.BooleanOperators.html">BooleanOperators</a></dt>
+      <dd><p>Logical operators over <a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a>. As with the linear operators, these
+only build data; normal forms are computed later, when a model is encoded for a solver.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Column.html">Column</a></dt>
+      <dd><p>A variable as a MILP solver sees it: with native bounds. The bounds are those the problem's
+top-level constraints state outright (<code>x &lt;= 10</code>), or the variable's intrinsic ones.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Comparison.html">Comparison</a></dt>
+      <dd><p>A comparison between two linear expressions.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Conjunction.html">Conjunction</a></dt>
+      <dd><p>Holds exactly when both sides hold.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Constant.html">Constant</a></dt>
+      <dd><p>A fixed real number.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.ContinuousVariable.html">ContinuousVariable</a></dt>
+      <dd><p>A variable ranging over the real numbers.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.DateTimeOffsetProjection.html">DateTimeOffsetProjection</a></dt>
+      <dd><p>Date-times with offsets, measured in multiples of a unit since an origin.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.DateTimeProjection.html">DateTimeProjection</a></dt>
+      <dd><p>Date-times measured in multiples of a unit since an origin.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.DeepRecursion.html">DeepRecursion</a></dt>
+      <dd><p>Expressions are as-written trees, so folding <code>+</code> or <code>&amp;</code> over a long sequence makes a
+tree as deep as the sequence is long. Recursive passes stay natural by continuing on a fresh
+stack whenever the current one is nearly exhausted, instead of overflowing. Public so that
+solver backends which walk expressions themselves can do the same.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Disjunction.html">Disjunction</a></dt>
+      <dd><p>Holds exactly when at least one side holds.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.EncodingOptions.html">EncodingOptions</a></dt>
+      <dd><p>Settings for lowering a problem to a <a class="xref" href="Hephaestus.MilpProblem.html">MilpProblem</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Equivalence.html">Equivalence</a></dt>
+      <dd><p>Holds exactly when both sides have the same truth value.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Evaluation.html">Evaluation</a></dt>
+      <dd><p>Reads expressions off a solution. Any expression can be read, not just variables.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Feasible.html">Feasible</a></dt>
+      <dd><p>A solution that satisfies the constraint but is not proven best, typically because a limit was reached.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Formatting.html">Formatting</a></dt>
+      <dd><p>Renders expressions the way they were written, for logs, error messages and code review:
+<code>(departureA + 120 &lt;= departureB) | (departureB + 120 &lt;= departureA)</code>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.GuardedRow.html">GuardedRow</a></dt>
+      <dd><p><code>Expression &lt;= 0</code> (or <code>== 0</code>) whenever every guard holds. With no guards the row
+holds unconditionally.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Implication.html">Implication</a></dt>
+      <dd><p>Holds unless the antecedent holds and the consequent does not.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IndicatorProblem.html">IndicatorProblem</a></dt>
+      <dd><p>A problem with its logic encoded but no big-M in sight: bounded columns, a linear objective, and
+rows that are linear except for being guarded by literals. This is the natural input for solvers
+with indicator constraints (Gurobi) or half-reified constraints (CP-SAT), and the half-way point
+on the road to a <a class="xref" href="Hephaestus.MilpProblem.html">MilpProblem</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IndicatorProblems.html">IndicatorProblems</a></dt>
+      <dd><p>Functions over <a class="xref" href="Hephaestus.IndicatorProblem.html">IndicatorProblem</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IndicatorSolver.html">IndicatorSolver</a></dt>
+      <dd><p>Turns any indicator backend into a solver for full problems: encode the logic, solve, then hide
+the auxiliary variables and snap whole-number variables to whole numbers. No big-M is involved.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Infeasible.html">Infeasible</a></dt>
+      <dd><p>The constraint cannot be satisfied.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IntegerVariable.html">IntegerVariable</a></dt>
+      <dd><p>A variable ranging over the whole numbers.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.LinearNormalisation.html">LinearNormalisation</a></dt>
+      <dd><p>The pass that flattens an as-written linear expression into its <a class="xref" href="Hephaestus.AffineForm.html">AffineForm</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.LinearOperators.html">LinearOperators</a></dt>
+      <dd><p>Arithmetic and comparison operators over <a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a>. Operators only build
+data: <code>a + b</code> is <code>new Sum(a, b)</code>, nothing is simplified or flattened here.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.LinearRow.html">LinearRow</a></dt>
+      <dd><p>The linear constraint <code>LowerBound &lt;= Σ coefficient · variable &lt;= UpperBound</code>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Literal.html">Literal</a></dt>
+      <dd><p>A binary variable, or its negation.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Maximisation.html">Maximisation</a></dt>
+      <dd><p>Find an assignment that makes the objective as large as possible while the constraint holds.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.MilpEncoding.html">MilpEncoding</a></dt>
+      <dd><p>Lowers a problem in pure steps: normalise and encode the logic with guarded rows, giving an
+<a class="xref" href="Hephaestus.IndicatorProblem.html">IndicatorProblem</a>; then propagate bounds and relax the guards with big-M values
+derived from them, giving a <a class="xref" href="Hephaestus.MilpProblem.html">MilpProblem</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.MilpProblem.html">MilpProblem</a></dt>
+      <dd><p>A problem lowered to a plain mixed-integer linear programme: bounded columns, linear rows and a
+linear objective. This is all a MILP backend ever needs to understand.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.MilpProblems.html">MilpProblems</a></dt>
+      <dd><p>Functions over <a class="xref" href="Hephaestus.MilpProblem.html">MilpProblem</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.MilpSolver.html">MilpSolver</a></dt>
+      <dd><p>Turns any MILP backend into a solver for full problems: encode, relax the guards with derived
+big-M values, solve, then hide the auxiliary variables and snap whole-number variables to whole numbers.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Minimisation.html">Minimisation</a></dt>
+      <dd><p>Find an assignment that makes the objective as small as possible while the constraint holds.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.ModellingException.html">ModellingException</a></dt>
+      <dd><p>Thrown when a model cannot be given a meaning: clashing variable names, non-finite coefficients,
+or a big-M value that cannot be derived because a variable lacks bounds.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Negation.html">Negation</a></dt>
+      <dd><p>Holds exactly when the operand does not.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Occurrences.html">Occurrences</a></dt>
+      <dd><p>Finds the variables that expressions and problems mention.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Optimal.html">Optimal</a></dt>
+      <dd><p>A solution that is proven to be the best possible.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.PointOperators.html">PointOperators</a></dt>
+      <dd><p>The algebra of positions: point - point is a quantity, point ± quantity is a point, and
+points compare with points. There is deliberately no point + point and no scaling.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Point-2.html">Point&lt;T, TDelta&gt;</a></dt>
+      <dd><p>A linear expression read as a position of type <code class="typeparamref">T</code>: a date-time, a
+chainage. Points can be compared and shifted by quantities of <code class="typeparamref">TDelta</code>, and
+the difference of two points is such a quantity; adding or scaling points does not type-check.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Problem.html">Problem</a></dt>
+      <dd><p>Factory functions that read like the mathematics: <code>Problem.Minimise(cost, subjectTo: constraint)</code>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Product.html">Product</a></dt>
+      <dd><p>A linear expression scaled by a fixed coefficient. There is deliberately no product of two
+expressions: non-linear terms are unrepresentable.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.QuantityOperators.html">QuantityOperators</a></dt>
+      <dd><p>The algebra of amounts. Every operator reduces to the corresponding operator on the underlying
+linear expressions, after bringing the right-hand side into the left-hand side's projection.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Quantity-1.html">Quantity&lt;T&gt;</a></dt>
+      <dd><p>A linear expression read as an amount of type <code class="typeparamref">T</code>: a duration, a length,
+a cost. Quantities can be added, subtracted, scaled and compared, with each other and with
+plain <code class="typeparamref">T</code> values.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Satisfaction.html">Satisfaction</a></dt>
+      <dd><p>Find any assignment under which the constraint holds.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Solution.html">Solution</a></dt>
+      <dd><p>An assignment of values to a problem's variables, as found by a solver.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.SolveResults.html">SolveResults</a></dt>
+      <dd><p>Functions over solve results.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.SolverOptions.html">SolverOptions</a></dt>
+      <dd><p>Limits and tuning that apply to any solver.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Sum.html">Sum</a></dt>
+      <dd><p>The sum of two linear expressions.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.SystemTimeOperators.html">SystemTimeOperators</a></dt>
+      <dd><p>A plain date-time shifted by a time-span quantity is a point whose origin is that date-time.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.SystemTimeVariables.html">SystemTimeVariables</a></dt>
+      <dd><p>Typed variables for the time types of the base class library.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.TimeSpanProjection.html">TimeSpanProjection</a></dt>
+      <dd><p>Time spans measured in multiples of a unit.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Unbounded.html">Unbounded</a></dt>
+      <dd><p>The objective can be improved without limit.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Unknown.html">Unknown</a></dt>
+      <dd><p>The solver stopped without an answer.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Variable.html">Variable</a></dt>
+      <dd><p>Factory functions for decision variables. Integration packages extend this type with typed
+variables (for example <code>Variable.Duration</code> from the NodaTime package).</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.VariableOrder.html">VariableOrder</a></dt>
+      <dd><p>The fixed order in which variables appear in normal forms: by name, then by kind.</p>
+</dd>
+    </dl>
+    <h3 id="structs">
+Structs
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Interval.html">Interval</a></dt>
+      <dd><p>A closed interval of real numbers; either end may be infinite.</p>
+</dd>
+    </dl>
+    <h3 id="interfaces">
+Interfaces
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IBooleanExpression.html">IBooleanExpression</a></dt>
+      <dd><p>A truth-valued expression over linear comparisons and binary variables. The cases are
+<a class="xref" href="Hephaestus.BooleanConstant.html">BooleanConstant</a>, <a class="xref" href="Hephaestus.Comparison.html">Comparison</a>, <a class="xref" href="Hephaestus.Negation.html">Negation</a>,
+<a class="xref" href="Hephaestus.Conjunction.html">Conjunction</a>, <a class="xref" href="Hephaestus.Disjunction.html">Disjunction</a>, <a class="xref" href="Hephaestus.Implication.html">Implication</a>,
+<a class="xref" href="Hephaestus.Equivalence.html">Equivalence</a> and <a class="xref" href="Hephaestus.BinaryVariable.html">BinaryVariable</a>. Like linear expressions, boolean
+expressions are plain data kept exactly as written.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IIndicatorBackend.html">IIndicatorBackend</a></dt>
+      <dd><p>A solver with indicator or half-reified constraints: it takes rows guarded by literals as they
+stand, so nothing is relaxed with a big-M and no bounds are needed for the encoding.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.ILinearExpression.html">ILinearExpression</a></dt>
+      <dd><p>A real-valued expression that is linear (strictly: affine) in its variables.
+The cases are <a class="xref" href="Hephaestus.Constant.html">Constant</a>, <a class="xref" href="Hephaestus.Sum.html">Sum</a>, <a class="xref" href="Hephaestus.Product.html">Product</a> and the
+<a class="xref" href="Hephaestus.IVariable.html">IVariable</a> records. Expressions are plain data, kept exactly as written;
+all interpretation (normalisation, bounds, encoding, evaluation) happens in later passes.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IMilpBackend.html">IMilpBackend</a></dt>
+      <dd><p>A solver for plain mixed-integer linear programmes.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IPointProjection-2.html">IPointProjection&lt;T, TDelta&gt;</a></dt>
+      <dd><p>The projection of a type whose values are positions rather than amounts (date-times, not
+durations). Positions cannot be added or scaled, but the difference between two of them is an
+amount, of type <code class="typeparamref">TDelta</code>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IProblem.html">IProblem</a></dt>
+      <dd><p>An optimisation problem: a single constraint, optionally with an objective. There is no list of
+constraints, because a list would only duplicate what <code>&amp;</code> already means; conjoin a
+collection with <code>AllOf()</code>. The cases are <a class="xref" href="Hephaestus.Satisfaction.html">Satisfaction</a>,
+<a class="xref" href="Hephaestus.Minimisation.html">Minimisation</a> and <a class="xref" href="Hephaestus.Maximisation.html">Maximisation</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IProjection-1.html">IProjection&lt;T&gt;</a></dt>
+      <dd><p>How values of a domain type lie along the solver's number line: for example durations measured
+in seconds, or date-times measured in seconds since some origin. A projection must be affine
+and increasing (equal steps in <code class="typeparamref">T</code> are equal steps in number, and later
+means larger). That is what lets expressions under different projections of the same type be
+combined: the conversion between any two is recovered from where they send zero and one.
+Implement projections as records, so that equal projections compare equal.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.ISolveResult.html">ISolveResult</a></dt>
+      <dd><p>The outcome of solving a problem. The cases are <a class="xref" href="Hephaestus.Optimal.html">Optimal</a>, <a class="xref" href="Hephaestus.Feasible.html">Feasible</a>,
+<a class="xref" href="Hephaestus.Infeasible.html">Infeasible</a>, <a class="xref" href="Hephaestus.Unbounded.html">Unbounded</a> and <a class="xref" href="Hephaestus.Unknown.html">Unknown</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.ISolver.html">ISolver</a></dt>
+      <dd><p>Anything that can solve a problem. This is the seam along which solvers are swapped: a backend
+that understands boolean structure natively (such as an SMT solver) implements it directly,
+while MILP backends implement the much smaller <a class="xref" href="Hephaestus.IMilpBackend.html">IMilpBackend</a> and are wrapped in a
+<a class="xref" href="Hephaestus.MilpSolver.html">MilpSolver</a>.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.IVariable.html">IVariable</a></dt>
+      <dd><p>A decision variable: a name and a kind, nothing more. Variables are values, so two variables of
+the same kind and name are the same variable. Bounds are not part of a variable; they are
+ordinary constraints (<code>0 &lt;= x &amp; x &lt;= 10</code>), which the encoder recognises and passes
+to the solver as native bounds.</p>
+</dd>
+    </dl>
+    <h3 id="enums">
+Enums
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.ObjectiveSense.html">ObjectiveSense</a></dt>
+      <dd><p>Whether the objective of a <a class="xref" href="Hephaestus.MilpProblem.html">MilpProblem</a> is to be made small or large.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Hephaestus.Relation.html">Relation</a></dt>
+      <dd><p>How the two sides of a <a class="xref" href="Hephaestus.Comparison.html">Comparison</a> relate.</p>
+</dd>
+    </dl>
+
+
+</article>
+
+        <div class="contribution d-print-none">
+        </div>
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made with <a href="https://github.com/SgtSwagrid/cs-library-template">C# Library Template</a>.
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

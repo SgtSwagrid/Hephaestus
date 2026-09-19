@@ -1,0 +1,1427 @@
+{
+  "source_base_path": "/home/runner/work/Hephaestus/Hephaestus/docs",
+  "xrefmap": "xrefmap.yml",
+  "files": [
+    {
+      "type": "Resource",
+      "output": {
+        "resource": {
+          "relative_path": "index.json"
+        }
+      }
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.AffineForm.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.AffineForm.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.AffineForm",
+      "Summary": "<p sourcefile=\"api/Hephaestus.AffineForm.yml\" sourcestartlinenumber=\"1\">The normal form of a linear expression: <code>constant + Σ coefficient · variable</code>, with\nvariables in a fixed order and no zero coefficients. Two linear expressions denote the same\nfunction exactly when their affine forms are equal, so <code>x + y</code> and <code>y + x</code> normalise\nto equal values even though the expressions themselves differ.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.AffineForms.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.AffineForms.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.AffineForms",
+      "Summary": "<p sourcefile=\"api/Hephaestus.AffineForms.yml\" sourcestartlinenumber=\"1\">Arithmetic and analysis over <xref href=\"Hephaestus.AffineForm\" data-throw-if-not-resolved=\"false\"></xref> and <xref href=\"Hephaestus.Interval\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Anchoring.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Anchoring.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Anchoring",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Anchoring.yml\" sourcestartlinenumber=\"1\">Building points out of plain values and quantities: <code>start + dwell</code>. These cannot be\ngeneric operators, because no operand is a <xref href=\"Hephaestus.Point%602\" data-throw-if-not-resolved=\"false\"></xref> and generic code does\nnot know how a <code>TDelta</code> is added to a <code>T</code>; so each point type declares its own\n<code>T + Quantity&lt;TDelta&gt;</code> operators beside its projection, in terms of these.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.BinaryVariable.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.BinaryVariable.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.BinaryVariable",
+      "Summary": "<p sourcefile=\"api/Hephaestus.BinaryVariable.yml\" sourcestartlinenumber=\"1\">A variable that is either 0 or 1. It is both a linear expression (its 0/1 value) and a boolean\nexpression (true exactly when it is 1), so it can be summed and scaled as well as combined with\n<code>&amp;</code>, <code>|</code> and <code>!</code>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.BooleanConstant.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.BooleanConstant.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.BooleanConstant",
+      "Summary": "<p sourcefile=\"api/Hephaestus.BooleanConstant.yml\" sourcestartlinenumber=\"1\">A fixed truth value.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.BooleanOperators.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.BooleanOperators.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.BooleanOperators",
+      "Summary": "<p sourcefile=\"api/Hephaestus.BooleanOperators.yml\" sourcestartlinenumber=\"1\">Logical operators over <xref href=\"Hephaestus.IBooleanExpression\" data-throw-if-not-resolved=\"false\"></xref>. As with the linear operators, these\nonly build data; normal forms are computed later, when a model is encoded for a solver.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Column.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Column.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Column",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Column.yml\" sourcestartlinenumber=\"1\">A variable as a MILP solver sees it: with native bounds. The bounds are those the problem's\ntop-level constraints state outright (<code>x &lt;= 10</code>), or the variable's intrinsic ones.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Comparison.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Comparison.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Comparison",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Comparison.yml\" sourcestartlinenumber=\"1\">A comparison between two linear expressions.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Conjunction.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Conjunction.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Conjunction",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Conjunction.yml\" sourcestartlinenumber=\"1\">Holds exactly when both sides hold.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Constant.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Constant.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Constant",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Constant.yml\" sourcestartlinenumber=\"1\">A fixed real number.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.ContinuousVariable.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.ContinuousVariable.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.ContinuousVariable",
+      "Summary": "<p sourcefile=\"api/Hephaestus.ContinuousVariable.yml\" sourcestartlinenumber=\"1\">A variable ranging over the real numbers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.DateTimeOffsetProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.DateTimeOffsetProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.DateTimeOffsetProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.DateTimeOffsetProjection.yml\" sourcestartlinenumber=\"1\">Date-times with offsets, measured in multiples of a unit since an origin.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.DateTimeProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.DateTimeProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.DateTimeProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.DateTimeProjection.yml\" sourcestartlinenumber=\"1\">Date-times measured in multiples of a unit since an origin.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.DeepRecursion.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.DeepRecursion.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.DeepRecursion",
+      "Summary": "<p sourcefile=\"api/Hephaestus.DeepRecursion.yml\" sourcestartlinenumber=\"1\">Expressions are as-written trees, so folding <code>+</code> or <code>&amp;</code> over a long sequence makes a\ntree as deep as the sequence is long. Recursive passes stay natural by continuing on a fresh\nstack whenever the current one is nearly exhausted, instead of overflowing. Public so that\nsolver backends which walk expressions themselves can do the same.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Disjunction.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Disjunction.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Disjunction",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Disjunction.yml\" sourcestartlinenumber=\"1\">Holds exactly when at least one side holds.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.EncodingOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.EncodingOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.EncodingOptions",
+      "Summary": "<p sourcefile=\"api/Hephaestus.EncodingOptions.yml\" sourcestartlinenumber=\"1\">Settings for lowering a problem to a <xref href=\"Hephaestus.MilpProblem\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Equivalence.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Equivalence.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Equivalence",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Equivalence.yml\" sourcestartlinenumber=\"1\">Holds exactly when both sides have the same truth value.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Evaluation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Evaluation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Evaluation",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Evaluation.yml\" sourcestartlinenumber=\"1\">Reads expressions off a solution. Any expression can be read, not just variables.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Feasible.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Feasible.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Feasible",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Feasible.yml\" sourcestartlinenumber=\"1\">A solution that satisfies the constraint but is not proven best, typically because a limit was reached.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Formatting.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Formatting.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Formatting",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Formatting.yml\" sourcestartlinenumber=\"1\">Renders expressions the way they were written, for logs, error messages and code review:\n<code>(departureA + 120 &lt;= departureB) | (departureB + 120 &lt;= departureA)</code>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.GuardedRow.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.GuardedRow.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.GuardedRow",
+      "Summary": "<p sourcefile=\"api/Hephaestus.GuardedRow.yml\" sourcestartlinenumber=\"1\"><code>Expression &lt;= 0</code> (or <code>== 0</code>) whenever every guard holds. With no guards the row\nholds unconditionally.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Gurobi.GurobiBackend.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Gurobi.GurobiBackend.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Gurobi.GurobiBackend",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Gurobi.GurobiBackend.yml\" sourcestartlinenumber=\"1\">Solves problems with Gurobi through its own .NET interface. As an <xref href=\"Hephaestus.IIndicatorBackend\" data-throw-if-not-resolved=\"false\"></xref>\nit turns every guarded row into a Gurobi indicator constraint, so that no big-M appears anywhere;\nas an <xref href=\"Hephaestus.IMilpBackend\" data-throw-if-not-resolved=\"false\"></xref> it takes the classic formulation with derived big-M values.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Gurobi.GurobiSolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Gurobi.GurobiSolver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Gurobi.GurobiSolver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Gurobi.GurobiSolver.yml\" sourcestartlinenumber=\"1\">Ready-made solvers backed by Gurobi.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Gurobi.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Gurobi.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Gurobi",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Highs.HighsBackend.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Highs.HighsBackend.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Highs.HighsBackend",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Highs.HighsBackend.yml\" sourcestartlinenumber=\"1\">Solves mixed-integer linear programmes with HiGHS, through the wrapper its maintainers publish.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Highs.HighsSolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Highs.HighsSolver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Highs.HighsSolver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Highs.HighsSolver.yml\" sourcestartlinenumber=\"1\">Ready-made solvers backed by HiGHS.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Highs.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Highs.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Highs",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IBooleanExpression.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IBooleanExpression.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IBooleanExpression",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IBooleanExpression.yml\" sourcestartlinenumber=\"1\">A truth-valued expression over linear comparisons and binary variables. The cases are\n<xref href=\"Hephaestus.BooleanConstant\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Comparison\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Negation\" data-throw-if-not-resolved=\"false\"></xref>,\n<xref href=\"Hephaestus.Conjunction\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Disjunction\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Implication\" data-throw-if-not-resolved=\"false\"></xref>,\n<xref href=\"Hephaestus.Equivalence\" data-throw-if-not-resolved=\"false\"></xref> and <xref href=\"Hephaestus.BinaryVariable\" data-throw-if-not-resolved=\"false\"></xref>. Like linear expressions, boolean\nexpressions are plain data kept exactly as written.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IIndicatorBackend.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IIndicatorBackend.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IIndicatorBackend",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IIndicatorBackend.yml\" sourcestartlinenumber=\"1\">A solver with indicator or half-reified constraints: it takes rows guarded by literals as they\nstand, so nothing is relaxed with a big-M and no bounds are needed for the encoding.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.ILinearExpression.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.ILinearExpression.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.ILinearExpression",
+      "Summary": "<p sourcefile=\"api/Hephaestus.ILinearExpression.yml\" sourcestartlinenumber=\"1\">A real-valued expression that is linear (strictly: affine) in its variables.\nThe cases are <xref href=\"Hephaestus.Constant\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Sum\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Product\" data-throw-if-not-resolved=\"false\"></xref> and the\n<xref href=\"Hephaestus.IVariable\" data-throw-if-not-resolved=\"false\"></xref> records. Expressions are plain data, kept exactly as written;\nall interpretation (normalisation, bounds, encoding, evaluation) happens in later passes.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IMilpBackend.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IMilpBackend.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IMilpBackend",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IMilpBackend.yml\" sourcestartlinenumber=\"1\">A solver for plain mixed-integer linear programmes.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IPointProjection-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IPointProjection-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IPointProjection<T, TDelta>",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IPointProjection-2.yml\" sourcestartlinenumber=\"1\">The projection of a type whose values are positions rather than amounts (date-times, not\ndurations). Positions cannot be added or scaled, but the difference between two of them is an\namount, of type <code class=\"typeparamref\">TDelta</code>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IProblem.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IProblem.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IProblem",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IProblem.yml\" sourcestartlinenumber=\"1\">An optimisation problem: a single constraint, optionally with an objective. There is no list of\nconstraints, because a list would only duplicate what <code>&amp;</code> already means; conjoin a\ncollection with <code>AllOf()</code>. The cases are <xref href=\"Hephaestus.Satisfaction\" data-throw-if-not-resolved=\"false\"></xref>,\n<xref href=\"Hephaestus.Minimisation\" data-throw-if-not-resolved=\"false\"></xref> and <xref href=\"Hephaestus.Maximisation\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IProjection-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IProjection-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IProjection<T>",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IProjection-1.yml\" sourcestartlinenumber=\"1\">How values of a domain type lie along the solver's number line: for example durations measured\nin seconds, or date-times measured in seconds since some origin. A projection must be affine\nand increasing (equal steps in <code class=\"typeparamref\">T</code> are equal steps in number, and later\nmeans larger). That is what lets expressions under different projections of the same type be\ncombined: the conversion between any two is recovered from where they send zero and one.\nImplement projections as records, so that equal projections compare equal.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.ISolveResult.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.ISolveResult.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.ISolveResult",
+      "Summary": "<p sourcefile=\"api/Hephaestus.ISolveResult.yml\" sourcestartlinenumber=\"1\">The outcome of solving a problem. The cases are <xref href=\"Hephaestus.Optimal\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Feasible\" data-throw-if-not-resolved=\"false\"></xref>,\n<xref href=\"Hephaestus.Infeasible\" data-throw-if-not-resolved=\"false\"></xref>, <xref href=\"Hephaestus.Unbounded\" data-throw-if-not-resolved=\"false\"></xref> and <xref href=\"Hephaestus.Unknown\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.ISolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.ISolver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.ISolver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.ISolver.yml\" sourcestartlinenumber=\"1\">Anything that can solve a problem. This is the seam along which solvers are swapped: a backend\nthat understands boolean structure natively (such as an SMT solver) implements it directly,\nwhile MILP backends implement the much smaller <xref href=\"Hephaestus.IMilpBackend\" data-throw-if-not-resolved=\"false\"></xref> and are wrapped in a\n<xref href=\"Hephaestus.MilpSolver\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IVariable.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IVariable.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IVariable",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IVariable.yml\" sourcestartlinenumber=\"1\">A decision variable: a name and a kind, nothing more. Variables are values, so two variables of\nthe same kind and name are the same variable. Bounds are not part of a variable; they are\nordinary constraints (<code>0 &lt;= x &amp; x &lt;= 10</code>), which the encoder recognises and passes\nto the solver as native bounds.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Implication.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Implication.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Implication",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Implication.yml\" sourcestartlinenumber=\"1\">Holds unless the antecedent holds and the consequent does not.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IndicatorProblem.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IndicatorProblem.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IndicatorProblem",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IndicatorProblem.yml\" sourcestartlinenumber=\"1\">A problem with its logic encoded but no big-M in sight: bounded columns, a linear objective, and\nrows that are linear except for being guarded by literals. This is the natural input for solvers\nwith indicator constraints (Gurobi) or half-reified constraints (CP-SAT), and the half-way point\non the road to a <xref href=\"Hephaestus.MilpProblem\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IndicatorProblems.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IndicatorProblems.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IndicatorProblems",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IndicatorProblems.yml\" sourcestartlinenumber=\"1\">Functions over <xref href=\"Hephaestus.IndicatorProblem\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IndicatorSolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IndicatorSolver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IndicatorSolver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IndicatorSolver.yml\" sourcestartlinenumber=\"1\">Turns any indicator backend into a solver for full problems: encode the logic, solve, then hide\nthe auxiliary variables and snap whole-number variables to whole numbers. No big-M is involved.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Infeasible.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Infeasible.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Infeasible",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Infeasible.yml\" sourcestartlinenumber=\"1\">The constraint cannot be satisfied.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.IntegerVariable.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.IntegerVariable.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.IntegerVariable",
+      "Summary": "<p sourcefile=\"api/Hephaestus.IntegerVariable.yml\" sourcestartlinenumber=\"1\">A variable ranging over the whole numbers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Interval.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Interval.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Interval",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Interval.yml\" sourcestartlinenumber=\"1\">A closed interval of real numbers; either end may be infinite.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.LinearNormalisation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.LinearNormalisation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.LinearNormalisation",
+      "Summary": "<p sourcefile=\"api/Hephaestus.LinearNormalisation.yml\" sourcestartlinenumber=\"1\">The pass that flattens an as-written linear expression into its <xref href=\"Hephaestus.AffineForm\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.LinearOperators.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.LinearOperators.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.LinearOperators",
+      "Summary": "<p sourcefile=\"api/Hephaestus.LinearOperators.yml\" sourcestartlinenumber=\"1\">Arithmetic and comparison operators over <xref href=\"Hephaestus.ILinearExpression\" data-throw-if-not-resolved=\"false\"></xref>. Operators only build\ndata: <code>a + b</code> is <code>new Sum(a, b)</code>, nothing is simplified or flattened here.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.LinearRow.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.LinearRow.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.LinearRow",
+      "Summary": "<p sourcefile=\"api/Hephaestus.LinearRow.yml\" sourcestartlinenumber=\"1\">The linear constraint <code>LowerBound &lt;= Σ coefficient · variable &lt;= UpperBound</code>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Literal.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Literal.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Literal",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Literal.yml\" sourcestartlinenumber=\"1\">A binary variable, or its negation.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Maximisation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Maximisation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Maximisation",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Maximisation.yml\" sourcestartlinenumber=\"1\">Find an assignment that makes the objective as large as possible while the constraint holds.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.MilpEncoding.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.MilpEncoding.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.MilpEncoding",
+      "Summary": "<p sourcefile=\"api/Hephaestus.MilpEncoding.yml\" sourcestartlinenumber=\"1\">Lowers a problem in pure steps: normalise and encode the logic with guarded rows, giving an\n<xref href=\"Hephaestus.IndicatorProblem\" data-throw-if-not-resolved=\"false\"></xref>; then propagate bounds and relax the guards with big-M values\nderived from them, giving a <xref href=\"Hephaestus.MilpProblem\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.MilpProblem.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.MilpProblem.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.MilpProblem",
+      "Summary": "<p sourcefile=\"api/Hephaestus.MilpProblem.yml\" sourcestartlinenumber=\"1\">A problem lowered to a plain mixed-integer linear programme: bounded columns, linear rows and a\nlinear objective. This is all a MILP backend ever needs to understand.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.MilpProblems.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.MilpProblems.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.MilpProblems",
+      "Summary": "<p sourcefile=\"api/Hephaestus.MilpProblems.yml\" sourcestartlinenumber=\"1\">Functions over <xref href=\"Hephaestus.MilpProblem\" data-throw-if-not-resolved=\"false\"></xref>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.MilpSolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.MilpSolver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.MilpSolver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.MilpSolver.yml\" sourcestartlinenumber=\"1\">Turns any MILP backend into a solver for full problems: encode, relax the guards with derived\nbig-M values, solve, then hide the auxiliary variables and snap whole-number variables to whole numbers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Minimisation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Minimisation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Minimisation",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Minimisation.yml\" sourcestartlinenumber=\"1\">Find an assignment that makes the objective as small as possible while the constraint holds.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.ModellingException.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.ModellingException.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.ModellingException",
+      "Summary": "<p sourcefile=\"api/Hephaestus.ModellingException.yml\" sourcestartlinenumber=\"1\">Thrown when a model cannot be given a meaning: clashing variable names, non-finite coefficients,\nor a big-M value that cannot be derived because a variable lacks bounds.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Negation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Negation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Negation",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Negation.yml\" sourcestartlinenumber=\"1\">Holds exactly when the operand does not.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.DayPeriodProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.DayPeriodProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.DayPeriodProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.DayPeriodProjection.yml\" sourcestartlinenumber=\"1\">Periods measured in whole days. Only periods made of days and weeks have a fixed length, so\nonly those can be encoded: a month is not a number of days.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.DurationProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.DurationProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.DurationProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.DurationProjection.yml\" sourcestartlinenumber=\"1\">Durations measured in multiples of a unit.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.InstantProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.InstantProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.InstantProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.InstantProjection.yml\" sourcestartlinenumber=\"1\">Instants measured in multiples of a unit since an origin.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.LocalDateProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.LocalDateProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.LocalDateProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.LocalDateProjection.yml\" sourcestartlinenumber=\"1\">Dates measured in whole days since an origin.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.LocalDateTimeProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.LocalDateTimeProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.LocalDateTimeProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.LocalDateTimeProjection.yml\" sourcestartlinenumber=\"1\">Local date-times measured in multiples of a unit since an origin, along a local time line on\nwhich every day has twenty-four hours (as it has for a railway timetable within one zone).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.LocalTimeProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.LocalTimeProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.LocalTimeProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.LocalTimeProjection.yml\" sourcestartlinenumber=\"1\">Times of day measured in multiples of a unit since midnight. A time of day cannot leave its\nday, so constrain such variables to it (<code>time.Between(LocalTime.Midnight, LocalTime.MaxValue)</code>);\nnumbers outside the day decode to its nearest end.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.NodaTimeOperators.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.NodaTimeOperators.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.NodaTimeOperators",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.NodaTimeOperators.yml\" sourcestartlinenumber=\"1\">A plain NodaTime value shifted by a quantity is a point whose origin is that value:\n<code>start + dwell</code>, <code>dwell + start</code>, <code>start - dwell</code>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.NodaTimeVariables.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.NodaTimeVariables.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.NodaTimeVariables",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.NodaTimeVariables.yml\" sourcestartlinenumber=\"1\">Typed variables for the NodaTime types, offered alongside <code>Variable.Continuous</code> and friends.\nIn every case <code>unit</code> is what the number one stands for (a second unless stated), and\n<code>inWholeUnits</code> makes the underlying variable an integer, for quantised times.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.OffsetDateTimeProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.OffsetDateTimeProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.OffsetDateTimeProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.OffsetDateTimeProjection.yml\" sourcestartlinenumber=\"1\">Offset date-times measured along the global time line; decoded values carry the origin's offset.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.ZonedDateTimeProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.ZonedDateTimeProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime.ZonedDateTimeProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.NodaTime.ZonedDateTimeProjection.yml\" sourcestartlinenumber=\"1\">Zoned date-times measured along the global time line; decoded values are in the origin's zone.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.NodaTime.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.NodaTime.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.NodaTime",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.ObjectiveSense.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.ObjectiveSense.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.ObjectiveSense",
+      "Summary": "<p sourcefile=\"api/Hephaestus.ObjectiveSense.yml\" sourcestartlinenumber=\"1\">Whether the objective of a <xref href=\"Hephaestus.MilpProblem\" data-throw-if-not-resolved=\"false\"></xref> is to be made small or large.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Occurrences.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Occurrences.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Occurrences",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Occurrences.yml\" sourcestartlinenumber=\"1\">Finds the variables that expressions and problems mention.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Optimal.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Optimal.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Optimal",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Optimal.yml\" sourcestartlinenumber=\"1\">A solution that is proven to be the best possible.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.OrTools.CpSatBackend.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.OrTools.CpSatBackend.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.OrTools.CpSatBackend",
+      "Summary": "<p sourcefile=\"api/Hephaestus.OrTools.CpSatBackend.yml\" sourcestartlinenumber=\"1\">Solves whole-number problems with CP-SAT through its own interface. A guarded row becomes a\nlinear constraint that is only enforced if its guards hold, which is CP-SAT's native idiom, so\nthere is no big-M at all. CP-SAT reasons over finite whole-number domains: every variable must\nbe an integer or binary, and must be bounded (directly or by implication).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.OrTools.CpSatSolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.OrTools.CpSatSolver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.OrTools.CpSatSolver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.OrTools.CpSatSolver.yml\" sourcestartlinenumber=\"1\">Ready-made CP-SAT solvers.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.OrTools.OrToolsBackend.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.OrTools.OrToolsBackend.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.OrTools.OrToolsBackend",
+      "Summary": "<p sourcefile=\"api/Hephaestus.OrTools.OrToolsBackend.yml\" sourcestartlinenumber=\"1\">Solves mixed-integer linear programmes with a solver driven through Google OR-Tools.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.OrTools.OrToolsSolver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.OrTools.OrToolsSolver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.OrTools.OrToolsSolver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.OrTools.OrToolsSolver.yml\" sourcestartlinenumber=\"1\">Ready-made solvers backed by OR-Tools.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.OrTools.OrToolsSolverId.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.OrTools.OrToolsSolverId.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.OrTools.OrToolsSolverId",
+      "Summary": "<p sourcefile=\"api/Hephaestus.OrTools.OrToolsSolverId.yml\" sourcestartlinenumber=\"1\">The identifiers of solvers that OR-Tools can drive. Which are available depends on the OR-Tools build and on installed licences.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.OrTools.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.OrTools.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.OrTools",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Point-2.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Point-2.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Point<T, TDelta>",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Point-2.yml\" sourcestartlinenumber=\"1\">A linear expression read as a position of type <code class=\"typeparamref\">T</code>: a date-time, a\nchainage. Points can be compared and shifted by quantities of <code class=\"typeparamref\">TDelta</code>, and\nthe difference of two points is such a quantity; adding or scaling points does not type-check.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.PointOperators.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.PointOperators.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.PointOperators",
+      "Summary": "<p sourcefile=\"api/Hephaestus.PointOperators.yml\" sourcestartlinenumber=\"1\">The algebra of positions: point - point is a quantity, point ± quantity is a point, and\npoints compare with points. There is deliberately no point + point and no scaling.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Problem.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Problem.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Problem",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Problem.yml\" sourcestartlinenumber=\"1\">Factory functions that read like the mathematics: <code>Problem.Minimise(cost, subjectTo: constraint)</code>.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Product.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Product.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Product",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Product.yml\" sourcestartlinenumber=\"1\">A linear expression scaled by a fixed coefficient. There is deliberately no product of two\nexpressions: non-linear terms are unrepresentable.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Quantity-1.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Quantity-1.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Quantity<T>",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Quantity-1.yml\" sourcestartlinenumber=\"1\">A linear expression read as an amount of type <code class=\"typeparamref\">T</code>: a duration, a length,\na cost. Quantities can be added, subtracted, scaled and compared, with each other and with\nplain <code class=\"typeparamref\">T</code> values.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.QuantityOperators.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.QuantityOperators.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.QuantityOperators",
+      "Summary": "<p sourcefile=\"api/Hephaestus.QuantityOperators.yml\" sourcestartlinenumber=\"1\">The algebra of amounts. Every operator reduces to the corresponding operator on the underlying\nlinear expressions, after bringing the right-hand side into the left-hand side's projection.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Relation.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Relation.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Relation",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Relation.yml\" sourcestartlinenumber=\"1\">How the two sides of a <xref href=\"Hephaestus.Comparison\" data-throw-if-not-resolved=\"false\"></xref> relate.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Satisfaction.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Satisfaction.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Satisfaction",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Satisfaction.yml\" sourcestartlinenumber=\"1\">Find any assignment under which the constraint holds.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Solution.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Solution.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Solution",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Solution.yml\" sourcestartlinenumber=\"1\">An assignment of values to a problem's variables, as found by a solver.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.SolveResults.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.SolveResults.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.SolveResults",
+      "Summary": "<p sourcefile=\"api/Hephaestus.SolveResults.yml\" sourcestartlinenumber=\"1\">Functions over solve results.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.SolverOptions.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.SolverOptions.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.SolverOptions",
+      "Summary": "<p sourcefile=\"api/Hephaestus.SolverOptions.yml\" sourcestartlinenumber=\"1\">Limits and tuning that apply to any solver.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Sum.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Sum.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Sum",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Sum.yml\" sourcestartlinenumber=\"1\">The sum of two linear expressions.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.SystemTimeOperators.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.SystemTimeOperators.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.SystemTimeOperators",
+      "Summary": "<p sourcefile=\"api/Hephaestus.SystemTimeOperators.yml\" sourcestartlinenumber=\"1\">A plain date-time shifted by a time-span quantity is a point whose origin is that date-time.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.SystemTimeVariables.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.SystemTimeVariables.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.SystemTimeVariables",
+      "Summary": "<p sourcefile=\"api/Hephaestus.SystemTimeVariables.yml\" sourcestartlinenumber=\"1\">Typed variables for the time types of the base class library.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.TimeSpanProjection.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.TimeSpanProjection.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.TimeSpanProjection",
+      "Summary": "<p sourcefile=\"api/Hephaestus.TimeSpanProjection.yml\" sourcestartlinenumber=\"1\">Time spans measured in multiples of a unit.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Unbounded.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Unbounded.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Unbounded",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Unbounded.yml\" sourcestartlinenumber=\"1\">The objective can be improved without limit.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Unknown.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Unknown.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Unknown",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Unknown.yml\" sourcestartlinenumber=\"1\">The solver stopped without an answer.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Variable.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Variable.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Variable",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Variable.yml\" sourcestartlinenumber=\"1\">Factory functions for decision variables. Integration packages extend this type with typed\nvariables (for example <code>Variable.Duration</code> from the NodaTime package).</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.VariableOrder.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.VariableOrder.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.VariableOrder",
+      "Summary": "<p sourcefile=\"api/Hephaestus.VariableOrder.yml\" sourcestartlinenumber=\"1\">The fixed order in which variables appear in normal forms: by name, then by kind.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Z3.Z3Solver.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Z3.Z3Solver.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Z3.Z3Solver",
+      "Summary": "<p sourcefile=\"api/Hephaestus.Z3.Z3Solver.yml\" sourcestartlinenumber=\"1\">Solves problems with the Z3 SMT solver. Boolean structure is handed over as it stands, so there\nare no auxiliary variables, no big-M values and no need for bounds; arithmetic is exact and\nrational, so strict inequalities mean exactly what they say.</p>\n"
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.Z3.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.Z3.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus.Z3",
+      "Summary": null
+    },
+    {
+      "type": "ManagedReference",
+      "source_relative_path": "api/Hephaestus.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/Hephaestus.html"
+        }
+      },
+      "version": "",
+      "Uid": null,
+      "IsMRef": true,
+      "Title": "Hephaestus",
+      "Summary": null
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "api/toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "api/toc.html"
+        },
+        ".json": {
+          "relative_path": "api/toc.json"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Conceptual",
+      "source_relative_path": "index.md",
+      "output": {
+        ".html": {
+          "relative_path": "index.html"
+        }
+      },
+      "version": ""
+    },
+    {
+      "type": "Toc",
+      "source_relative_path": "toc.yml",
+      "output": {
+        ".html": {
+          "relative_path": "toc.html"
+        },
+        ".json": {
+          "relative_path": "toc.json"
+        }
+      },
+      "version": ""
+    }
+  ],
+  "groups": [
+    {
+      "xrefmap": "xrefmap.yml"
+    }
+  ]
+}
