@@ -1,9 +1,9 @@
 namespace Hephaestus;
 
 /// <summary>
-/// An optimisation problem: a single constraint, optionally with an objective. There is no list of
-/// constraints, because a list would only duplicate what <c>&amp;</c> already means; conjoin a
-/// collection with <c>AllOf()</c>. The cases are <see cref="Satisfaction"/>,
+/// An optimisation problem: a single constraint, optionally with an objective. The constraints of
+/// a model are conjoined into it with <c>&amp;</c> or <c>AllOf()</c>, and can be had back as its
+/// <c>Conjuncts</c>. The cases are <see cref="Satisfaction"/>,
 /// <see cref="Minimisation"/> and <see cref="Maximisation"/>.
 /// </summary>
 public interface IProblem;

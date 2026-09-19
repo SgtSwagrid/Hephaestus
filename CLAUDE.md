@@ -31,7 +31,8 @@ and are lowered to whichever solver is plugged in. The [README](README.md) recor
 These were deliberate decisions. Don't reintroduce what they rule out:
 
 - Expressions are as-written data. Operators only construct records; flattening, normalisation and simplification happen in later passes, never at construction time.
-- A problem is _one_ constraint plus an optional objective, not a list of constraints (`&` already means "and").
+- A problem is _one_ constraint plus an optional objective, not a list of constraints. "The constraints" of a model are the `Conjuncts` of that one constraint; diagnostics (names, conflicts, shadow prices) are quoted in those, and work on the as-written expressions rather than on encoded rows.
+- Adding a case to `ILinearExpression` or `IBooleanExpression` means teaching every pass about it: `Occurrences`, `Formatting`, both normalisations, `Evaluation`, `PiecewiseLowering`, and the Z3 translation. Each ends in a `NotSupportedException` for unknown cases, so the tests find what was missed.
 - Variables carry no bounds. Bounds are ordinary constraints, recovered as column bounds by the encoder.
 - Big-M values are never supplied by the user, but derived per row from propagated bounds.
 

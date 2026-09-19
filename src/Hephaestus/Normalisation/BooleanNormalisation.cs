@@ -36,6 +36,7 @@ internal static class BooleanNormalisation {
             BinaryVariable variable => new Literal(variable, step.Polarity),
             Comparison comparison => OfComparison(comparison, step),
             Negation negation => Convert(step with { Expression = negation.Operand, Polarity = !step.Polarity }),
+            NamedConstraint named => Convert(step with { Expression = named.Expression }),
             Conjunction => OfJunction(step, isConjunctive: step.Polarity),
             Disjunction => OfJunction(step, isConjunctive: !step.Polarity),
             Implication implication => Convert(step with { Expression = !implication.Antecedent | implication.Consequent }),

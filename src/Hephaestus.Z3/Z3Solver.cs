@@ -91,6 +91,7 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
             BinaryVariable variable => step.Symbols.Context.MkEq(step.Symbols.Constants[variable], step.Symbols.Context.MkInt(1)),
             Comparison comparison => Compare(step.Symbols.Context, comparison.Relation, Linear(step.Symbols, (comparison.Left - comparison.Right).Normalise())),
             Negation negation => step.Symbols.Context.MkNot(Boolean(step with { Expression = negation.Operand })),
+            NamedConstraint named => Boolean(step with { Expression = named.Expression }),
             Conjunction conjunction => step.Symbols.Context.MkAnd(Boolean(step with { Expression = conjunction.Left }), Boolean(step with { Expression = conjunction.Right })),
             Disjunction disjunction => step.Symbols.Context.MkOr(Boolean(step with { Expression = disjunction.Left }), Boolean(step with { Expression = disjunction.Right })),
             Implication implication => step.Symbols.Context.MkImplies(Boolean(step with { Expression = implication.Antecedent }), Boolean(step with { Expression = implication.Consequent })),

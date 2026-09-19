@@ -48,6 +48,7 @@ public static class Occurrences {
             Maximum maximum => CollectLinear(new LinearStep(maximum.Right, CollectLinear(step with { Expression = maximum.Left }))),
             Minimum minimum => CollectLinear(new LinearStep(minimum.Right, CollectLinear(step with { Expression = minimum.Left }))),
             AbsoluteValue absolute => CollectLinear(step with { Expression = absolute.Operand }),
+            NamedTerm named => CollectLinear(step with { Expression = named.Expression }),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
 
@@ -59,6 +60,7 @@ public static class Occurrences {
             BinaryVariable variable => step.Found.Add(variable),
             Comparison comparison => CollectLinear(new LinearStep(comparison.Right, CollectLinear(new LinearStep(comparison.Left, step.Found)))),
             Negation negation => CollectBoolean(step with { Expression = negation.Operand }),
+            NamedConstraint named => CollectBoolean(step with { Expression = named.Expression }),
             Conjunction conjunction => CollectBoth(step, conjunction.Left, conjunction.Right),
             Disjunction disjunction => CollectBoth(step, disjunction.Left, disjunction.Right),
             Implication implication => CollectBoth(step, implication.Antecedent, implication.Consequent),

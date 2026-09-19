@@ -4,7 +4,7 @@ namespace Hephaestus;
 /// A truth-valued expression over linear comparisons and binary variables. The cases are
 /// <see cref="BooleanConstant"/>, <see cref="Comparison"/>, <see cref="Negation"/>,
 /// <see cref="Conjunction"/>, <see cref="Disjunction"/>, <see cref="Implication"/>,
-/// <see cref="Equivalence"/> and <see cref="BinaryVariable"/>. Like linear expressions, boolean
+/// <see cref="Equivalence"/>, <see cref="NamedConstraint"/> and <see cref="BinaryVariable"/>. Like linear expressions, boolean
 /// expressions are plain data kept exactly as written.
 /// </summary>
 public interface IBooleanExpression;

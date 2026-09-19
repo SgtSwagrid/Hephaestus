@@ -129,6 +129,7 @@ public static class PiecewiseLowering {
     private static Lifted<ILinearExpression> LiftUnguarded(Step<ILinearExpression> step) =>
         step.Expression switch {
             Product product => Rebuilt(product, Lift(step with { Expression = product.Expression })),
+            NamedTerm named => Rebuilt(named, Lift(step with { Expression = named.Expression })),
             Sum sum => Rebuilt(sum, Both(step.State, sum.Left, sum.Right)),
             Maximum maximum => Named(Both(step.State, maximum.Left, maximum.Right), isNegated: false),
             Minimum minimum => Named(Both(step.State, -minimum.Left, -minimum.Right), isNegated: true),
@@ -144,6 +145,9 @@ public static class PiecewiseLowering {
 
     private static Lifted<ILinearExpression> Rebuilt(Product product, Lifted<ILinearExpression> operand) =>
         new(ReferenceEquals(operand.Expression, product.Expression) ? product : product with { Expression = operand.Expression }, operand.State);
+
+    private static Lifted<ILinearExpression> Rebuilt(NamedTerm named, Lifted<ILinearExpression> operand) =>
+        new(ReferenceEquals(operand.Expression, named.Expression) ? named : named with { Expression = operand.Expression }, operand.State);
 
     private static Lifted<ILinearExpression> Rebuilt(Sum sum, Lifted<(ILinearExpression Left, ILinearExpression Right)> operands) =>
         new(ReferenceEquals(operands.Expression.Left, sum.Left) && ReferenceEquals(operands.Expression.Right, sum.Right) ? sum : new Sum(operands.Expression.Left, operands.Expression.Right), operands.State);
@@ -172,6 +176,7 @@ public static class PiecewiseLowering {
         step.Expression switch {
             Comparison comparison => Rebuilt(comparison, Both(step.State, comparison.Left, comparison.Right)),
             Negation negation => Rebuilt(negation, Lift(step with { Expression = negation.Operand })),
+            NamedConstraint named => Rebuilt(named, Lift(step with { Expression = named.Expression })),
             Conjunction conjunction => Rebuilt(conjunction, conjunction.Left, conjunction.Right, step.State, (left, right) => new Conjunction(left, right)),
             Disjunction disjunction => Rebuilt(disjunction, disjunction.Left, disjunction.Right, step.State, (left, right) => new Disjunction(left, right)),
             Implication implication => Rebuilt(implication, implication.Antecedent, implication.Consequent, step.State, (left, right) => new Implication(left, right)),
@@ -181,6 +186,9 @@ public static class PiecewiseLowering {
 
     private static Lifted<IBooleanExpression> Rebuilt(Comparison comparison, Lifted<(ILinearExpression Left, ILinearExpression Right)> sides) =>
         new(ReferenceEquals(sides.Expression.Left, comparison.Left) && ReferenceEquals(sides.Expression.Right, comparison.Right) ? comparison : comparison with { Left = sides.Expression.Left, Right = sides.Expression.Right }, sides.State);
+
+    private static Lifted<IBooleanExpression> Rebuilt(NamedConstraint named, Lifted<IBooleanExpression> operand) =>
+        new(ReferenceEquals(operand.Expression, named.Expression) ? named : named with { Expression = operand.Expression }, operand.State);
 
     private static Lifted<IBooleanExpression> Rebuilt(Negation negation, Lifted<IBooleanExpression> operand) =>
         new(ReferenceEquals(operand.Expression, negation.Operand) ? negation : new Negation(operand.Expression), operand.State);
