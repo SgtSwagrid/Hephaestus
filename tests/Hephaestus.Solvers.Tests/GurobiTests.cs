@@ -98,4 +98,27 @@ public sealed class GurobiTests {
             File.Delete(path);
         }
     }
+
+    [Fact]
+    public void AnInfeasibilityIsNarrowedDownByGurobiItself() {
+        var slots = Enumerable.Range(0, 40).Select(index => Variable.Continuous($"slot{index}")).ToList();
+        var padding = slots.AllOf(slot => slot.Between(0, 3600)) & slots.Zip(slots.Skip(1), (first, second) => ((first + 90 <= second) | (second + 90 <= first)).WithName($"headway {first.Name}/{second.Name}")).AllOf();
+        var (early, late, gate) = ((X <= 100).WithName("x early"), (X >= 50 + 60 * A).WithName("x late"), (A | (slots[3] >= 4000)).WithName("gate"));
+        var solver = (IConflictSolver)GurobiLicence.Require(GurobiSolver.Create());
+
+        var narrowed = solver.NarrowConflict(Problem.Satisfy(padding & early & late & gate));
+        var conflict = solver.FindConflict(padding & early & late & gate);
+
+        Assert.InRange(narrowed.Length, 4, 6);
+        Assert.Equal(["gate", "slot3 <= 3600", "x early", "x late"], conflict.Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void AConflictThroughAPiecewiseFunctionNamesTheBoundsBehindIt() {
+        var tall = (Hephaestus.Piecewise.Max(X, 2 * A) >= 12).WithName("tall");
+        var solver = GurobiLicence.Require(GurobiSolver.Create());
+
+        Assert.Equal(["tall", "x <= 10"], solver.FindConflict(X.Between(0, 10) & tall & (A | !A)).Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
+        Assert.Empty(solver.FindConflict(X.Between(0, 12) & tall));
+    }
 }

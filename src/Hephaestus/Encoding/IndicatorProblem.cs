@@ -30,6 +30,18 @@ public sealed record IndicatorProblem(
     ImmutableArray<GuardedRow> Rows,
     ObjectiveSense Sense,
     AffineForm Objective
+) {
+    /// <summary>
+    /// The constraints that the bounds of the columns were taken from, for the columns that have any.
+    /// Bounds are constraints like any other, so an explanation of infeasibility has to be able to name them.
+    /// </summary>
+    public ImmutableDictionary<IVariable, BoundOrigin> BoundOrigins { get; init; } = ImmutableDictionary<IVariable, BoundOrigin>.Empty;
+}
+
+/// <summary>The constraints that state a column's lower and upper bounds. A side that nothing states, or that was derived rather than stated, has none.</summary>
+public sealed record BoundOrigin(
+    IBooleanExpression? Lower,
+    IBooleanExpression? Upper
 );
 
 /// <summary>Functions over <see cref="IndicatorProblem"/>.</summary>
