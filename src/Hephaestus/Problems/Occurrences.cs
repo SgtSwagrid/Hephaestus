@@ -49,6 +49,7 @@ public static class Occurrences {
             Minimum minimum => CollectLinear(new LinearStep(minimum.Right, CollectLinear(step with { Expression = minimum.Left }))),
             AbsoluteValue absolute => CollectLinear(step with { Expression = absolute.Operand }),
             NamedTerm named => CollectLinear(step with { Expression = named.Expression }),
+            Conditional conditional => CollectLinear(new LinearStep(conditional.Otherwise, CollectLinear(new LinearStep(conditional.Then, CollectBoolean(new BooleanStep(conditional.Condition, step.Found)))))),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
 

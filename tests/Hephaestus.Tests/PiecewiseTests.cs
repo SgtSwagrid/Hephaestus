@@ -128,4 +128,72 @@ public sealed class PiecewiseTests {
         Assert.Equal(TimeSpan.FromMinutes(20), solution.Value(Max(delay, first - second)));
         Assert.Equal(TimeSpan.FromMinutes(-3), solution.Value(Min([delay, first - second, Abs(delay)])));
     }
+
+    private static readonly BinaryVariable Runs = Variable.Binary("runs");
+    private static readonly BinaryVariable Stops = Variable.Binary("stops");
+
+    [Fact]
+    public void AConditionalAndTheProductWithABinaryVariableOnlyBuildData() {
+        Assert.Equal(new Conditional(X >= 5, Y, Z), If(X >= 5, Y, Z));
+        Assert.Equal(new Conditional(Runs, X, new Constant(0)), If(Runs, X));
+        Assert.Equal(new Conditional(Runs, new Constant(3), new Constant(1)), If(Runs, 3, 1));
+        Assert.Equal(new Conditional(Runs, X + 1, new Constant(0)), Runs * (X + 1));
+        Assert.Equal(new Conditional(Runs, X, new Constant(0)), X * Runs);
+        Assert.Equal(new Conditional(Runs, Stops, new Constant(0)), Runs * Stops);
+        Assert.Equal(new Product(2, Runs), 2 * Runs);
+    }
+
+    [Fact]
+    public void AConditionalIsWrittenAndReadLikeTheRest() {
+        var solution = new Solution(Solution.Empty.Values.Add(X, 3).Add(Y, -7).Add(Runs, 1).Add(Stops, 0), 0);
+
+        Assert.Equal("if(runs & (x >= 2), y, 2*x) + 1", (If(Runs & (X >= 2), Y, 2 * X) + 1).Format());
+        Assert.Equal<IVariable>([Runs, X, Y], [.. If(Runs, X, Y).Variables]);
+        Assert.Equal(-7, solution.Value(If(Runs & (X >= 2), Y, 2 * X)));
+        Assert.Equal(6, solution.Value(If(Stops | (X >= 4), Y, 2 * X)));
+        Assert.Equal(0, solution.Value(Stops * Y));
+        Assert.Equal(-7, solution.Value(Runs * Y));
+    }
+
+    [Fact]
+    public void TheProductWithABinaryVariableIsTwoConditionalRowsAndNoFurtherBinary() {
+        var problem = Problem.Satisfy(Box & (Runs * X).EqualTo(Y));
+
+        Assert.Equal(["_if0"], Auxiliaries(problem));
+        Assert.Equal(["!runs => _if0 == 0", "_if0 - y == 0", "runs => _if0 - x == 0"], problem.EncodeLogic().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal));
+        // Relaxed for a solver without indicator constraints, those are the rows of the textbook, with big-M from the bounds of x.
+        // (The fourth, that the product is at least zero when the variable is not set, is already a bound of its column.)
+        Assert.Equal(["-_if0 + 10*runs + x <= 10", "_if0 + 10*runs - x <= 10", "_if0 - 10*runs <= 0", "_if0 - y == 0"], Rows(problem));
+        Assert.Equal((0, 10), (problem.Encode().Columns.Single(column => column.IsAuxiliary).LowerBound, problem.Encode().Columns.Single(column => column.IsAuxiliary).UpperBound));
+    }
+
+    [Fact]
+    public void AConditionalThatIsOnlyPushedOneWayIsOnlyHeldFromTheOther() =>
+        Assert.Equal(["!runs => _if0 >= 2", "runs => _if0 - x >= 0"], Problem.Minimise(If(Runs, X, 2), subjectTo: Box).EncodeLogic().Rows.Select(row => row.Format().Replace("-_if0 + x <= 0", "_if0 - x >= 0").Replace("-_if0 <= -2", "_if0 >= 2")).Order(StringComparer.Ordinal));
+
+    [Fact]
+    public void ACompoundConditionIsEncodedBothWays() {
+        var problem = Problem.Maximise(If((X >= 5) & Runs, Y, 1), subjectTo: Box);
+
+        Assert.Contains("_if0", Auxiliaries(problem));
+        Assert.Equal<IVariable>([Runs, X, Y], [.. problem.Variables]);
+    }
+
+    [Fact]
+    public void ConditionalsNestWithTheOtherFunctionsAndShareWhenEqual() =>
+        Assert.Equal(["_if1", "_max0"], Auxiliaries(Problem.Minimise(If(Runs, Max(X, Y)) + If(Runs, Max(X, Y) + 0), subjectTo: Box)));
+
+    [Fact]
+    public void TypedConditionals() {
+        var origin = new DateTime(2026, 9, 19, 8, 0, 0);
+        var (first, second) = (Variable.DateTime("first", origin), Variable.DateTime("second", origin));
+        var dwell = Variable.TimeSpan("dwell");
+        var solution = new Solution(Solution.Empty.Values.Add(Variable.Continuous("first"), 60).Add(Variable.Continuous("second"), 600).Add(Variable.Continuous("dwell"), 45).Add(Runs, 0), 0);
+
+        Assert.Equal(TimeSpan.Zero, solution.Value(If(Runs, dwell)));
+        Assert.Equal(TimeSpan.FromSeconds(30), solution.Value(If(Runs, dwell, TimeSpan.FromSeconds(30))));
+        Assert.Equal(TimeSpan.FromSeconds(540), solution.Value(If(!Runs, second - first, dwell)));
+        Assert.Equal(origin.AddMinutes(10), solution.Value(If(Runs, first, second)));
+        Assert.Equal(origin, solution.Value(If(Runs, first, origin)));
+    }
 }

@@ -74,6 +74,7 @@ public static class Evaluation {
             Maximum maximum => Math.Max(Evaluate(step with { Expression = maximum.Left }), Evaluate(step with { Expression = maximum.Right })),
             Minimum minimum => Math.Min(Evaluate(step with { Expression = minimum.Left }), Evaluate(step with { Expression = minimum.Right })),
             AbsoluteValue absolute => Math.Abs(Evaluate(step with { Expression = absolute.Operand })),
+            Conditional conditional => Evaluate(step with { Expression = step.Solution.Value(conditional.Condition) ? conditional.Then : conditional.Otherwise }),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
         };
 

@@ -4,7 +4,7 @@ namespace Hephaestus;
 /// A real-valued expression that is linear (strictly: affine) in its variables, or piecewise so.
 /// The cases are <see cref="Constant"/>, <see cref="Sum"/>, <see cref="Product"/>, the
 /// <see cref="IVariable"/> records, and the piecewise-linear <see cref="Maximum"/>,
-/// <see cref="Minimum"/> and <see cref="AbsoluteValue"/>, which the encoder lowers to linear form,
+/// <see cref="Minimum"/>, <see cref="AbsoluteValue"/> and <see cref="Conditional"/>, which the encoder lowers to linear form,
 /// and <see cref="NamedTerm"/>. Expressions are plain data, kept exactly as written;
 /// all interpretation (normalisation, bounds, encoding, evaluation) happens in later passes.
 /// </summary>
@@ -42,3 +42,14 @@ public sealed record Minimum(
 
 /// <summary>The distance of an expression from zero. Build it with <see cref="Piecewise.Abs(ILinearExpression)"/>.</summary>
 public sealed record AbsoluteValue(ILinearExpression Operand) : ILinearExpression;
+
+/// <summary>
+/// One expression or another, according to whether a condition holds. Build it with
+/// <see cref="Piecewise.If(IBooleanExpression, ILinearExpression, ILinearExpression)"/>, or as the product
+/// of a binary variable and an expression, which is the expression if the variable is set and zero if not.
+/// </summary>
+public sealed record Conditional(
+    IBooleanExpression Condition,
+    ILinearExpression Then,
+    ILinearExpression Otherwise
+) : ILinearExpression;

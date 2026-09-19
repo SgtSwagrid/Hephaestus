@@ -22,6 +22,19 @@ public static partial class Piecewise {
     /// <summary>The size of a quantity, whichever its sign: an earliness or a lateness alike.</summary>
     public static Quantity<T> Abs<T>(Quantity<T> operand) => operand with { Expression = Abs(operand.Expression) };
 
+    /// <summary>One quantity or another, according to whether a condition holds, under the projection of the first.</summary>
+    public static Quantity<T> If<T>(IBooleanExpression condition, Quantity<T> then, Quantity<T> otherwise) => then with { Expression = If(condition, then.Expression, otherwise.In(then.Projection)) };
+
+    /// <summary>A quantity if a condition holds, and a fixed amount (nothing, unless stated) if it does not.</summary>
+    public static Quantity<T> If<T>(IBooleanExpression condition, Quantity<T> then, T? otherwise = default) =>
+        then with { Expression = If(condition, then.Expression, otherwise is null ? 0 : then.Projection.Encode(otherwise)) };
+
+    /// <summary>One point or another, according to whether a condition holds, under the projection of the first.</summary>
+    public static Point<T, TDelta> If<T, TDelta>(IBooleanExpression condition, Point<T, TDelta> then, Point<T, TDelta> otherwise) => then with { Expression = If(condition, then.Expression, otherwise.In(then.Projection)) };
+
+    /// <summary>A point if a condition holds, and a fixed position if it does not.</summary>
+    public static Point<T, TDelta> If<T, TDelta>(IBooleanExpression condition, Point<T, TDelta> then, T otherwise) => then with { Expression = If(condition, then.Expression, then.Projection.Encode(otherwise)) };
+
     /// <summary>The later of two points, under the projection of the first.</summary>
     public static Point<T, TDelta> Max<T, TDelta>(Point<T, TDelta> left, Point<T, TDelta> right) => left with { Expression = Max(left.Expression, right.In(left.Projection)) };
 

@@ -91,7 +91,7 @@ There are two algebraic data types, each an interface with a handful of sealed r
 - `ILinearExpression`: `Constant`, `Sum`, `Product`, and the variables.
 - `IBooleanExpression`: `BooleanConstant`, `Comparison`, `Negation`, `Conjunction`, `Disjunction`, `Implication`, `Equivalence`, and `BinaryVariable`.
 
-Keeping them apart makes illegal compositions unrepresentable: `x * y`, `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` belongs to both types, so `occupiesA + occupiesB <= 1` and `occupiesA & occupiesB` are both fine.
+Keeping them apart makes illegal compositions unrepresentable: `x * y` (unless one of them is a binary variable), `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` belongs to both types, so `occupiesA + occupiesB <= 1` and `occupiesA & occupiesB` are both fine.
 
 Operators (`+ - * /`, `<= >= < >`, `& | ! ^`, plus `EqualTo`, `NotEqualTo`, `Between`, `Implies`, `Iff`) are extension members that do nothing but construct records: `a + b` *is* `new Sum(a, b)`. Plain values mix in on either side: `x + 5`, `5 + x`, `0 <= x`, and, for constraints that depend on known data, `train.IsFreight.Implies(departure >= curfew)` or `isPeak & (headway >= 180)`. Nothing is flattened or simplified at construction time. All interpretation happens later, in separate passes over the data:
 
@@ -177,7 +177,7 @@ Over whole-valued expressions, `n < 5` is exactly `n <= 4`. Over the reals a MIL
 
 To use the truth of a constraint as a number (say, to count violated soft constraints), tie it to a binary variable yourself: `isLate.Iff(arrival >= deadline)`, then use `isLate` in the objective. `Iff` binds in both directions.
 
-### Min, max and absolute value
+### Min, max, absolute value and conditionals
 
 ```csharp
 using static Hephaestus.Piecewise;
@@ -188,6 +188,13 @@ var problem    = Problem.Minimise(makespan + 10 * Abs(arrival - booked), subject
 ```
 
 `Max`, `Min` and `Abs` are records like everything else, and work on plain and typed expressions alike. When a problem is encoded, each becomes an auxiliary variable tied to its operands (all three are maxima: `min(a, b) = -max(-a, -b)` and `|e| = max(e, -e)`), and equal ones share a variable. How it is tied depends on how the problem leans on it. Minimising a maximum, or bounding an absolute value from above, only tempts the solver to make the variable too small, so `m >= a & m >= b` is enough and no binary variable is spent; that is the usual linear-programming idiom, found for you. Only a use that rewards a larger value (`Abs(x - y) >= 5`, or maximising a maximum) adds `m <= a | m <= b`, which costs one binary. The variable is bounded by the bounds of its operands, so its big-M is derived like any other.
+
+```csharp
+var dwellCost = stops * dwell;                                  // dwell if the train stops, else nothing
+var penalty   = If(arrival >= deadline, 50 + 2 * lateness, 0);  // one expression or another
+```
+
+`If(condition, then, otherwise)` is lowered by the same pass, and the product of a binary variable and an expression is `If(binary, expression, 0)`: the one product of two expressions that stays linear, and the only one that compiles. With a binary variable for a condition it costs two conditional rows and no further binary, which Gurobi and CP-SAT take as they stand and the others get as the textbook big-M rows, with M derived from the bounds of the expression. Like a maximum, it is only held from the side on which the problem could otherwise cheat.
 
 ### Typed expressions
 

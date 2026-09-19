@@ -76,15 +76,21 @@ public static class MilpEncoding {
     /// tied to its operands on one side only: that loses nothing, and gives a big-M something to be
     /// derived from and a finite-domain solver its domain.
     /// </summary>
-    private static IndicatorProblem WithBounds(ImmutableArray<MaximumDefinition> definitions, int rounds, IndicatorProblem problem) =>
+    private static IndicatorProblem WithBounds(ImmutableArray<IDefinition> definitions, int rounds, IndicatorProblem problem) =>
         definitions.IsEmpty
             ? problem
             : problem.WithColumnBounds(definitions.Aggregate(problem.DerivedBounds(rounds), Bound), [.. definitions.Select(definition => definition.Variable)]);
 
-    private static ImmutableDictionary<IVariable, Interval> Bound(ImmutableDictionary<IVariable, Interval> bounds, MaximumDefinition definition) =>
-        (definition.Left.Normalise().Range(bounds.Of), definition.Right.Normalise().Range(bounds.Of)) is var (left, right)
-            ? bounds.SetItem(definition.Variable, bounds.Of(definition.Variable).Intersect(new Interval(Math.Max(left.Lower, right.Lower), Math.Max(left.Upper, right.Upper))))
-            : bounds;
+    private static ImmutableDictionary<IVariable, Interval> Bound(ImmutableDictionary<IVariable, Interval> bounds, IDefinition definition) =>
+        bounds.SetItem(definition.Variable, bounds.Of(definition.Variable).Intersect(RangeOf(definition, bounds)));
+
+    /// <summary>A maximum lies between the largest of the lower bounds and the largest of the upper; a conditional lies somewhere in one branch or the other.</summary>
+    private static Interval RangeOf(IDefinition definition, ImmutableDictionary<IVariable, Interval> bounds) =>
+        definition switch {
+            MaximumDefinition maximum when (maximum.Left.Normalise().Range(bounds.Of), maximum.Right.Normalise().Range(bounds.Of)) is var (left, right) => new Interval(Math.Max(left.Lower, right.Lower), Math.Max(left.Upper, right.Upper)),
+            ConditionalDefinition conditional when (conditional.Then.Normalise().Range(bounds.Of), conditional.Otherwise.Normalise().Range(bounds.Of)) is var (then, otherwise) => new Interval(Math.Min(then.Lower, otherwise.Lower), Math.Max(then.Upper, otherwise.Upper)),
+            _ => throw new NotSupportedException($"Unknown kind of definition: {definition.GetType().Name}."),
+        };
 
     /// <summary>A row without variables either says nothing, or says that its guards cannot all hold.</summary>
     private static IEnumerable<GuardedRow> Tidied(GuardedRow row) =>
