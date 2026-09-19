@@ -1,4 +1,6 @@
 
+using static Hephaestus.Piecewise;
+
 namespace Hephaestus.Contracts;
 
 /// <summary>
@@ -161,5 +163,53 @@ public abstract class SolverContract {
         Assert.Equal(start.AddMinutes(36), solution.Value(arrival), Moment);
         Assert.Equal(start + TimeSpan.FromMinutes(25), start + solution.Value(arrival - departure), Moment);
     }
-}
 
+    [Fact]
+    public void TheLargestOfSeveralIsMadeAsSmallAsPossible() {
+        var constraint = X.Between(0, 10) & Y.Between(0, 10) & (X + Y >= 7) & (X - Y <= 1);
+
+        var solution = Optimum(Problem.Minimise(Max(X, Y), subjectTo: constraint));
+
+        Assert.Equal(3.5, solution.ObjectiveValue, precision: Precision);
+        Assert.Equal(3.5, solution.Value(Max(X, Y)), precision: Precision);
+    }
+
+    [Fact]
+    public void TheLargestOfSeveralIsMadeAsLargeAsPossible() {
+        var constraint = X.Between(0, 4) & Y.Between(0, 7) & (X + Y <= 8);
+
+        Assert.Equal(7, Optimum(Problem.Maximise(Max(X, Y), subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(4, Optimum(Problem.Maximise(Min(X, Y), subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(0, Optimum(Problem.Minimise(Min(X, Y), subjectTo: constraint)).ObjectiveValue, precision: Precision);
+    }
+
+    [Fact]
+    public void AnAbsoluteValueBindsFromBothSides() {
+        var constraint = X.Between(0, 10) & (Abs(X - 5) >= 2);
+
+        Assert.Equal(2, Optimum(Problem.Minimise(Abs(X - 5), subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(5, Optimum(Problem.Maximise(Abs(X - 5), subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.Equal(7, Optimum(Problem.Minimise(X, subjectTo: constraint & (X >= 4))).ObjectiveValue, precision: Precision);
+        Assert.IsType<Infeasible>(Solver.Solve(Problem.Satisfy(constraint & (Abs(X - 5) <= 1))));
+    }
+
+    [Fact]
+    public void DeviationsFromSeveralTargetsAreSummed() {
+        var targets = new double[] { 2, 4, 9 };
+
+        var solution = Optimum(Problem.Minimise(targets.Sum(target => Abs(X - target)), subjectTo: X.Between(0, 10)));
+
+        Assert.Equal(7, solution.ObjectiveValue, precision: Precision);
+        Assert.Equal(4, solution.Value(X), precision: Precision);
+    }
+
+    [Fact]
+    public void PiecewiseFunctionsNestAndMixWithLogic() {
+        var inner = Max(X, Min(Y, 6));
+        var constraint = X.Between(0, 3) & Y.Between(0, 10) & Flag.Iff(inner >= 5);
+
+        Assert.Equal(6, Optimum(Problem.Maximise(inner, subjectTo: constraint)).ObjectiveValue, precision: Precision);
+        Assert.True(Optimum(Problem.Maximise(Y, subjectTo: constraint)).Value(Flag));
+        Assert.Equal(10 - 20, Optimum(Problem.Maximise(Y - 20 * Flag, subjectTo: constraint & (Y >= 5))).ObjectiveValue, precision: Precision);
+    }
+}

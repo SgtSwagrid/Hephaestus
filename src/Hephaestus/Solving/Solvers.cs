@@ -41,7 +41,7 @@ public sealed record MilpSolver(
     public ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default) =>
         problem.Encode(Encoding) is var encoded && encoded.IsTriviallyInfeasible
             ? new Infeasible()
-            : Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken).Select(solution => solution.Presentable(encoded.Columns));
+            : Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken).Select(solution => solution.Presentable(encoded.Columns, problem.Objective));
 }
 
 /// <summary>
@@ -57,7 +57,7 @@ public sealed record IndicatorSolver(
     public ISolveResult Solve(IProblem problem, CancellationToken cancellationToken = default) =>
         problem.EncodeLogic(Encoding) is var encoded && encoded.IsTriviallyInfeasible
             ? new Infeasible()
-            : Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken).Select(solution => solution.Presentable(encoded.Columns));
+            : Backend.Solve(encoded, Options ?? SolverOptions.Default, cancellationToken).Select(solution => solution.Presentable(encoded.Columns, problem.Objective));
 }
 
 /// <summary>Functions over solve results.</summary>
@@ -92,16 +92,22 @@ public static class SolveResults {
     }
 
     extension(Solution solution) {
-        /// <summary>The solution as the modeller should see it: without auxiliary columns, and with whole-number variables snapped to whole numbers.</summary>
-        public Solution Presentable(ImmutableArray<Column> columns) =>
-            solution with {
-                Values = columns
-                    .Where(column => !column.IsAuxiliary)
-                    .ToImmutableSortedDictionary(
-                        column => column.Variable,
-                        column => column.Variable.IsIntegral ? Math.Round(solution.Values[column.Variable]) : solution.Values[column.Variable],
-                        VariableOrder.Comparer),
-            };
+        /// <summary>
+        /// The solution as the modeller should see it: without auxiliary columns, with whole-number
+        /// variables snapped to whole numbers, and with the objective as written read off the result.
+        /// (The solver's own figure may count an auxiliary variable that was left slack.)
+        /// </summary>
+        public Solution Presentable(ImmutableArray<Column> columns, ILinearExpression objective) =>
+            solution.WithValues(columns
+                .Where(column => !column.IsAuxiliary)
+                .ToImmutableSortedDictionary(
+                    column => column.Variable,
+                    column => column.Variable.IsIntegral ? Math.Round(solution.Values[column.Variable]) : solution.Values[column.Variable],
+                    VariableOrder.Comparer), objective);
+
+        /// <summary>The solution over other values, with the objective read off them.</summary>
+        public Solution WithValues(ImmutableSortedDictionary<IVariable, double> values, ILinearExpression objective) =>
+            (solution with { Values = values }) is var presented ? presented with { ObjectiveValue = presented.Value(objective) } : solution;
     }
 
     extension(ISolver solver) {

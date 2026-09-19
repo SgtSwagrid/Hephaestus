@@ -42,22 +42,49 @@ public static class MilpEncoding {
 
         /// <summary>Whether the objective is to be made small or large.</summary>
         public ObjectiveSense Sense => problem is Maximisation ? ObjectiveSense.Maximise : ObjectiveSense.Minimise;
+
+        /// <summary>A problem of the same kind with another objective and constraint. (A <see cref="Satisfaction"/> problem has no objective to replace.)</summary>
+        public IProblem With(ILinearExpression objective, IBooleanExpression constraint) =>
+            problem switch {
+                Minimisation => new Minimisation(objective, constraint),
+                Maximisation => new Maximisation(objective, constraint),
+                _ => new Satisfaction(constraint),
+            };
     }
 
-    private static IndicatorProblem Lower(IProblem problem, EncodingOptions options) {
+    private static IndicatorProblem Lower(IProblem original, EncodingOptions options) {
+        var (problem, definitions) = original.Linearise(options);
+        var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet();
         var formula = problem.Constraint.Normalise(options.StrictnessEpsilon);
-        var variables = problem.Variables;
+        // A maximum that the problem turns out not to lean on is never tied down, and would take its operands with it.
+        var variables = problem.Variables.Union(original.Variables);
         var program = IndicatorEncoding.Encode(formula, new AuxiliaryNaming([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix));
         var stated = BoundPropagation.Sweep(program.Rows.Where(IsStatedBound), ImmutableDictionary<IVariable, Interval>.Empty);
-        return new IndicatorProblem(
+        return WithBounds(definitions, options.BoundPropagationRounds, new IndicatorProblem(
             [
-                .. variables.Select(variable => AsColumn(variable, stated, isAuxiliary: false)),
+                .. variables.Select(variable => AsColumn(variable, stated, isAuxiliary: auxiliaries.Contains(variable))),
                 .. program.Auxiliaries.Select(variable => AsColumn(variable, stated, isAuxiliary: true)),
             ],
             [.. program.Rows.Where(row => !IsStatedBound(row)).SelectMany(Tidied)],
             problem.Sense,
-            problem.Objective.Normalise());
+            problem.Objective.Normalise()));
     }
+
+    /// <summary>
+    /// A maximum lies between the largest of its operands' lower bounds and the largest of their
+    /// upper bounds. Saying so bounds the variable that stands for it on both sides, even where it is
+    /// tied to its operands on one side only: that loses nothing, and gives a big-M something to be
+    /// derived from and a finite-domain solver its domain.
+    /// </summary>
+    private static IndicatorProblem WithBounds(ImmutableArray<MaximumDefinition> definitions, int rounds, IndicatorProblem problem) =>
+        definitions.IsEmpty
+            ? problem
+            : problem.WithColumnBounds(definitions.Aggregate(problem.DerivedBounds(rounds), Bound), [.. definitions.Select(definition => definition.Variable)]);
+
+    private static ImmutableDictionary<IVariable, Interval> Bound(ImmutableDictionary<IVariable, Interval> bounds, MaximumDefinition definition) =>
+        (definition.Left.Normalise().Range(bounds.Of), definition.Right.Normalise().Range(bounds.Of)) is var (left, right)
+            ? bounds.SetItem(definition.Variable, bounds.Of(definition.Variable).Intersect(new Interval(Math.Max(left.Lower, right.Lower), Math.Max(left.Upper, right.Upper))))
+            : bounds;
 
     /// <summary>A row without variables either says nothing, or says that its guards cannot all hold.</summary>
     private static IEnumerable<GuardedRow> Tidied(GuardedRow row) =>

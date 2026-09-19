@@ -1,4 +1,6 @@
 
+using static Hephaestus.Piecewise;
+
 namespace Hephaestus.Contracts;
 
 /// <summary>
@@ -121,5 +123,14 @@ public abstract class WholeNumberContract {
         Assert.Equal(TimeSpan.FromSeconds(60), solution.Value(dwell));
         Assert.Equal(start.AddMinutes(11), solution.Value(departure));
     }
-}
 
+    [Fact]
+    public void PiecewiseFunctionsOfWholeNumbersStayWhole() {
+        var domain = DepartureA.Between(0, 100) & DepartureB.Between(0, 100);
+
+        Assert.Equal(60, Optimum(Problem.Minimise(Max(DepartureA, DepartureB), subjectTo: domain & (DepartureA + DepartureB >= 120))).ObjectiveValue);
+        Assert.Equal(100, Optimum(Problem.Maximise(Abs(DepartureA - DepartureB), subjectTo: domain)).ObjectiveValue);
+        Assert.Equal(7, Optimum(Problem.Maximise(Min(DepartureA, 7), subjectTo: domain)).ObjectiveValue);
+        Assert.Equal(40, Optimum(Problem.Minimise(DepartureA, subjectTo: domain & (Abs(DepartureA - 50) <= 10) & (Max(DepartureA, DepartureB) >= 30))).ObjectiveValue);
+    }
+}
