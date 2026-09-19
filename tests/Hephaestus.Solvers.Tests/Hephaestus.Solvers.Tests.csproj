@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Hephaestus.Gurobi/Hephaestus.Gurobi.csproj" />
+    <ProjectReference Include="../../src/Hephaestus.Highs/Hephaestus.Highs.csproj" />
+    <ProjectReference Include="../../src/Hephaestus.OrTools/Hephaestus.OrTools.csproj" />
+    <ProjectReference Include="../../src/Hephaestus.Z3/Hephaestus.Z3.csproj" />
+  </ItemGroup>
+
+</Project>

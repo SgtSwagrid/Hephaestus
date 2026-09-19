@@ -1,0 +1,61 @@
+# Generate and publish API documentation to GitHub Pages upon release, using DocFX as configured by `docs/docfx.json`.
+
+name: Documentation
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+# Cancel in-progress runs when starting a new one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  docs:
+    name: Publish API docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install DocFX
+        run: dotnet tool install --global docfx
+
+      # DocFX reads the compiled assemblies rather than the source,
+      # because it doesn't yet understand C# 14 `extension` blocks in source form.
+      - name: Build
+        run: dotnet build --configuration Release
+
+      # Every packable project in the solution is documented.
+      - name: Collect assemblies
+        run: |
+          mkdir -p artefacts/docs/assemblies
+          for project in $(dotnet sln list | grep '\.csproj$'); do
+            if [[ $(dotnet msbuild "$project" -getProperty:IsPackable) == "true" ]]; then
+              assembly=$(dotnet msbuild "$project" -getProperty:TargetPath -p:Configuration=Release)
+              cp "$assembly" artefacts/docs/assemblies/
+              if [[ -f "${assembly%.dll}.xml" ]]; then cp "${assembly%.dll}.xml" artefacts/docs/assemblies/; fi
+            fi
+          done
+
+      - name: Generate docs
+        run: docfx docs/docfx.json
+
+      - name: Publish to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: artefacts/docs/site
+          publish_branch: docs

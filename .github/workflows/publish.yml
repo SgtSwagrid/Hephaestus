@@ -1,0 +1,64 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+
+  # Publish every packable project to nuget.org.
+  # Triggered by publishing a GitHub release with a version tag (v*), e.g. `v1.2.3` or `v1.2.3-beta.1`.
+  # The package version is the tag without its `v`; a suffix such as `-beta.1` makes it a prerelease.
+  #
+  # Authentication is by nuget.org Trusted Publishing, so no API key is stored anywhere.
+  # Required setup:
+  #   - A Trusted Publishing policy on nuget.org for this repository and the workflow file `publish.yml`.
+  #   - A repository variable NUGET_USER with your nuget.org username,
+  #     unless it matches the name of the GitHub repository owner.
+  publish:
+    name: Publish to NuGet
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # To attach the packages to the GitHub release.
+      id-token: write # To exchange a GitHub OIDC token for a short-lived nuget.org API key.
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Version from tag
+        run: echo "PACKAGE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: dotnet build --configuration Release -p:Version="$PACKAGE_VERSION"
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build -p:Version="$PACKAGE_VERSION" --output artefacts
+
+      - name: Attach packages to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" artefacts/*.nupkg artefacts/*.snupkg --clobber
+
+      - name: Log in to NuGet
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER || github.repository_owner }}
+
+      # Symbol packages (.snupkg) next to each .nupkg are pushed along with it.
+      - name: Publish
+        run: >
+          dotnet nuget push "artefacts/*.nupkg"
+          --api-key "${{ steps.login.outputs.NUGET_API_KEY }}"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

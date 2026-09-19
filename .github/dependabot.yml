@@ -1,0 +1,15 @@
+# Opens pull requests for outdated NuGet dependencies once per week.
+# See https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+
+version: 2
+
+updates:
+
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+    commit-message:
+      prefix: "[dependabot]"

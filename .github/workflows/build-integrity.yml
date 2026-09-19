@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Cancel in-progress runs when starting a new one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # Verify code format and build integrity for every PR.
+  # Each step is skipped for repositories without any projects (such as the config repository itself),
+  # so that the required status check still passes.
+  build-integrity:
+    name: Build Integrity
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install .NET
+        if: hashFiles('**/*.csproj') != ''
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Linter
+        if: hashFiles('**/*.csproj') != ''
+        run: dotnet format --verify-no-changes
+
+      - name: Build
+        if: hashFiles('**/*.csproj') != ''
+        run: dotnet build --configuration Release
+
+      - name: Test
+        if: hashFiles('**/*.csproj') != ''
+        run: dotnet test --configuration Release --no-build

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <!-- Take the native solver binaries for this platform alone rather than all five. -->
+    <RuntimeIdentifier>$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Hephaestus.NodaTime/Hephaestus.NodaTime.csproj" />
+    <ProjectReference Include="../../src/Hephaestus.OrTools/Hephaestus.OrTools.csproj" />
+    <ProjectReference Include="../../src/Hephaestus.Z3/Hephaestus.Z3.csproj" />
+  </ItemGroup>
+
+</Project>

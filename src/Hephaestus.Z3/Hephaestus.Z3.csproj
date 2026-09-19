@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Hephaestus.Optimisation.Z3</PackageId>
+    <AssemblyName>Hephaestus.Optimisation.Z3</AssemblyName>
+    <RootNamespace>Hephaestus.Z3</RootNamespace>
+    <Description>Microsoft Z3 backend for Hephaestus: an SMT solver that handles boolean structure and strict inequalities natively and exactly, with no big-M encoding at all.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Hephaestus/Hephaestus.csproj" />
+    <PackageReference Include="Microsoft.Z3" />
+  </ItemGroup>
+
+</Project>

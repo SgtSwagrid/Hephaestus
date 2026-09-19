@@ -1,0 +1,41 @@
+<Project>
+
+  <!--
+    MSBuild settings common to all of my C# libraries.
+    Automatically synchronised from 'https://github.com/SgtSwagrid/cs-library-config/'.
+    Library-specific settings belong in 'src/Directory.Build.props' or the project files, which import this one.
+  -->
+
+  <PropertyGroup Label="Compilation">
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Version">
+    <!-- Local builds are versioned 0.0.0-dev. The publish workflow overrides this with the release tag (v1.2.3 → 1.2.3). -->
+    <VersionPrefix>0.0.0</VersionPrefix>
+    <VersionSuffix>dev</VersionSuffix>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Package">
+    <Authors>Alec Dorrington</Authors>
+    <Company>Alec Dorrington</Company>
+    <Copyright>Copyright (c) Alec Dorrington</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl Condition="'$(GITHUB_REPOSITORY)' != ''">https://github.com/$(GITHUB_REPOSITORY)</PackageProjectUrl>
+    <!-- Source Link takes the repository URL and commit from git, so that debuggers can step into the published source. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <!-- The README is packed by 'Directory.Build.targets'. -->
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/TrainHeadway/TrainHeadway.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Hephaestus.Gurobi/Hephaestus.Gurobi.csproj" />
+    <Project Path="src/Hephaestus.Highs/Hephaestus.Highs.csproj" />
+    <Project Path="src/Hephaestus.NodaTime/Hephaestus.NodaTime.csproj" />
+    <Project Path="src/Hephaestus.OrTools/Hephaestus.OrTools.csproj" />
+    <Project Path="src/Hephaestus.Z3/Hephaestus.Z3.csproj" />
+    <Project Path="src/Hephaestus/Hephaestus.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Hephaestus.NodaTime.Tests/Hephaestus.NodaTime.Tests.csproj" />
+    <Project Path="tests/Hephaestus.Solvers.Tests/Hephaestus.Solvers.Tests.csproj" />
+    <Project Path="tests/Hephaestus.Tests/Hephaestus.Tests.csproj" />
+  </Folder>
+</Solution>

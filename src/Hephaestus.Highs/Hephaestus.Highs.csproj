@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Hephaestus.Optimisation.Highs</PackageId>
+    <AssemblyName>Hephaestus.Optimisation.Highs</AssemblyName>
+    <RootNamespace>Hephaestus.Highs</RootNamespace>
+    <Description>Standalone HiGHS backend for Hephaestus: the leading permissively licensed MILP solver, in a few megabytes and with no other dependencies.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Hephaestus/Hephaestus.csproj" />
+    <PackageReference Include="Highs.Native" />
+  </ItemGroup>
+
+</Project>

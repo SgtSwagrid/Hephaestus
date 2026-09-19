@@ -1,0 +1,70 @@
+<Project>
+
+  <!--
+    MSBuild targets common to all of my C# libraries.
+    Automatically synchronised from 'https://github.com/SgtSwagrid/cs-library-config/'.
+  -->
+
+  <!--
+    The README doubles as each package's page on nuget.org, which renders Markdown but shows HTML tags as literal text.
+    So the package gets a copy in which the HTML header (headings, paragraphs, links and badges) is converted to Markdown,
+    and relative links are made absolute (when building on GitHub Actions), since nuget.org can't resolve them.
+  -->
+  <Target Name="PackReadme" BeforeTargets="_GetPackageFiles" Condition="'$(IsPackable)' == 'true'">
+    <PropertyGroup>
+      <PackReadmeRepositoryUrl Condition="'$(GITHUB_REPOSITORY)' != ''">$(GITHUB_SERVER_URL)/$(GITHUB_REPOSITORY)</PackReadmeRepositoryUrl>
+    </PropertyGroup>
+    <ConvertReadmeForNuGet
+      Source="$(MSBuildThisFileDirectory)README.md"
+      Destination="$(IntermediateOutputPath)nuget/README.md"
+      RepositoryUrl="$(PackReadmeRepositoryUrl)" />
+    <ItemGroup>
+      <None Include="$(IntermediateOutputPath)nuget/README.md" Pack="true" PackagePath="/" Visible="false" />
+    </ItemGroup>
+  </Target>
+
+  <UsingTask
+    TaskName="ConvertReadmeForNuGet"
+    TaskFactory="RoslynCodeTaskFactory"
+    AssemblyFile="$(MSBuildToolsPath)/Microsoft.Build.Tasks.Core.dll">
+    <ParameterGroup>
+      <Source ParameterType="System.String" Required="true" />
+      <Destination ParameterType="System.String" Required="true" />
+      <RepositoryUrl ParameterType="System.String" />
+    </ParameterGroup>
+    <Task>
+      <Using Namespace="System.IO" />
+      <Using Namespace="System.Linq" />
+      <Using Namespace="System.Text.RegularExpressions" />
+      <Code Type="Fragment" Language="cs"><![CDATA[
+        // Applied in order to each line which starts with an HTML tag, outside of code blocks.
+        var rules = new[] {
+            (@"<!--.*?-->", ""),
+            (@"<a\s+href=""([^""]*)""[^>]*>\s*<img\s+src=""([^""]*)""\s+alt=""([^""]*)""[^>]*>\s*</a>", "[![$3]($2)]($1)"),
+            (@"<img\s+src=""([^""]*)""\s+alt=""([^""]*)""[^>]*>", "![$2]($1)"),
+            (@"<a\s+href=""([^""]*)""[^>]*>(.*?)</a>", "[$2]($1)"),
+            (@"<h1[^>]*>(.*?)</h1>", "# $1"),
+            (@"<h2[^>]*>(.*?)</h2>", "## $1"),
+            (@"<h3[^>]*>(.*?)</h3>", "### $1"),
+            (@"</?(div|span|p|br|center)\b[^>]*>", ""),
+        };
+        var convertHtml = (string line) => line.TrimStart().StartsWith("<")
+            ? rules.Aggregate(line, (text, rule) => Regex.Replace(text, rule.Item1, rule.Item2)).Trim()
+            : line;
+        var absoluteLinks = (string line) => string.IsNullOrEmpty(RepositoryUrl)
+            ? line
+            : Regex.Replace(line, @"\]\((?!https?:|#|mailto:)([^)\s]+)\)", "](" + RepositoryUrl + "/blob/HEAD/$1)");
+        var isFence = (string line) => line.TrimStart().StartsWith("```");
+
+        // Fenced code blocks are left untouched: a line is inside one if an odd number of fences precede it.
+        var lines = File.ReadAllLines(Source);
+        var converted = lines.Select((line, i) =>
+            isFence(line) || lines.Take(i).Count(isFence) % 2 == 1 ? line : absoluteLinks(convertHtml(line)));
+
+        Directory.CreateDirectory(Path.GetDirectoryName(Destination));
+        File.WriteAllLines(Destination, converted);
+      ]]></Code>
+    </Task>
+  </UsingTask>
+
+</Project>

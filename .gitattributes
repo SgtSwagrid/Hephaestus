@@ -1,0 +1,33 @@
+# Force git to always use Unix-style line endings ('\n').
+* text eol=lf
+
+# Except for Windows scripts.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Ensure source files are recognised as text, with C#-aware diffs.
+*.cs text diff=csharp
+*.csproj text
+*.props text
+*.targets text
+*.slnx text
+*.md text
+*.txt text
+*.json text
+*.xml text
+*.yml text
+*.sh text
+
+# Ensure binary files are recognised as binaries.
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.dll binary
+*.exe binary
+*.nupkg binary
+*.snupkg binary

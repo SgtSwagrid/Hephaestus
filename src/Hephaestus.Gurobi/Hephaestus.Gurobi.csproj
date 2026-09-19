@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Hephaestus.Optimisation.Gurobi</PackageId>
+    <AssemblyName>Hephaestus.Optimisation.Gurobi</AssemblyName>
+    <RootNamespace>Hephaestus.Gurobi</RootNamespace>
+    <Description>Native Gurobi backend for Hephaestus. Conditional constraints become Gurobi indicator constraints, so no big-M is involved at all; a classic big-M formulation with derived values is available too. Needs a Gurobi licence.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Hephaestus/Hephaestus.csproj" />
+    <PackageReference Include="Gurobi.Optimizer" />
+  </ItemGroup>
+
+</Project>

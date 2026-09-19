@@ -1,0 +1,28 @@
+{
+  "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+  "metadata": [
+    {
+      "src": [
+        {
+          "src": "../artefacts/docs/assemblies",
+          "files": [ "*.dll" ]
+        }
+      ],
+      "dest": "api"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": [ "index.md", "toc.yml", "api/*.yml" ]
+      }
+    ],
+    "output": "../artefacts/docs/site",
+    "template": [ "default", "modern" ],
+    "globalMetadata": {
+      "_appTitle": "Hephaestus",
+      "_appFooter": "Made with <a href=\"https://github.com/SgtSwagrid/cs-library-template\">C# Library Template</a>.",
+      "_enableSearch": true
+    }
+  }
+}

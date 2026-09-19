@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csdevkit",
+    "ms-dotnettools.csharp",
+    "editorconfig.editorconfig",
+    "anthropic.claude-code",
+    "DavidAnson.vscode-markdownlint",
+    "github.vscode-github-actions",
+    "github.vscode-pull-request-github",
+    "mhutchie.git-graph",
+    "codezombiech.gitignore",
+    "azuretools.vscode-containers"
+  ]
+}

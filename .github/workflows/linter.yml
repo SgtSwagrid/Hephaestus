@@ -1,0 +1,74 @@
+# Automatically fixes code style violations with `dotnet format`, as configured by `.editorconfig`.
+# On pull requests, the fix is committed straight to the PR branch.
+# On pushes to `main`, the fix is proposed in a new PR instead.
+
+name: Linter
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Cancel in-progress runs when starting a new one.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+
+      # A PAT is used where available so that the fix itself triggers CI.
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          token: ${{ secrets.GH_TOKEN || github.token }}
+
+      - name: Install .NET
+        if: hashFiles('**/*.csproj') != ''
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      # Check format without modifying files. `continue-on-error` allows subsequent
+      # steps to inspect the outcome and apply a fix rather than stopping immediately.
+      - name: Validate
+        id: validate
+        if: hashFiles('**/*.csproj') != ''
+        run: dotnet format --verify-no-changes
+        continue-on-error: true
+
+      # Apply `dotnet format` in-place. Only runs when the check above found violations.
+      - name: Fix
+        if: steps.validate.outcome == 'failure'
+        run: dotnet format
+
+      # For PRs: commit the fix directly to the PR branch.
+      - name: Commit
+        if: steps.validate.outcome == 'failure' && github.event_name == 'pull_request'
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "[linter] Fixed code style violations with `dotnet format`."
+
+      # For pushes to main: open a PR rather than pushing directly.
+      - name: Publish
+        if: steps.validate.outcome == 'failure' && github.event_name != 'pull_request'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GH_TOKEN || github.token }}
+          branch: linter
+          commit-message: "[linter] Fixed code style violations with `dotnet format`."
+          title: "[linter] Fixed code style violations with `dotnet format`."
+          body: |
+            Applied `dotnet format` to fix code style violations that reached `${{ github.ref_name }}`.
+            The rules are defined in [.editorconfig](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/.editorconfig).

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Hephaestus.Optimisation.OrTools</PackageId>
+    <AssemblyName>Hephaestus.Optimisation.OrTools</AssemblyName>
+    <RootNamespace>Hephaestus.OrTools</RootNamespace>
+    <Description>Google OR-Tools backend for Hephaestus: solve problems with SCIP, CBC, HiGHS, CP-SAT, GLOP, or a commercial solver that OR-Tools can reach (Gurobi, CPLEX, Xpress).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Hephaestus/Hephaestus.csproj" />
+    <PackageReference Include="Google.OrTools" />
+  </ItemGroup>
+
+</Project>

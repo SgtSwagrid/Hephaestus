@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- 'Hephaestus' itself is taken on nuget.org, hence the longer package and assembly name. -->
+    <PackageId>Hephaestus.Optimisation</PackageId>
+    <AssemblyName>Hephaestus.Optimisation</AssemblyName>
+    <RootNamespace>Hephaestus</RootNamespace>
+    <Description>A purely functional modelling layer for MILP and SMT solvers. Constraints are immutable expressions that read like the mathematics they represent: (a + h &lt;= b) | (b + h &lt;= a). Boolean structure is lowered to linear constraints automatically, with big-M values derived from variable bounds. The underlying solver is swappable.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Hephaestus.Tests" />
+  </ItemGroup>
+
+</Project>

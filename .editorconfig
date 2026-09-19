@@ -1,0 +1,54 @@
+# IDE configuration for consistent code formatting across different editors.
+# Also read by `dotnet format`, which enforces it in CI.
+
+root = true
+
+# Set default charset, line endings, and whitespace handling for all files.
+[*]
+charset                  = utf-8
+end_of_line              = lf
+insert_final_newline     = true
+trim_trailing_whitespace = true
+indent_style             = space
+indent_size              = 4
+
+# Use an indentation of 2 spaces for markup and configuration.
+[*.{csproj,props,targets,slnx,xml,json,yml,yaml,md,htm,html,js,ts}]
+indent_size = 2
+
+# Trailing whitespace is a line break in Markdown.
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+
+# Braces open on the same line (K&R).
+csharp_new_line_before_open_brace                     = none
+csharp_new_line_before_else                           = false
+csharp_new_line_before_catch                          = false
+csharp_new_line_before_finally                        = false
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types     = true
+
+# Expression bodies wherever a member is a single expression.
+csharp_style_expression_bodied_methods         = true:suggestion
+csharp_style_expression_bodied_properties      = true:suggestion
+csharp_style_expression_bodied_operators       = true:suggestion
+csharp_style_expression_bodied_accessors       = true:suggestion
+csharp_style_expression_bodied_indexers        = true:suggestion
+csharp_style_expression_bodied_lambdas         = true:suggestion
+csharp_style_expression_bodied_local_functions = true:suggestion
+csharp_style_expression_bodied_constructors    = true:suggestion
+
+# Expressions over statements.
+csharp_style_prefer_switch_expression     = true:suggestion
+csharp_style_prefer_pattern_matching      = true:suggestion
+csharp_style_var_for_built_in_types       = true:suggestion
+csharp_style_var_when_type_is_apparent    = true:suggestion
+csharp_style_var_elsewhere                = true:suggestion
+csharp_style_namespace_declarations       = file_scoped:warning
+csharp_using_directive_placement          = outside_namespace:warning
+dotnet_sort_system_directives_first       = true
+
+# Folders are for organisation only; they needn't match namespaces.
+dotnet_diagnostic.IDE0130.severity = none

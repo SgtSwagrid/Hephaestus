@@ -1,0 +1,76 @@
+# CLAUDE.md
+
+This file provides guidance to [Claude Code](https://claude.com/product/claude-code) when working with code in this repository.
+It is not intended for human eyes.
+
+### Maintenance
+
+You (robot or human) have standing permission to update this file without asking.
+Add important patterns, gotchas, or context that would help future sessions.
+Keep it concise and actionable.
+
+## Project overview
+
+This is a C# library providing a purely functional modelling layer for MILP and SMT solvers.
+Constraints are immutable expressions that read like the mathematics they represent,
+and are lowered to whichever solver is plugged in. The [README](README.md) records the design in detail.
+
+### Structure
+
+- [src/Hephaestus](src/Hephaestus) is the core (package `Hephaestus.Optimisation`). It has no native dependencies and must stay that way.
+- Every other project in [src](src) is a solver backend or an integration, published as a separate package `Hephaestus.Optimisation.*`.
+- Namespaces are `Hephaestus.*`; the package IDs are longer only because `Hephaestus` is taken on nuget.org.
+- [tests/Hephaestus.Solvers.Tests](tests/Hephaestus.Solvers.Tests) runs one contract against every backend. Add new backends to it.
+
+### Design invariants
+
+These were deliberate decisions. Don't reintroduce what they rule out:
+
+- Expressions are as-written data. Operators only construct records; flattening, normalisation and simplification happen in later passes, never at construction time.
+- A problem is _one_ constraint plus an optional objective, not a list of constraints (`&` already means "and").
+- Variables carry no bounds. Bounds are ordinary constraints, recovered as column bounds by the encoder.
+- Big-M values are never supplied by the user, but derived per row from propagated bounds.
+
+### Configuration
+
+Many configuration files (`.editorconfig`, the root `Directory.Build.props` and `Directory.Build.targets`, `global.json`, `.github/workflows/*`, `CONTRIBUTING.md`, `docs/STYLE_GUIDE.md`, etc.)
+are synchronised from [C# Library Config](https://github.com/SgtSwagrid/cs-library-config) and will be overwritten.
+Don't change them here; change `src/Directory.Build.props`, `tests/Directory.Build.props` or `Directory.Packages.props` instead,
+or else propose the change upstream.
+
+## Instructions
+
+### Compilation and Diagnostics
+
+- When the user asks for help with a compilation or type error, start by running `dotnet build` to see the error for yourself.
+  If there are many errors, making it unclear which one the user is referring to, ask them to clarify, and then focus only on that issue.
+- JetBrains IDE MCP integration may be active. When a request seems to implicitly refer to something the user is looking at, check
+  `mcp__ide__getDiagnostics` first to see which file(s) are open and get associated diagnostics (errors, warnings, and info hints with line numbers).
+
+#### Testing
+
+- After making code changes, always run `dotnet build` and `dotnet test` to verify that issues are fixed and no new ones are introduced.
+- Warnings are errors. Don't suppress a warning without a comment explaining why.
+- Run `dotnet format` before committing, or the CI pipeline will reject the change.
+- Tests and samples build for the current platform's runtime identifier only, because OR-Tools ships native binaries for five platforms (about 380 MB). Keep it that way.
+- Repeatedly retry upon failure until the build succeeds. If you are unsure how to fix an issue, ask for help or refer to existing code for examples.
+- Before trying to fix an error, make sure you first understand it fully.
+- You should never report that a feature is complete without testing it first.
+
+### Code Style
+
+- You must read the [Code Style Guidelines](docs/STYLE_GUIDE.md).
+
+### Pull Requests
+
+When asked to publish the code changes, your task is to open one or more pull requests (PRs) to merge the changes into `main` on GitHub:
+
+- Use `git` to check what has changed as compared to the `main` branch on `origin`.
+- If the changes are thematically linked, they can be published as a single PR.
+- Otherwise, you'll need to divide the changes into multiple PRs using your own judgement.
+- Each PR should have a singular focus, shouldn't break anything, and should be able to be merged independently.
+- Ensure that all code is staged, committed and pushed. Ensure no new files are left uncommitted, and no debug code is left in the codebase.
+- When creating a PR, ensure that the title and description are clear, informative, and comprehensive.
+- All feature/bugfix/etc branch names should be formatted as "feature_<short description>" or "fix_<short description>" or similar.
+- All PR titles should be formatted as "[<scope>] <Short summary>", e.g. "[renderer] Fixed colour inversion bug."
+- You have GitHub MCP integration that can be used to do the above.

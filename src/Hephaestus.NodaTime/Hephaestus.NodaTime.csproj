@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>Hephaestus.Optimisation.NodaTime</PackageId>
+    <AssemblyName>Hephaestus.Optimisation.NodaTime</AssemblyName>
+    <RootNamespace>Hephaestus.NodaTime</RootNamespace>
+    <Description>NodaTime support for Hephaestus: typed variables and expressions for Duration, Instant, LocalDateTime, LocalDate, LocalTime, OffsetDateTime and ZonedDateTime, with the operators each type ought to have (instant - instant is a duration; instant + instant does not compile).</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Hephaestus/Hephaestus.csproj" />
+    <PackageReference Include="NodaTime" />
+  </ItemGroup>
+
+</Project>
