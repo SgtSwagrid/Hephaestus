@@ -135,7 +135,7 @@ if (solver.Solve(problem) is Infeasible) {
 }
 ```
 
-`FindConflict` returns conjuncts that cannot all hold and none of which can be spared: drop any one and the rest can. It asks nothing of a solver but to tell feasible from infeasible, so it works with every backend, and takes about `k · log(n / k)` solves to find `k` constraints among `n`. Bounds take part like any other constraint, since that is all they are.
+`FindConflict` returns conjuncts that cannot all hold and none of which can be spared: drop any one and the rest can. It asks nothing of a solver but to tell feasible from infeasible, so it works with every backend, and takes about `k · log(n / k)` solves to find `k` constraints among `n`. Bounds take part like any other constraint, since that is all they are. Gurobi is asked to narrow the search down first, with an irreducible infeasible subsystem of its own, so on a large model the search is over a handful of constraints rather than all of them; the answer is the same either way.
 
 ### Shadow prices
 

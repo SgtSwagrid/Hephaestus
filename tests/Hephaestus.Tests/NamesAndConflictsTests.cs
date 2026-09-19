@@ -130,4 +130,59 @@ public sealed class NamesAndConflictsTests {
     [Fact]
     public void ASolverThatCannotDecideCannotVouchForAConflict() =>
         Assert.Contains("Out of time", Assert.Throws<InvalidOperationException>(() => new MilpSolver(new WaveringBackend()).FindConflict(M.Between(0, 3) & (M >= 4))).Message);
+
+    [Fact]
+    public void BoundsKnowTheConstraintThatStatesThem() {
+        var (loose, tight, floor) = ((M <= 8).WithName("loose"), (M <= 5).WithName("tight"), (M >= 1).WithName("floor"));
+        var encoded = Problem.Minimise(Max(M, N), subjectTo: loose & tight & floor & N.EqualTo(3).WithName("fixed") & A).EncodeLogic();
+
+        Assert.Equal(new BoundOrigin(floor, tight), encoded.BoundOrigins[M]);
+        Assert.Equal("fixed", encoded.BoundOrigins[N].Lower!.Name);
+        Assert.Same(encoded.BoundOrigins[N].Lower, encoded.BoundOrigins[N].Upper);
+        Assert.Equal("a", encoded.BoundOrigins[A].Lower!.Name);
+        Assert.Null(encoded.BoundOrigins[A].Upper);
+        // The variable that stands for the maximum is bounded by derivation, which is nobody's constraint.
+        Assert.DoesNotContain(encoded.Columns.Single(column => column.Variable.Name == "_max0").Variable, encoded.BoundOrigins.Keys);
+    }
+
+    /// <summary>Offers a fixed answer when asked to narrow a conflict down, and otherwise solves by trying everything.</summary>
+    private sealed record OfferingBackend(Func<IndicatorProblem, ImmutableArray<IBooleanExpression>> Offer, List<int> Sizes) : IMilpBackend, IConflictBackend {
+        public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>
+            new CountingBackend(Sizes).Solve(problem, start, options, cancellationToken);
+
+        public ImmutableArray<IBooleanExpression> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) => Offer(problem);
+    }
+
+    private static IBooleanExpression Padded(IBooleanExpression low, IBooleanExpression high) =>
+        Enumerable.Range(0, 100).Select(index => Variable.Binary($"flag{index}") + Variable.Binary($"flag{index + 1}") <= 2).AllOf() & low & M.Between(0, 1) & (N >= 0) & high;
+
+    [Fact]
+    public void ASolverThatCanNarrowTheSearchDownIsOnlyAskedAboutWhatItOffers() {
+        var (low, high, sizes) = ((M >= 1).WithName("low"), (M <= 0).WithName("high"), new List<int>());
+        var solver = new MilpSolver(new OfferingBackend(problem => [low, problem.BoundOrigins[N].Lower!, high], sizes));
+
+        var conflict = solver.FindConflict(Padded(low, high));
+
+        Assert.Equal(["low", "high"], conflict.Select(conjunct => conjunct.Name));
+        // None of the solves was of more than the three constraints on offer, of which one turned out to be spare.
+        Assert.All(sizes, size => Assert.InRange(size, 0, 3));
+    }
+
+    [Fact]
+    public void AnOfferThatIsNotInfeasibleAfterAllIsSetAside() {
+        var (low, high) = ((M >= 1).WithName("low"), (M <= 0).WithName("high"));
+        var solver = new MilpSolver(new OfferingBackend(problem => [low, problem.BoundOrigins[N].Lower!], []));
+
+        Assert.Equal(["low", "high"], solver.FindConflict(Padded(low, high)).Select(conjunct => conjunct.Name));
+        Assert.Empty(new MilpSolver(new OfferingBackend(_ => [low], [])).FindConflict(M.Between(0, 3) & low));
+    }
+
+    [Fact]
+    public void WhatIsEvidentIsAnsweredWithoutAskingTheBackend() {
+        var (low, high, never) = ((M >= 4).WithName("low"), (M <= 2).WithName("high"), (M + 1 <= M).WithName("never"));
+        var solver = new MilpSolver(new OfferingBackend(_ => throw new InvalidOperationException("The backend should not have been asked."), []));
+
+        Assert.Equal([low, high], solver.NarrowConflict(Problem.Satisfy((N >= 0) & low & high)));
+        Assert.Equal([never], solver.NarrowConflict(Problem.Satisfy((N >= 0) & never & (M >= 0))));
+    }
 }

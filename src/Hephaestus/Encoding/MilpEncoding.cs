@@ -62,15 +62,46 @@ public static class MilpEncoding {
         var variables = problem.Variables.Union(original.Variables);
         var program = IndicatorEncoding.Encode(conjuncts, new AuxiliaryNaming([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix));
         var stated = BoundPropagation.Sweep(program.Rows.Where(IsStatedBound), ImmutableDictionary<IVariable, Interval>.Empty);
-        return WithBounds(definitions, options.BoundPropagationRounds, new IndicatorProblem(
+        return WithOrigins(program.Rows.Where(IsStatedBound), stated, WithBounds(definitions, options.BoundPropagationRounds, new IndicatorProblem(
             [
                 .. variables.Select(variable => AsColumn(variable, stated, isAuxiliary: auxiliaries.Contains(variable))),
                 .. program.Auxiliaries.Select(variable => AsColumn(variable, stated, isAuxiliary: true)),
             ],
             [.. program.Rows.Where(row => !IsStatedBound(row)).SelectMany(Tidied)],
             problem.Sense,
-            problem.Objective.Normalise()));
+            problem.Objective.Normalise())));
     }
+
+    /// <summary>One side of a variable's bounds, as one constraint states it.</summary>
+    private sealed record StatedBound(
+        IVariable Variable,
+        bool IsUpper,
+        double Value,
+        IBooleanExpression? Origin
+    );
+
+    /// <summary>
+    /// Records which constraint states each bound: the tightest, where several do. A bound that was
+    /// since tightened by derivation (as those of the variables that stand for maxima are) is no
+    /// longer the stated one, and is put down to nothing.
+    /// </summary>
+    private static IndicatorProblem WithOrigins(IEnumerable<GuardedRow> statedRows, ImmutableDictionary<IVariable, Interval> stated, IndicatorProblem problem) {
+        var tightest = statedRows.SelectMany(StatedBy).GroupBy(bound => (bound.Variable, bound.IsUpper)).ToImmutableDictionary(group => group.Key, group => group.Aggregate((best, next) => (next.Value > best.Value) == best.IsUpper ? best : next).Origin);
+        return problem with {
+            BoundOrigins = problem.Columns
+                .Select(column => KeyValuePair.Create(column.Variable, new BoundOrigin(
+                    column.LowerBound == stated.Of(column.Variable).Lower ? tightest.GetValueOrDefault((column.Variable, false)) : null,
+                    column.UpperBound == stated.Of(column.Variable).Upper ? tightest.GetValueOrDefault((column.Variable, true)) : null)))
+                .Where(entry => entry.Value is not { Lower: null, Upper: null })
+                .ToImmutableDictionary(),
+        };
+    }
+
+    /// <summary><c>c&#183;x + k &lt;= 0</c> bounds <c>x</c> from above if <c>c</c> is positive and from below if not; an equation does both.</summary>
+    private static IEnumerable<StatedBound> StatedBy(GuardedRow row) =>
+        row.Expression.Coefficients.Single() is var term && row.IsEquality
+            ? [new StatedBound(term.Key, true, -row.Expression.Constant / term.Value, row.Origin), new StatedBound(term.Key, false, -row.Expression.Constant / term.Value, row.Origin)]
+            : [new StatedBound(term.Key, term.Value > 0, -row.Expression.Constant / term.Value, row.Origin)];
 
     /// <summary>
     /// A maximum lies between the largest of its operands' lower bounds and the largest of their

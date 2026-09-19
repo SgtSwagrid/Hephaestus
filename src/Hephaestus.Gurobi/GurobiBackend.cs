@@ -8,7 +8,7 @@ namespace Hephaestus.Gurobi;
 /// it turns every guarded row into a Gurobi indicator constraint, so that no big-M appears anywhere;
 /// as an <see cref="IMilpBackend"/> it takes the classic formulation with derived big-M values.
 /// </summary>
-public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
+public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend, IConflictBackend {
     /// <inheritdoc/>
     public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>
         Solve(problem.AsIndicatorProblem(), start, options, cancellationToken).Select(solution => solution with { RowDuals = PerRow(problem, solution.RowDuals) });
@@ -66,15 +66,51 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend {
             },
             column.Variable.Name);
 
-    private static void Declare(GRBModel model, GuardedRow row, ImmutableDictionary<IVariable, GRBVar> variables) {
+    /// <summary>A row as Gurobi holds it: a plain constraint, or an indicator constraint if it has a guard.</summary>
+    private sealed record Declared(
+        GRBConstr? Plain,
+        GRBGenConstr? Indicator
+    );
+
+    private static Declared Declare(GRBModel model, GuardedRow row, ImmutableDictionary<IVariable, GRBVar> variables) {
         var body = Linear(new AffineForm(row.Expression.Coefficients, 0), variables);
         var sense = row.IsEquality ? GRB.EQUAL : GRB.LESS_EQUAL;
-        if (row.Guards is [var guard]) {
-            model.AddGenConstrIndicator(variables[guard.Variable], guard.IsPositive ? 1 : 0, body, sense, 0 - row.Expression.Constant, null);
-        } else {
-            model.AddConstr(body, sense, 0 - row.Expression.Constant, null);
-        }
+        return row.Guards is [var guard]
+            ? new Declared(null, model.AddGenConstrIndicator(variables[guard.Variable], guard.IsPositive ? 1 : 0, body, sense, 0 - row.Expression.Constant, null))
+            : new Declared(model.AddConstr(body, sense, 0 - row.Expression.Constant, null), null);
     }
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// Gurobi computes an irreducible infeasible subsystem: rows and bounds that cannot all hold, none
+    /// of which can be spared. Each is put down to the constraint it was encoded from.
+    /// </remarks>
+    public ImmutableArray<IBooleanExpression> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) {
+        using var environment = Quietly();
+        using var model = new GRBModel(environment);
+        using var interruption = cancellationToken.Register(model.Terminate);
+
+        var singlyGuarded = problem.WithSingleGuards();
+        var variables = singlyGuarded.Columns.ToImmutableDictionary(column => column.Variable, column => Declare(model, column));
+        var rows = singlyGuarded.Rows.Select(row => (Row: row, Declared: Declare(model, row, variables))).ToImmutableArray();
+        Configure(model, options);
+        model.Optimize();
+        if (Settled(model) != GRB.Status.INFEASIBLE) {
+            return [];
+        }
+        model.ComputeIIS();
+
+        return [
+            .. InConflict(
+                rows.Where(entry => (entry.Declared.Plain?.IISConstr ?? entry.Declared.Indicator!.IISGenConstr) == 1).Select(entry => entry.Row.Origin),
+                variables.Where(entry => entry.Value.IISLB == 1).Select(entry => problem.BoundOrigins.GetValueOrDefault(entry.Key)?.Lower),
+                variables.Where(entry => entry.Value.IISUB == 1).Select(entry => problem.BoundOrigins.GetValueOrDefault(entry.Key)?.Upper)),
+        ];
+    }
+
+    /// <summary>The constraints that any of the subsystem's rows or bounds came from, each once. What has no origin (the domain of a binary variable, say) is nobody's constraint.</summary>
+    private static IEnumerable<IBooleanExpression> InConflict(params IEnumerable<IBooleanExpression?>[] origins) =>
+        origins.SelectMany(some => some).OfType<IBooleanExpression>().Distinct<IBooleanExpression>(ReferenceEqualityComparer.Instance);
 
     private static GRBLinExpr Linear(AffineForm form, ImmutableDictionary<IVariable, GRBVar> variables) {
         var expression = new GRBLinExpr(form.Constant);

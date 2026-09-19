@@ -51,13 +51,18 @@ public sealed record MilpSolver(
     IMilpBackend Backend,
     EncodingOptions? Encoding = null,
     SolverOptions? Options = null
-) : ISolver {
+) : IConflictSolver {
     /// <inheritdoc/>
     public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => problem.Encode(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
             : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
                 .Presentable(encoded.Columns, problem.Objective, encodingTime);
+
+    /// <inheritdoc/>
+    /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
+    public ImmutableArray<IBooleanExpression> NarrowConflict(IProblem problem, CancellationToken cancellationToken = default) =>
+        Backend is IConflictBackend backend ? Conflicts.Narrow(problem.EncodeLogic(Encoding), backend, Options ?? SolverOptions.Default, cancellationToken) : [];
 }
 
 /// <summary>
@@ -68,13 +73,18 @@ public sealed record IndicatorSolver(
     IIndicatorBackend Backend,
     EncodingOptions? Encoding = null,
     SolverOptions? Options = null
-) : ISolver {
+) : IConflictSolver {
     /// <inheritdoc/>
     public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         Timed.Run(() => problem.EncodeLogic(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
             ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
             : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
                 .Presentable(encoded.Columns, problem.Objective, encodingTime);
+
+    /// <inheritdoc/>
+    /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
+    public ImmutableArray<IBooleanExpression> NarrowConflict(IProblem problem, CancellationToken cancellationToken = default) =>
+        Backend is IConflictBackend backend ? Conflicts.Narrow(problem.EncodeLogic(Encoding), backend, Options ?? SolverOptions.Default, cancellationToken) : [];
 }
 
 /// <summary>Functions over solve results.</summary>
