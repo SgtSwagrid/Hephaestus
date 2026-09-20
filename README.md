@@ -34,14 +34,32 @@ There are no auxiliary booleans to declare, no gadget factories, and no big-M to
 
 ## ⬇️ Installation
 
+A model needs the core and one backend. Everything else is optional.
+
+### The core
+
 | Package | What it is |
 | --- | --- |
-| `Hephaestus.Optimisation` | The core: expressions, problems, the MILP encoding, the solver interfaces. No native dependencies. |
+| `Hephaestus.Optimisation` | Expressions, problems, the MILP encoding, the solver interfaces. No native dependencies. |
+
+### Solver backends
+
+Each puts a solver behind the same `ISolver`, so which one is underneath is a single line of your program.
+
+| Package | What it is |
+| --- | --- |
 | `Hephaestus.Optimisation.Gurobi` | Native Gurobi backend. Conditional constraints become Gurobi indicator constraints, so no big-M is involved; the classic big-M formulation is available too. Needs a Gurobi licence. |
 | `Hephaestus.Optimisation.Highs` | Standalone HiGHS backend: the leading permissively licensed MILP solver, in a few megabytes. |
 | `Hephaestus.Optimisation.OrTools` | Google OR-Tools: CP-SAT through its own interface (whole-number problems, no big-M, often the fastest choice for either-or scheduling), plus SCIP, CBC and HiGHS as MILP solvers. Pure LP solvers (GLOP, CLP, PDLP) are accepted only for problems that need no whole-number variables. |
 | `Hephaestus.Optimisation.Z3` | SMT backend on Microsoft Z3: native boolean structure, exact arithmetic, no encoding at all. |
-| `Hephaestus.Optimisation.NodaTime` | Typed variables and expressions for the NodaTime types. |
+
+### Integrations
+
+Typed variables and expressions for a domain's own types, so that a duration is a `Duration` and not a number of seconds. The core already covers `TimeSpan`, `DateTime` and `DateTimeOffset`.
+
+| Package | What it is |
+| --- | --- |
+| `Hephaestus.Optimisation.NodaTime` | `Duration`, `Instant`, `LocalDateTime`, `LocalDate`, `LocalTime`, `OffsetDateTime` and `ZonedDateTime`. |
 
 ```bash
 dotnet add package Hephaestus.Optimisation --prerelease
