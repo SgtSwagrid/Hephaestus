@@ -50,22 +50,22 @@ public static class Formatting {
 
     extension(IndicatorProblem problem) {
         /// <summary>The whole problem, one row or column per line.</summary>
-        public string Format() => Write(problem.Sense, problem.Objective, problem.Rows.Select(row => row.Format()), problem.Columns);
+        public string Format() => Write(problem, problem.Rows.Select(row => row.Format()));
     }
 
     extension(MilpProblem problem) {
         /// <summary>The whole programme, one row or column per line.</summary>
-        public string Format() => Write(problem.Sense, problem.Objective, problem.Rows.Select(row => row.Format()), problem.Columns);
+        public string Format() => Write(problem, problem.Rows.Select(row => row.Format()));
     }
 
     /// <summary>A problem in either of the forms a backend takes; only the way a row is written tells them apart.</summary>
-    private static string Write(ObjectiveSense sense, AffineForm objective, IEnumerable<string> rows, IEnumerable<Column> columns) =>
+    private static string Write(ILoweredProblem problem, IEnumerable<string> rows) =>
         string.Join(Environment.NewLine, [
-            $"{(sense == ObjectiveSense.Minimise ? "minimise" : "maximise")} {objective.Format()}",
+            $"{(problem.Sense == ObjectiveSense.Minimise ? "minimise" : "maximise")} {problem.Objective.Format()}",
             "subject to",
             .. rows.Select(row => $"  {row}"),
             "where",
-            .. columns.Select(column => $"  {Number(column.LowerBound)} <= {column.Variable.Name} <= {Number(column.UpperBound)}, {Kind(column.Variable)}"),
+            .. problem.Columns.Select(column => $"  {Number(column.LowerBound)} <= {column.Variable.Name} <= {Number(column.UpperBound)}, {Kind(column.Variable)}"),
         ]);
 
     private static ImmutableList<string> WriteLinear(ILinearExpression expression, ImmutableList<string> tokens) =>

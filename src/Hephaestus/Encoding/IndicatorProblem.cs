@@ -30,12 +30,17 @@ public sealed record IndicatorProblem(
     ImmutableArray<GuardedRow> Rows,
     ObjectiveSense Sense,
     AffineForm Objective
-) {
+) : ILoweredProblem {
     /// <summary>
     /// The constraints that the bounds of the columns were taken from, for the columns that have any.
     /// Bounds are constraints like any other, so an explanation of infeasibility has to be able to name them.
     /// </summary>
     public ImmutableDictionary<IVariable, BoundOrigin> BoundOrigins { get; init; } = ImmutableDictionary<IVariable, BoundOrigin>.Empty;
+
+    /// <inheritdoc/>
+    public bool IsTriviallyInfeasible =>
+        Columns.Any(column => column.LowerBound > column.UpperBound)
+        || Rows.Any(row => row.Guards.IsEmpty && row.Expression.IsConstant && !IndicatorProblems.IsSatisfied(row));
 }
 
 /// <summary>The constraints that state a column's lower and upper bounds. A side that nothing states, or that was derived rather than stated, has none.</summary>
@@ -79,11 +84,6 @@ public static class IndicatorProblems {
         /// </summary>
         public IndicatorProblem WithSingleGuards(string auxiliaryPrefix = "_all") =>
             problem.Rows.Aggregate(new Conjoining(problem with { Rows = [] }, ImmutableDictionary<Conjunction, Literal>.Empty, auxiliaryPrefix, 0), Conjoin).Problem;
-
-        /// <summary>Whether infeasibility is evident without solving: contradictory stated bounds, or an unconditional constant row that fails.</summary>
-        public bool IsTriviallyInfeasible =>
-            problem.Columns.Any(column => column.LowerBound > column.UpperBound)
-            || problem.Rows.Any(row => row.Guards.IsEmpty && row.Expression.IsConstant && !IsSatisfied(row));
     }
 
     extension(MilpProblem problem) {
