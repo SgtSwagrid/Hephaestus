@@ -91,14 +91,12 @@ internal static class IndicatorEncoding {
             : DefineAfresh(defined, formula, naming);
 
     private static Defined DefineAfresh(Defined defined, INormalForm formula, AuxiliaryNaming naming) {
-        var index = Enumerable
-            .Range(defined.Program.NextAuxiliaryIndex, int.MaxValue - defined.Program.NextAuxiliaryIndex)
-            .First(candidate => !naming.Reserved.Contains(naming.Prefix + candidate));
-        var literal = new Literal(new BinaryVariable(naming.Prefix + index), IsPositive: true);
+        var fresh = FreshNames.After(defined.Program.NextAuxiliaryIndex, naming.Prefix, naming.Reserved.Contains);
+        var literal = new Literal(new BinaryVariable(fresh.Name), IsPositive: true);
         var declared = defined.Program with {
             Definitions = defined.Program.Definitions.Add(formula, literal),
             Auxiliaries = defined.Program.Auxiliaries.Add(literal.Variable),
-            NextAuxiliaryIndex = index + 1,
+            NextAuxiliaryIndex = fresh.Index + 1,
         };
         return new Defined(Enforce(declared, formula, [literal], naming), defined.Literals.Add(literal));
     }

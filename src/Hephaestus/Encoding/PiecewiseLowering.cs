@@ -218,10 +218,10 @@ public static class PiecewiseLowering {
         if (state.Known.ContainsKey(key)) {
             return state;
         }
-        var index = Enumerable.Range(state.NextIndex, int.MaxValue - state.NextIndex).First(candidate => !state.Reserved.Contains(prefix + candidate));
+        var fresh = FreshNames.After(state.NextIndex, prefix, state.Reserved.Contains);
         // A choice among whole numbers is a whole number, which matters to solvers that know no others.
-        IVariable variable = isIntegral ? new IntegerVariable(prefix + index) : new ContinuousVariable(prefix + index);
-        return state with { Known = state.Known.Add(key, variable), Definitions = state.Definitions.Add(define(variable)), NextIndex = index + 1 };
+        IVariable variable = isIntegral ? new IntegerVariable(fresh.Name) : new ContinuousVariable(fresh.Name);
+        return state with { Known = state.Known.Add(key, variable), Definitions = state.Definitions.Add(define(variable)), NextIndex = fresh.Index + 1 };
     }
 
     private static Lifted<IBooleanExpression> Lift(Step<IBooleanExpression> step) => DeepRecursion.Guard(LiftUnguarded, step);
