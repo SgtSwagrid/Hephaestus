@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Hephaestus.Tests;
 
 public sealed class EncodingTests {
@@ -90,6 +92,38 @@ public sealed class EncodingTests {
         Assert.Contains("-arrival + 80*late <= -10", encoded.Rows.Select(row => row.Format()));
         Assert.Contains("arrival - 30.0001*late <= 89.9999", encoded.Rows.Select(row => row.Format()));
     }
+
+    [Fact]
+    public void RowsGuardedAlikeShareOneBinaryForTheirConjunction() {
+        var problem = GuardedBy([[new Literal(OccupiesA, true), new Literal(OccupiesB, true)], [new Literal(OccupiesB, true), new Literal(OccupiesA, true)]]);
+
+        var single = problem.WithSingleGuards();
+
+        Assert.Single(single.Columns, column => column.IsAuxiliary);
+    }
+
+    [Fact]
+    public void ButGuardsAreToldApartByTheirLiteralsAndNotByTheirNames() {
+        // Rendered as names and joined, "a" and "b & c" would read as the same three guards as "a", "b" and "c".
+        var both = Variable.Binary("occupiesB & occupiesC");
+        var third = Variable.Binary("occupiesC");
+        var problem = GuardedBy([
+            [new Literal(OccupiesA, true), new Literal(both, true)],
+            [new Literal(OccupiesA, true), new Literal(OccupiesB, true), new Literal(third, true)],
+        ]);
+
+        var single = problem.WithSingleGuards();
+
+        Assert.Equal(2, single.Columns.Count(column => column.IsAuxiliary));
+    }
+
+    /// <summary>A problem whose rows say nothing but are guarded as given, for the single-guard rewrite to chew on.</summary>
+    private static IndicatorProblem GuardedBy(ImmutableArray<ImmutableList<Literal>> guards) =>
+        new(
+            [.. guards.SelectMany(row => row).Select(guard => guard.Variable).Distinct().Select(variable => new Column(variable, 0, 1, IsAuxiliary: false))],
+            [.. guards.Select(row => new GuardedRow(row, (X - 1).Normalise(), IsEquality: false))],
+            ObjectiveSense.Minimise,
+            AffineForm.Zero);
 
     [Fact]
     public void AnUnderivableBigMIsALoudErrorNamingTheCulprits() {

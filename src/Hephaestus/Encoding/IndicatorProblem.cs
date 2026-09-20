@@ -78,7 +78,7 @@ public static class IndicatorProblems {
         /// set whenever they all hold; equal conjunctions share one.
         /// </summary>
         public IndicatorProblem WithSingleGuards(string auxiliaryPrefix = "_all") =>
-            problem.Rows.Aggregate(new Conjoining(problem with { Rows = [] }, ImmutableDictionary<string, Literal>.Empty, auxiliaryPrefix, 0), Conjoin).Problem;
+            problem.Rows.Aggregate(new Conjoining(problem with { Rows = [] }, ImmutableDictionary<Conjunction, Literal>.Empty, auxiliaryPrefix, 0), Conjoin).Problem;
 
         /// <summary>Whether infeasibility is evident without solving: contradictory stated bounds, or an unconditional constant row that fails.</summary>
         public bool IsTriviallyInfeasible =>
@@ -110,9 +110,20 @@ public static class IndicatorProblems {
                 problem.Objective);
     }
 
+    /// <summary>
+    /// The guards of a row, in a fixed order, as the key under which rows guarded alike share a
+    /// binary. Literals rather than their names, so that a variable called <c>b &amp; c</c> cannot
+    /// pass itself off as two guards.
+    /// </summary>
+    private sealed record Conjunction(ImmutableArray<Literal> Guards) {
+        public bool Equals(Conjunction? other) => other is not null && Guards.SequenceEqual(other.Guards);
+
+        public override int GetHashCode() => Guards.Aggregate(0, HashCode.Combine);
+    }
+
     private sealed record Conjoining(
         IndicatorProblem Problem,
-        ImmutableDictionary<string, Literal> Conjunctions,
+        ImmutableDictionary<Conjunction, Literal> Conjunctions,
         string Prefix,
         int NextIndex
     );
@@ -137,8 +148,8 @@ public static class IndicatorProblems {
     private static Conjoining WithRows(Conjoining state, ImmutableArray<GuardedRow> rows) =>
         state with { Problem = state.Problem with { Rows = state.Problem.Rows.AddRange(rows) } };
 
-    private static string Key(ImmutableList<Literal> guards) =>
-        string.Join(" & ", guards.Select(guard => (guard.IsPositive ? "" : "!") + guard.Variable.Name).Order(StringComparer.Ordinal));
+    private static Conjunction Key(ImmutableList<Literal> guards) =>
+        new([.. guards.OrderBy(guard => guard.Variable.Name, StringComparer.Ordinal).ThenBy(guard => guard.IsPositive)]);
 
     private static IEnumerable<GuardedRow> Unguarded(LinearRow row) =>
         new AffineForm(row.Coefficients, 0) is var body && row.LowerBound == row.UpperBound
