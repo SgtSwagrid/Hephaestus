@@ -49,11 +49,11 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 /// and give it whatever algebra suits.
 /// </para>
 /// </summary>
-public interface ILinearlyEncodable<TValue> : IReadableExpression<TValue>, IWritableExpression<TValue> {
+public interface ILinearlyEncodable<TValue> : IDecodedExpression<TValue>, IWritableExpression<TValue> {
     /// <summary>How the underlying number and a <typeparamref name="TValue"/> stand for each other.</summary>
     IProjection<TValue> Projection { get; }
 
-    IDecoder<TValue, double> IReadableExpression<TValue>.Decoder => Projection;
+    IDecoder<TValue, double> IDecodedExpression<TValue>.Decoder => Projection;
 
     IEncoder<TValue, double> IWritableExpression<TValue>.Encoder => Projection;
 }

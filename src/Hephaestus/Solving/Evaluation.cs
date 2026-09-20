@@ -2,30 +2,37 @@ namespace Hephaestus;
 
 /// <summary>Reads expressions off a solution. Any expression can be read, not just variables.</summary>
 public static class Evaluation {
-    extension(Solution solution) {
-        /// <summary>The value of a linear expression under this solution.</summary>
-        /// <exception cref="KeyNotFoundException">The expression mentions a variable the solved problem did not.</exception>
-        public double Value(ILinearExpression expression) => Evaluate(solution, expression);
+    /// <summary>
+    /// The violation a comparison is forgiven when a constraint is read without one being named,
+    /// since solvers work in floating point.
+    /// </summary>
+    public const double Tolerance = 1e-6;
 
-        /// <summary>Whether a binary variable is set. (Read it as a number with <c>Value((ILinearExpression)variable)</c>.)</summary>
+    /// <summary>
+    /// The decimal places, in units of the projection, that a number is rounded to before being
+    /// decoded. Solvers are accurate to about a millionth of a unit, so without this a start at 240
+    /// seconds reads as 08:03:59.99999999; read the underlying expression for the unrounded number.
+    /// </summary>
+    public const int DecimalPlaces = 5;
+
+    extension(Solution solution) {
+        /// <summary>
+        /// The value of any expression under this solution, in whatever type it reads as: a number
+        /// for a linear expression, a truth for a constraint, and its own type for anything read
+        /// through a projection. Any expression can be read, not just variables.
+        /// </summary>
+        /// <exception cref="KeyNotFoundException">The expression mentions a variable the solved problem did not.</exception>
+        public TValue Value<TValue>(IReadableExpression<TValue> expression) => expression.Read(solution);
+
+        /// <summary>Whether a binary variable is set. (Read it as a number with <c>Value((ILinearExpression)variable)</c>, since it is both.)</summary>
         public bool Value(BinaryVariable variable) => solution.ValueOf(variable) > 0.5;
 
         /// <summary>
-        /// Whether a boolean expression holds under this solution. Comparisons are forgiven
-        /// violations up to <paramref name="tolerance"/>, since solvers work in floating point.
+        /// Whether a boolean expression holds under this solution, forgiving comparisons violated by
+        /// no more than <paramref name="tolerance"/>. Reading one without saying forgives
+        /// <see cref="Tolerance"/>, which is nearly always what is wanted.
         /// </summary>
-        public bool Value(IBooleanExpression expression, double tolerance = 1e-6) => Holds(solution, expression, tolerance);
-
-        /// <summary>The value of a typed quantity under this solution.</summary>
-        /// <param name="quantity">The quantity to read.</param>
-        /// <param name="decimalPlaces">
-        /// The number of decimal places, in units of the projection, to which the underlying number is
-        /// rounded before decoding. Solvers are accurate to about a millionth of a unit, so without
-        /// this a start at 240 seconds reads as 08:03:59.99999999. The unrounded number is
-        /// <c>solution.Value(quantity.Expression)</c>.
-        /// </param>
-        public TValue Value<TValue>(IReadableExpression<TValue> quantity, int decimalPlaces = 5) =>
-            quantity.Decoder.Decode(Math.Round(solution.Value(quantity.Expression), decimalPlaces));
+        public bool Value(IBooleanExpression expression, double tolerance) => Holds(solution, expression, tolerance);
 
         /// <summary>This solution with a value for one more variable.</summary>
         public Solution With(IVariable variable, double value) => solution with { Values = solution.Values.SetItem(variable, value) };
@@ -48,7 +55,7 @@ public static class Evaluation {
                 : throw new KeyNotFoundException($"The solution has no value for '{variable.Name}': the variable does not occur in the problem that was solved.");
     }
 
-    private static double Evaluate(Solution solution, ILinearExpression expression) => DeepRecursion.Guard(EvaluateUnguarded, solution, expression);
+    internal static double Evaluate(Solution solution, ILinearExpression expression) => DeepRecursion.Guard(EvaluateUnguarded, solution, expression);
 
     private static double EvaluateUnguarded(Solution solution, ILinearExpression expression) =>
         expression switch {
@@ -64,7 +71,7 @@ public static class Evaluation {
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
-    private static bool Holds(Solution solution, IBooleanExpression expression, double tolerance) =>
+    internal static bool Holds(Solution solution, IBooleanExpression expression, double tolerance) =>
         DeepRecursion.Guard(HoldsUnguarded, solution, expression, tolerance);
 
     private static bool HoldsUnguarded(Solution solution, IBooleanExpression expression, double tolerance) =>

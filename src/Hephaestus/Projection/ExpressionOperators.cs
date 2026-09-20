@@ -7,9 +7,9 @@ namespace Hephaestus;
 /// mapping backwards alone leaves the opposite.
 /// </summary>
 public static class ExpressionOperators {
-    extension<TValue>(IReadableExpression<TValue> readable) {
+    extension<TValue>(IDecodedExpression<TValue> readable) {
         /// <summary>This, read as something else afterwards: <c>runtime.Select(span =&gt; $"{span}")</c>.</summary>
-        public IReadableExpression<TOther> Select<TOther>(Func<TValue, TOther> selector) =>
+        public IDecodedExpression<TOther> Select<TOther>(Func<TValue, TOther> selector) =>
             new ReadableExpression<TOther>(readable.Expression, readable.Decoder.Select(selector));
     }
 
@@ -33,7 +33,7 @@ public static class ExpressionOperators {
 internal sealed record ReadableExpression<TValue>(
     ILinearExpression Expression,
     IDecoder<TValue, double> Decoder
-) : IReadableExpression<TValue>;
+) : IDecodedExpression<TValue>;
 
 /// <summary>A linear expression that a value can be written into, and nothing more.</summary>
 internal sealed record WritableExpression<TValue>(

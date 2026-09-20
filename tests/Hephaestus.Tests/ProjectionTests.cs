@@ -167,6 +167,32 @@ public sealed class ProjectionTests {
     }
 
     [Fact]
+    public void OneValueReadsEveryKindOfExpression() {
+        var flag = Variable.Binary("flag");
+        var count = Variable.Integer<int>("count");
+        var cost = Variable.Continuous<decimal>("cost");
+        var runtime = Variable.TimeSpan("runtime");
+        var start = Variable.DateTime("start", Origin);
+        var solution = Solution.Empty
+            .With(flag, true)
+            .With(count, 3)
+            .With(cost, 12.5m)
+            .With(runtime, TimeSpan.FromMinutes(2))
+            .With(start, Origin.AddMinutes(5));
+
+        // One name, and the type of the answer follows the thing asked about.
+        Assert.Equal(1d, solution.Value((ILinearExpression)flag));
+        Assert.True(solution.Value(flag));
+        Assert.True(solution.Value(flag & (count >= 1)));
+        Assert.Equal(3, solution.Value(count));
+        Assert.Equal(12.5m, solution.Value(cost));
+        Assert.Equal(TimeSpan.FromMinutes(2), solution.Value(runtime));
+        Assert.Equal(Origin.AddMinutes(5), solution.Value(start));
+        Assert.Equal("120s", solution.Value(runtime.Select(span => $"{span.TotalSeconds}s")));
+        Assert.Equal(2d, solution.Value(runtime.Biselect(span => span.TotalMinutes, (double m) => TimeSpan.FromMinutes(m))));
+    }
+
+    [Fact]
     public void AnExpressionCanBeSeenAsOneOfAnotherType() {
         var seconds = Variable.TimeSpan("seconds");
 
