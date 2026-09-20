@@ -17,7 +17,7 @@ public interface ISolver {
     /// variables, or mention others, or not be feasible at all; the answer is the same, only perhaps sooner.
     /// </param>
     /// <param name="cancellationToken">Stops the solve early.</param>
-    ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default);
+    ISolveResult Solve(IOneShotProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>A solver for plain mixed-integer linear programmes.</summary>
@@ -53,7 +53,7 @@ public sealed record MilpSolver(
     SolverOptions? Options = null
 ) : IConflictSolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+    public ISolveResult Solve(IOneShotProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         BackendSolving.Solve(
             problem,
             () => problem.Encode(Encoding),
@@ -62,7 +62,7 @@ public sealed record MilpSolver(
 
     /// <inheritdoc/>
     /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
-    public ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default) =>
+    public ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default) =>
         BackendSolving.NarrowConflict(problem, Backend as IConflictBackend, Encoding, Options, cancellationToken);
 }
 
@@ -76,7 +76,7 @@ public sealed record IndicatorSolver(
     SolverOptions? Options = null
 ) : IConflictSolver {
     /// <inheritdoc/>
-    public ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
+    public ISolveResult Solve(IOneShotProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
         BackendSolving.Solve(
             problem,
             () => problem.EncodeLogic(Encoding),
@@ -85,7 +85,7 @@ public sealed record IndicatorSolver(
 
     /// <inheritdoc/>
     /// <inheritdoc cref="MilpSolver.NarrowConflict" path="/remarks"/>
-    public ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default) =>
+    public ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default) =>
         BackendSolving.NarrowConflict(problem, Backend as IConflictBackend, Encoding, Options, cancellationToken);
 }
 
@@ -96,7 +96,7 @@ public sealed record IndicatorSolver(
 internal static class BackendSolving {
     /// <summary>Encodes, solves, and presents the answer in the modeller's terms; an infeasibility the encoding already settles is not put to the backend at all.</summary>
     public static ISolveResult Solve<TProblem>(
-        ISingleObjectiveProblem problem,
+        IOneShotProblem problem,
         Func<TProblem> encode,
         Func<TProblem, IReadOnlyDictionary<IVariable, double>, ISolveResult> solve,
         Solution? startingFrom
@@ -104,7 +104,7 @@ internal static class BackendSolving {
         Solved(problem, Timed.Run(encode), solve, startingFrom);
 
     private static ISolveResult Solved<TProblem>(
-        ISingleObjectiveProblem problem,
+        IOneShotProblem problem,
         (TProblem Encoded, TimeSpan Elapsed) encoding,
         Func<TProblem, IReadOnlyDictionary<IVariable, double>, ISolveResult> solve,
         Solution? startingFrom
@@ -115,7 +115,7 @@ internal static class BackendSolving {
                 .Presentable(encoding.Encoded.Columns, problem.Objective.Expression, encoding.Elapsed);
 
     /// <summary>A conflict as the backend narrows it, where the backend can; empty where it cannot.</summary>
-    public static ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, IConflictBackend? backend, EncodingOptions? encoding, SolverOptions? options, CancellationToken cancellationToken) =>
+    public static ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, IConflictBackend? backend, EncodingOptions? encoding, SolverOptions? options, CancellationToken cancellationToken) =>
         backend is null ? [] : Conflicts.Narrow(problem.EncodeLogic(encoding), backend, options ?? SolverOptions.Default, cancellationToken);
 }
 

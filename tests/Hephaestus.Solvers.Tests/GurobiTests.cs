@@ -10,7 +10,7 @@ public sealed class GurobiTests {
     private static readonly BinaryVariable B = Variable.Binary("b");
     private static readonly BinaryVariable C = Variable.Binary("c");
 
-    private static double Optimum(ISolver solver, ISingleObjectiveProblem problem) =>
+    private static double Optimum(ISolver solver, IOneShotProblem problem) =>
         Assert.IsType<Optimal>(GurobiLicence.Require(solver).Solve(problem)).Solution.ObjectiveValue;
 
     [Fact]

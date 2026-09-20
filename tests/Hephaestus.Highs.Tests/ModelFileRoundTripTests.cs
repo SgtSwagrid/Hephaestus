@@ -10,7 +10,7 @@ public sealed class ModelFileRoundTripTests {
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly BinaryVariable Runs = Variable.Binary("runs");
 
-    public static TheoryData<string, ISingleObjectiveProblem> Problems => new() {
+    public static TheoryData<string, IOneShotProblem> Problems => new() {
         { "changeover", Problem.Minimise(A + 2 * B + 7).SubjectTo(A.Between(0, 3600) & B.Between(30, 3600) & (((A + 120 <= B) | (B + 120 <= A)).WithName("changeover")) & (A >= 10)) },
         { "maximised", Problem.Maximise(3 * A + 5 * B - 2 * N + 1.5).SubjectTo((A <= 4) & (2 * B <= 12) & (3 * A + 2 * B <= 18) & (A >= 0) & (B >= 0) & N.Between(-3, 3) & (A + N >= 0.5)) },
         { "free and fixed", Problem.Minimise(Abs(A - 5) + B).SubjectTo((A - 2 * B).EqualTo(1) & (B >= -8) & Runs & (Runs * N >= 2) & N.Between(0, 9)) },
@@ -34,7 +34,7 @@ public sealed class ModelFileRoundTripTests {
 
     [Theory]
     [MemberData(nameof(Problems))]
-    public void HighsReadsBackWhatWasWritten(string name, ISingleObjectiveProblem problem) {
+    public void HighsReadsBackWhatWasWritten(string name, IOneShotProblem problem) {
         var expected = Assert.IsType<Optimal>(HighsSolver.Create().Solve(problem)).Solution.ObjectiveValue;
 
         Assert.Equal(expected, SolveFile(problem.Encode().ToLp(), "lp"), precision: 4);

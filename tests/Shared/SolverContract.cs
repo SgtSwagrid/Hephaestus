@@ -31,7 +31,7 @@ public abstract class SolverContract {
 
     private static readonly TimeSpan Moment = TimeSpan.FromMilliseconds(1);
 
-    private Solution Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
+    private Solution Optimum(IOneShotProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
 
     [Fact]
     public void JobsSharingAMachineAreSeparatedByTheChangeover() {

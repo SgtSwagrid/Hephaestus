@@ -19,7 +19,7 @@ public sealed record ShadowPrices(ImmutableDictionary<string, double> ByName);
 /// it would cost if those choices could be made again.
 /// </summary>
 public static class Sensitivity {
-    extension(ISingleObjectiveProblem problem) {
+    extension(IOneShotProblem problem) {
         /// <summary>The shadow prices of the problem's constraints at <paramref name="solution"/>.</summary>
         /// <param name="solution">A solution of the problem, normally its optimum.</param>
         /// <param name="backend">A backend that reports dual values for linear programmes: Gurobi, HiGHS, or OR-Tools with GLOP.</param>
@@ -41,7 +41,7 @@ public static class Sensitivity {
         LinearRow Row
     );
 
-    private static ShadowPrices Priced(ISingleObjectiveProblem original, LinearisedProblem linearised, Solution solution, IMilpBackend backend, SolverOptions options, CancellationToken cancellationToken) {
+    private static ShadowPrices Priced(IOneShotProblem original, LinearisedProblem linearised, Solution solution, IMilpBackend backend, SolverOptions options, CancellationToken cancellationToken) {
         // The variables that stand for maxima are hidden from solutions, but what they stand for can be read off.
         var full = linearised.Definitions.Aggregate(solution, (known, definition) => known.With(definition.Variable, ValueOf(definition, known)));
         // The constraints that lowering added go unpriced, having no name to quote a price under.
@@ -69,7 +69,7 @@ public static class Sensitivity {
     private static IEnumerable<PricedRow> RowsOf(string name, IBooleanExpression conjunct, Solution solution) =>
         Active(conjunct, true, solution).SelectMany(comparison => AsRow(comparison, solution)).Select(row => new PricedRow(name, row));
 
-    private static MilpProblem Programme(ISingleObjectiveProblem problem, ImmutableArray<PricedRow> rows, Solution solution) {
+    private static MilpProblem Programme(IOneShotProblem problem, ImmutableArray<PricedRow> rows, Solution solution) {
         var objective = Continuous(problem.Objective.Expression.Normalise(), solution);
         return new MilpProblem(
             [.. rows.SelectMany(row => row.Row.Coefficients.Keys).Concat(objective.Coefficients.Keys).Distinct().Order(VariableOrder.Comparer).Select(variable => new Column(variable, double.NegativeInfinity, double.PositiveInfinity, IsAuxiliary: false))],

@@ -6,7 +6,7 @@ namespace Hephaestus;
 /// What a problem is to optimise. It is a value in its own right, which can be built once and set
 /// against one constraint after another. It is either an <see cref="ISingleObjective"/> or an
 /// <see cref="ILexicographicObjective"/>, and it is the objective that makes a problem an
-/// <see cref="ISingleObjectiveProblem"/> or an <see cref="IMultipleObjectiveProblem"/>.
+/// <see cref="IOneShotProblem"/> or an <see cref="IMultipleObjectiveProblem"/>.
 /// </summary>
 public interface IObjective;
 

@@ -12,7 +12,7 @@ public static class LexicographicSolving {
         /// <summary>Solves a problem of either kind: in one go if it has a single objective or none, and one objective after another if it has several.</summary>
         public ISolveResult Solve(IProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
             problem switch {
-                ISingleObjectiveProblem single => solver.Solve(single, startingFrom, cancellationToken),
+                IOneShotProblem single => solver.Solve(single, startingFrom, cancellationToken),
                 IMultipleObjectiveProblem multiple => solver.Solve(multiple, startingFrom, cancellationToken),
                 _ => throw new NotSupportedException($"Unknown kind of problem: {problem.GetType().Name}."),
             };

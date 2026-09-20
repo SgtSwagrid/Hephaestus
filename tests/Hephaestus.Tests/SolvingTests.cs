@@ -254,7 +254,7 @@ public sealed class SolvingTests {
         Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(M), Domain), bounded);
         Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(M), Domain & (M >= 3) & (A | (N >= 1))), tightened);
         Assert.Equal(new SingleObjectiveProblem(Objective.Maximise(M), Domain & A), Problem.Maximise(M).SubjectTo(Domain).SubjectTo(A));
-        Assert.Equal(new SingleObjectiveProblem(Objective.None, Domain & A), Problem.Satisfy(Domain).SubjectTo(A));
+        Assert.Equal(new SatisfactionProblem(Domain & A), Problem.Satisfy(Domain).SubjectTo(A));
         Assert.Equal(0, Assert.IsType<Optimal>(Solver.Solve(bounded)).Solution.ObjectiveValue);
         Assert.Equal(3, Assert.IsType<Optimal>(Solver.Solve(tightened)).Solution.ObjectiveValue);
     }
@@ -332,8 +332,25 @@ public sealed class SolvingTests {
     }
 
     [Fact]
+    public void AProblemWithNothingToOptimiseIsASatisfactionProblem() {
+        Assert.IsType<SatisfactionProblem>(Problem.Satisfy(Linked));
+        Assert.IsType<SatisfactionProblem>(Problem.Optimise(Objective.None));
+        Assert.IsType<SingleObjectiveProblem>(Problem.Minimise(M));
+        // Both are what a solver takes in one go.
+        Assert.IsAssignableFrom<IOneShotProblem>(Problem.Satisfy(Linked));
+        Assert.IsAssignableFrom<IOneShotProblem>(Problem.Minimise(M));
+    }
+
+    [Fact]
+    public void AndStaysOneAsItIsBuiltUp() {
+        Assert.IsType<SatisfactionProblem>(Problem.Satisfy(Linked).SubjectTo(A).SubjectTo(M >= 1));
+        Assert.Equal(Objective.None, Problem.Satisfy(Linked).SubjectTo(A).Objective);
+        Assert.IsType<SingleObjectiveProblem>(Problem.Minimise(M).SubjectTo(Linked));
+    }
+
+    [Fact]
     public void TheKindOfObjectiveIsTheKindOfProblem() {
-        Assert.Equal(new SingleObjectiveProblem(Objective.None, Linked), Problem.Satisfy(Linked));
+        Assert.Equal(new SatisfactionProblem(Linked), Problem.Satisfy(Linked));
         Assert.Equal(new SingleObjectiveProblem(new Optimisation(ObjectiveSense.Maximise, M), Linked), Problem.Maximise(M).SubjectTo(Linked));
         Assert.IsAssignableFrom<ILexicographicObjective>(Problem.Maximise(M).ThenMinimise(N).Objective);
         Assert.IsAssignableFrom<ISingleObjective>(Problem.Maximise(M).SubjectTo(Linked).Objective);

@@ -8,7 +8,7 @@ namespace Hephaestus;
 /// derived from them, giving a <see cref="MilpProblem"/>.
 /// </summary>
 public static class MilpEncoding {
-    extension(ISingleObjectiveProblem problem) {
+    extension(IOneShotProblem problem) {
         /// <summary>The problem as a plain mixed-integer linear programme.</summary>
         /// <exception cref="ModellingException">
         /// Two different variables share a name, an expression is not finite, or a big-M cannot be
@@ -24,7 +24,7 @@ public static class MilpEncoding {
         public IndicatorProblem EncodeLogic(EncodingOptions? options = null) => Lower(problem, options ?? EncodingOptions.Default);
     }
 
-    private static IndicatorProblem Lower(ISingleObjectiveProblem original, EncodingOptions options) {
+    private static IndicatorProblem Lower(IOneShotProblem original, EncodingOptions options) {
         var linearised = original.Linearise(options);
         var (problem, definitions) = linearised;
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet();

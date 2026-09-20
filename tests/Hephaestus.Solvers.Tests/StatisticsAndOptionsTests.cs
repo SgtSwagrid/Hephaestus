@@ -10,7 +10,7 @@ public sealed class StatisticsAndOptionsTests {
     private static readonly IntegerVariable[] Slots = [.. Enumerable.Range(0, 5).Select(index => Variable.Integer($"slot{index}"))];
 
     /// <summary>Five jobs, one machine, ninety seconds apart: a whole-number problem that every backend here can take, with 90 * 10 as its optimum.</summary>
-    private static readonly ISingleObjectiveProblem Queue = Problem.Minimise(Slots.Sum()).SubjectTo(Slots.AllOf(slot => slot.Between(0, 3600))
+    private static readonly IOneShotProblem Queue = Problem.Minimise(Slots.Sum()).SubjectTo(Slots.AllOf(slot => slot.Between(0, 3600))
             & Slots.SelectMany((first, index) => Slots.Skip(index + 1).Select(second => (first + 90 <= second) | (second + 90 <= first))).AllOf());
 
     public static TheoryData<string> BoundingSolvers => ["SCIP", "HiGHS", "CP-SAT", "Gurobi", "Gurobi (big-M)"];
