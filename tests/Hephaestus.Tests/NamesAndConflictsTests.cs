@@ -48,13 +48,13 @@ public sealed class NamesAndConflictsTests {
         Assert.Equal("m <= n + 1", (M <= N + 1).Name);
         Assert.Equal("precedence", (M <= N + 1).WithName("precedence").Name);
         Assert.Equal("a", ((IBooleanExpression)A).Name);
-        Assert.Equal("occupied", A.WithName("occupied").Name);
+        Assert.Equal("busy", A.WithName("busy").Name);
     }
 
     [Fact]
     public void ANameChangesNothingAboutWhatAnExpressionMeans() {
         var plain = M.Between(0, 5) & ((M >= 3) | A) & (Max(M, N) <= 4);
-        var named = M.Between(0, 5).WithName("domain") & ((M.WithName("emm") >= 3).WithName("late") | A.WithName("occupied")).WithName("either") & (Max(M, N).WithName("latest") <= 4);
+        var named = M.Between(0, 5).WithName("domain") & ((M.WithName("emm") >= 3).WithName("late") | A.WithName("busy")).WithName("either") & (Max(M, N).WithName("latest") <= 4);
 
         Assert.Equal(Problem.Minimise(M).SubjectTo(plain).Encode().Format(), Problem.Minimise(M.WithName("objective")).SubjectTo(named).Encode().Format());
         Assert.Equal<IVariable>([.. plain.Variables], [.. named.Variables]);
@@ -65,10 +65,10 @@ public sealed class NamesAndConflictsTests {
     [Fact]
     public void TypedExpressionsCanBeNamedToo() {
         var origin = new DateTime(2026, 9, 19, 8, 0, 0);
-        var (arrival, departure) = (Variable.DateTime("arrival", origin), Variable.DateTime("departure", origin));
+        var (finish, start) = (Variable.DateTime("finish", origin), Variable.DateTime("start", origin));
 
-        Assert.Equal("dwell >= 45", ((departure - arrival).WithName("dwell") >= TimeSpan.FromSeconds(45)).Format());
-        Assert.Equal("release <= 600", ((arrival + TimeSpan.FromMinutes(2)).WithName("release") <= origin.AddMinutes(10)).Format());
+        Assert.Equal("runtime >= 45", ((start - finish).WithName("runtime") >= TimeSpan.FromSeconds(45)).Format());
+        Assert.Equal("release <= 600", ((finish + TimeSpan.FromMinutes(2)).WithName("release") <= origin.AddMinutes(10)).Format());
     }
 
     [Fact]

@@ -11,40 +11,40 @@ namespace Hephaestus.Contracts;
 public abstract class SolverContract {
     protected abstract ISolver Solver { get; }
 
-    private static readonly ContinuousVariable DepartureA = Variable.Continuous("departureA");
-    private static readonly ContinuousVariable DepartureB = Variable.Continuous("departureB");
-    private static readonly BinaryVariable OccupiesA = Variable.Binary("occupiesA");
-    private static readonly BinaryVariable OccupiesB = Variable.Binary("occupiesB");
+    private static readonly ContinuousVariable StartA = Variable.Continuous("startA");
+    private static readonly ContinuousVariable StartB = Variable.Continuous("startB");
+    private static readonly BinaryVariable UsesA = Variable.Binary("usesA");
+    private static readonly BinaryVariable UsesB = Variable.Binary("usesB");
     private static readonly ContinuousVariable X = Variable.Continuous("x");
     private static readonly ContinuousVariable Y = Variable.Continuous("y");
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly BinaryVariable Flag = Variable.Binary("flag");
 
-    private const double Headway = 120;
+    private const double Changeover = 120;
 
     /// <summary>Decimal places to which continuous values are compared: solvers work to tolerances of about a millionth.</summary>
     private const int Precision = 4;
 
-    private static readonly IBooleanExpression Separated = (DepartureA + Headway <= DepartureB) | (DepartureB + Headway <= DepartureA);
-    private static readonly IBooleanExpression ConflictFree = !(OccupiesA & OccupiesB) | Separated;
-    private static readonly IBooleanExpression Horizon = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600);
+    private static readonly IBooleanExpression Separated = (StartA + Changeover <= StartB) | (StartB + Changeover <= StartA);
+    private static readonly IBooleanExpression ConflictFree = !(UsesA & UsesB) | Separated;
+    private static readonly IBooleanExpression Horizon = StartA.Between(0, 3600) & StartB.Between(0, 3600);
 
     private static readonly TimeSpan Moment = TimeSpan.FromMilliseconds(1);
 
     private Solution Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
 
     [Fact]
-    public void TrainsSharingATrackAreSeparatedByTheHeadway() {
-        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(Horizon & ConflictFree & OccupiesA & OccupiesB));
+    public void JobsSharingAMachineAreSeparatedByTheChangeover() {
+        var solution = Optimum(Problem.Minimise(StartA + StartB).SubjectTo(Horizon & ConflictFree & UsesA & UsesB));
 
-        Assert.Equal(Headway, solution.ObjectiveValue, precision: Precision);
-        Assert.Equal(Headway, Math.Abs(solution.Value(DepartureA - DepartureB)), precision: Precision);
+        Assert.Equal(Changeover, solution.ObjectiveValue, precision: Precision);
+        Assert.Equal(Changeover, Math.Abs(solution.Value(StartA - StartB)), precision: Precision);
         Assert.True(solution.Value(Separated));
     }
 
     [Fact]
-    public void TrainsOnDifferentTracksNeedNoSeparation() {
-        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(Horizon & ConflictFree & OccupiesA & !OccupiesB));
+    public void JobsOnDifferentMachinesNeedNoSeparation() {
+        var solution = Optimum(Problem.Minimise(StartA + StartB).SubjectTo(Horizon & ConflictFree & UsesA & !UsesB));
 
         Assert.Equal(0, solution.ObjectiveValue, precision: Precision);
         Assert.False(solution.Value(Separated));
@@ -53,12 +53,12 @@ public abstract class SolverContract {
 
     [Fact]
     public void TheSolverMayChooseToGiveUpTheTrackRatherThanWait() {
-        // Departing late costs a little; not running on the shared track at all costs more than waiting.
-        var both = Problem.Minimise(DepartureA + DepartureB + 1000 * (2 - OccupiesA - OccupiesB)).SubjectTo(Horizon & ConflictFree);
+        // Starting late costs a little; not running on the shared machine at all costs more than waiting.
+        var both = Problem.Minimise(StartA + StartB + 1000 * (2 - UsesA - UsesB)).SubjectTo(Horizon & ConflictFree);
         var solution = Optimum(both);
 
-        Assert.Equal(Headway, solution.ObjectiveValue, precision: Precision);
-        Assert.True(solution.Value(OccupiesA & OccupiesB & Separated));
+        Assert.Equal(Changeover, solution.ObjectiveValue, precision: Precision);
+        Assert.True(solution.Value(UsesA & UsesB & Separated));
     }
 
     [Fact]
@@ -143,23 +143,23 @@ public abstract class SolverContract {
 
     [Fact]
     public void TypedExpressionsAreSolvedAndReadBackInTheirOwnTypes() {
-        var start = new DateTime(2026, 9, 19, 8, 0, 0);
-        var departure = Variable.DateTime("departure", origin: start);
-        var arrival = Variable.DateTime("arrival", origin: start);
-        var dwell = Variable.TimeSpan("dwell", unit: TimeSpan.FromSeconds(30), inWholeUnits: true);
+        var shiftStart = new DateTime(2026, 9, 19, 8, 0, 0);
+        var start = Variable.DateTime("start", origin: shiftStart);
+        var finish = Variable.DateTime("finish", origin: shiftStart);
+        var runtime = Variable.TimeSpan("runtime", unit: TimeSpan.FromSeconds(30), inWholeUnits: true);
         var constraint =
-            departure.Between(start, start.AddHours(1))
-            & arrival.Between(start, start.AddHours(2))
-            & dwell.Between(TimeSpan.FromSeconds(45), TimeSpan.FromMinutes(5))
-            & (departure >= start.AddMinutes(10) + dwell)
-            & (arrival - departure >= TimeSpan.FromMinutes(25));
+            start.Between(shiftStart, shiftStart.AddHours(1))
+            & finish.Between(shiftStart, shiftStart.AddHours(2))
+            & runtime.Between(TimeSpan.FromSeconds(45), TimeSpan.FromMinutes(5))
+            & (start >= shiftStart.AddMinutes(10) + runtime)
+            & (finish - start >= TimeSpan.FromMinutes(25));
 
-        var solution = Optimum(Problem.Minimise(arrival).SubjectTo(constraint));
+        var solution = Optimum(Problem.Minimise(finish).SubjectTo(constraint));
 
-        Assert.Equal(TimeSpan.FromSeconds(60), solution.Value(dwell));
-        Assert.Equal(start.AddMinutes(11), solution.Value(departure), Moment);
-        Assert.Equal(start.AddMinutes(36), solution.Value(arrival), Moment);
-        Assert.Equal(start + TimeSpan.FromMinutes(25), start + solution.Value(arrival - departure), Moment);
+        Assert.Equal(TimeSpan.FromSeconds(60), solution.Value(runtime));
+        Assert.Equal(shiftStart.AddMinutes(11), solution.Value(start), Moment);
+        Assert.Equal(shiftStart.AddMinutes(36), solution.Value(finish), Moment);
+        Assert.Equal(shiftStart + TimeSpan.FromMinutes(25), shiftStart + solution.Value(finish - start), Moment);
     }
 
     [Fact]
@@ -213,48 +213,48 @@ public abstract class SolverContract {
 
     [Fact]
     public void AStartingSolutionChangesNothingButTheRoute() {
-        var problem = Problem.Minimise(DepartureA + DepartureB).SubjectTo(Horizon & ConflictFree & OccupiesA & OccupiesB);
+        var problem = Problem.Minimise(StartA + StartB).SubjectTo(Horizon & ConflictFree & UsesA & UsesB);
         var optimum = Optimum(problem);
         var starts = new[] {
             optimum,
-            Solution.Empty.With(DepartureA, 500).With(DepartureB, 1000).With(OccupiesA, true).With(OccupiesB, true),
-            Solution.Empty.With(DepartureB, 1000),
-            Solution.Empty.With(DepartureA, 10).With(DepartureB, 20).With(X, 3),
+            Solution.Empty.With(StartA, 500).With(StartB, 1000).With(UsesA, true).With(UsesB, true),
+            Solution.Empty.With(StartB, 1000),
+            Solution.Empty.With(StartA, 10).With(StartB, 20).With(X, 3),
         };
 
-        Assert.All(starts, start => Assert.Equal(Headway, Assert.IsType<Optimal>(Solver.Solve(problem, startingFrom: start)).Solution.ObjectiveValue, precision: Precision));
+        Assert.All(starts, start => Assert.Equal(Changeover, Assert.IsType<Optimal>(Solver.Solve(problem, startingFrom: start)).Solution.ObjectiveValue, precision: Precision));
     }
 
     [Fact]
     public void ObjectivesAreMetInOrderOfPriority() {
-        var constraint = Horizon & ConflictFree & OccupiesA & OccupiesB;
-        var earliestThenAFirst = Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint).Then(Objective.Minimise(DepartureA));
-        var earliestThenBFirst = Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint).Then(Objective.Minimise(DepartureB));
-        var withinAMinuteThenFarApart = Problem.Lexicographic([Objective.Minimise(DepartureA + DepartureB, absoluteTolerance: 60), Objective.Maximise(DepartureB - DepartureA)]).SubjectTo(constraint);
+        var constraint = Horizon & ConflictFree & UsesA & UsesB;
+        var earliestThenAFirst = Problem.Minimise(StartA + StartB).SubjectTo(constraint).Then(Objective.Minimise(StartA));
+        var earliestThenBFirst = Problem.Minimise(StartA + StartB).SubjectTo(constraint).Then(Objective.Minimise(StartB));
+        var withinAMinuteThenFarApart = Problem.Lexicographic([Objective.Minimise(StartA + StartB, absoluteTolerance: 60), Objective.Maximise(StartB - StartA)]).SubjectTo(constraint);
 
-        Assert.Equal((0, Headway), Departures(Assert.IsType<Optimal>(Solver.Solve(earliestThenAFirst))));
-        Assert.Equal((Headway, 0), Departures(Assert.IsType<Optimal>(Solver.Solve(earliestThenBFirst))));
-        Assert.Equal((0, Headway + 60), Departures(Assert.IsType<Optimal>(Solver.Solve(withinAMinuteThenFarApart))));
-        Assert.Equal(Headway + 60, Assert.IsType<Optimal>(Solver.Solve(withinAMinuteThenFarApart)).Solution.ObjectiveValue, precision: Precision);
+        Assert.Equal((0, Changeover), Starts(Assert.IsType<Optimal>(Solver.Solve(earliestThenAFirst))));
+        Assert.Equal((Changeover, 0), Starts(Assert.IsType<Optimal>(Solver.Solve(earliestThenBFirst))));
+        Assert.Equal((0, Changeover + 60), Starts(Assert.IsType<Optimal>(Solver.Solve(withinAMinuteThenFarApart))));
+        Assert.Equal(Changeover + 60, Assert.IsType<Optimal>(Solver.Solve(withinAMinuteThenFarApart)).Solution.ObjectiveValue, precision: Precision);
     }
 
-    private static (double, double) Departures(Optimal result) =>
-        (Math.Round(result.Solution.Value(DepartureA), Precision), Math.Round(result.Solution.Value(DepartureB), Precision));
+    private static (double, double) Starts(Optimal result) =>
+        (Math.Round(result.Solution.Value(StartA), Precision), Math.Round(result.Solution.Value(StartB), Precision));
 
     [Fact]
-    public void AnInfeasibleTimetableIsExplainedByTheConstraintsThatClash() {
+    public void AnInfeasibleScheduleIsExplainedByTheConstraintsThatClash() {
         var constraint =
             Horizon
-            & ConflictFree.WithName("headway")
-            & OccupiesA & OccupiesB
-            & (DepartureA <= 100).WithName("A leaves early")
+            & ConflictFree.WithName("changeover")
+            & UsesA & UsesB
+            & (StartA <= 100).WithName("A starts early")
             & X.Between(0, 5) & Y.Between(0, 5) & (X + Y <= 3)
-            & (DepartureB <= 100).WithName("B leaves early")
+            & (StartB <= 100).WithName("B starts early")
             & Flag.Implies(X >= 1);
 
-        var conflict = Solver.FindConflict(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint));
+        var conflict = Solver.FindConflict(Problem.Minimise(StartA + StartB).SubjectTo(constraint));
 
-        Assert.Equal(["0 <= departureA", "0 <= departureB", "A leaves early", "B leaves early", "headway", "occupiesA", "occupiesB"], conflict.Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
+        Assert.Equal(["0 <= startA", "0 <= startB", "A starts early", "B starts early", "changeover", "usesA", "usesB"], conflict.Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
         Assert.Empty(Solver.FindConflict(constraint.Conjuncts.Remove(conflict[0]).AllOf()));
     }
 

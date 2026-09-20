@@ -4,7 +4,7 @@ namespace Hephaestus.NodaTime;
 
 /// <summary>
 /// A plain NodaTime value shifted by a quantity is a point whose origin is that value:
-/// <c>start + dwell</c>, <c>dwell + start</c>, <c>start - dwell</c>.
+/// <c>start + runtime</c>, <c>runtime + start</c>, <c>start - runtime</c>.
 /// </summary>
 public static class NodaTimeOperators {
     extension(Quantity<Duration>) {

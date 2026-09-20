@@ -5,7 +5,7 @@ namespace Hephaestus;
 
 /// <summary>
 /// Renders expressions the way they were written, for logs, error messages and code review:
-/// <c>(departureA + 120 &lt;= departureB) | (departureB + 120 &lt;= departureA)</c>.
+/// <c>(startA + 120 &lt;= startB) | (startB + 120 &lt;= startA)</c>.
 /// </summary>
 public static class Formatting {
     extension(ILinearExpression expression) {

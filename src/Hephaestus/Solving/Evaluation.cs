@@ -21,7 +21,7 @@ public static class Evaluation {
         /// <param name="decimalPlaces">
         /// The number of decimal places, in units of the projection, to which the underlying number is
         /// rounded before decoding. Solvers are accurate to about a millionth of a unit, so without
-        /// this a departure at 240 seconds reads as 08:03:59.99999999. The unrounded number is
+        /// this a start at 240 seconds reads as 08:03:59.99999999. The unrounded number is
         /// <c>solution.Value(quantity.Expression)</c>.
         /// </param>
         public T Value<T>(Quantity<T> quantity, int decimalPlaces = 5) =>

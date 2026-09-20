@@ -224,12 +224,12 @@ public sealed class PiecewiseTests {
     public void TypedConditionals() {
         var origin = new DateTime(2026, 9, 19, 8, 0, 0);
         var (first, second) = (Variable.DateTime("first", origin), Variable.DateTime("second", origin));
-        var dwell = Variable.TimeSpan("dwell");
-        var solution = new Solution(Solution.Empty.Values.Add(Variable.Continuous("first"), 60).Add(Variable.Continuous("second"), 600).Add(Variable.Continuous("dwell"), 45).Add(Runs, 0), 0);
+        var runtime = Variable.TimeSpan("runtime");
+        var solution = new Solution(Solution.Empty.Values.Add(Variable.Continuous("first"), 60).Add(Variable.Continuous("second"), 600).Add(Variable.Continuous("runtime"), 45).Add(Runs, 0), 0);
 
-        Assert.Equal(TimeSpan.Zero, solution.Value(If(Runs, dwell)));
-        Assert.Equal(TimeSpan.FromSeconds(30), solution.Value(If(Runs, dwell, TimeSpan.FromSeconds(30))));
-        Assert.Equal(TimeSpan.FromSeconds(540), solution.Value(If(!Runs, second - first, dwell)));
+        Assert.Equal(TimeSpan.Zero, solution.Value(If(Runs, runtime)));
+        Assert.Equal(TimeSpan.FromSeconds(30), solution.Value(If(Runs, runtime, TimeSpan.FromSeconds(30))));
+        Assert.Equal(TimeSpan.FromSeconds(540), solution.Value(If(!Runs, second - first, runtime)));
         Assert.Equal(origin.AddMinutes(10), solution.Value(If(Runs, first, second)));
         Assert.Equal(origin, solution.Value(If(Runs, first, origin)));
     }

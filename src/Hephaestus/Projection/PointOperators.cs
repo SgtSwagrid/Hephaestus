@@ -66,7 +66,7 @@ public static class PointOperators {
 }
 
 /// <summary>
-/// Building points out of plain values and quantities: <c>start + dwell</c>. These cannot be
+/// Building points out of plain values and quantities: <c>start + runtime</c>. These cannot be
 /// generic operators, because no operand is a <see cref="Point{T, TDelta}"/> and generic code does
 /// not know how a <c>TDelta</c> is added to a <c>T</c>; so each point type declares its own
 /// <c>T + Quantity&lt;TDelta&gt;</c> operators beside its projection, in terms of these.

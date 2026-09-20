@@ -28,7 +28,7 @@ public sealed record InstantProjection(
 
 /// <summary>
 /// Local date-times measured in multiples of a unit since an origin, along a local time line on
-/// which every day has twenty-four hours (as it has for a railway timetable within one zone).
+/// which every day has twenty-four hours (as it has for a shift roster within one zone).
 /// </summary>
 public sealed record LocalDateTimeProjection(
     LocalDateTime Origin,

@@ -1,24 +1,25 @@
 namespace Hephaestus.Tests;
 
 public sealed class ModelFilesTests {
-    private static readonly ContinuousVariable DepartureA = Variable.Continuous("departureA");
-    private static readonly ContinuousVariable DepartureB = Variable.Continuous("departureB");
-    private static readonly BinaryVariable OccupiesA = Variable.Binary("occupiesA");
-    private static readonly BinaryVariable OccupiesB = Variable.Binary("occupiesB");
+    private static readonly ContinuousVariable StartA = Variable.Continuous("startA");
+    private static readonly ContinuousVariable StartB = Variable.Continuous("startB");
+    private static readonly BinaryVariable UsesA = Variable.Binary("usesA");
+    private static readonly BinaryVariable UsesB = Variable.Binary("usesB");
     private static readonly IntegerVariable N = Variable.Integer("n");
 
-    private static readonly IBooleanExpression Headway =
-        (!(OccupiesA & OccupiesB) | (DepartureA + 120 <= DepartureB) | (DepartureB + 120 <= DepartureA)).WithName("headway A/B");
+    private static readonly IBooleanExpression Changeover =
+        (!(UsesA & UsesB) | (StartA + 120 <= StartB) | (StartB + 120 <= StartA)).WithName("changeover A/B");
 
-    private static readonly ISingleObjectiveProblem Problem1 = Problem.Minimise(DepartureA + 2 * DepartureB + 7).SubjectTo(DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Headway & OccupiesA & (DepartureA - DepartureB + N).EqualTo(3) & (N >= -4));
+    private static readonly ISingleObjectiveProblem Problem1 = Problem.Minimise(StartA + 2 * StartB + 7).SubjectTo(StartA.Between(0, 3600) & StartB.Between(0, 3600) & Changeover & UsesA & (StartA - StartB + N).EqualTo(3) & (N >= -4));
 
     private static string[] Lines(string text) => text.TrimEnd('\n').Split('\n');
+
 
     [Fact]
     public void RowsKnowTheConstraintTheyWereEncodedFrom() {
         var encoded = Problem1.Encode();
 
-        Assert.Equal(["headway A/B", "headway A/B", "departureA - departureB + n == 3"], encoded.Rows.Select(row => row.Origin!.Name));
+        Assert.Equal(["changeover A/B", "changeover A/B", "startA - startB + n == 3"], encoded.Rows.Select(row => row.Origin!.Name));
         Assert.Equal(encoded.Rows.Select(row => row.Origin), Problem1.EncodeLogic().RelaxGuards().Rows.Select(row => row.Origin));
     }
 
@@ -28,26 +29,26 @@ public sealed class ModelFilesTests {
             [
                 "\\ Written by Hephaestus.",
                 "Minimize",
-                " obj: 1 departureA + 2 departureB + 7 constant_one",
+                " obj: 1 startA + 2 startB + 7 constant_one",
                 "Subject To",
-                "\\ headway A/B",
-                " headway_A_B: 3720 x__aux0 + 1 departureA - 1 departureB <= 3600",
-                "\\ headway A/B",
-                " headway_A_B_2: -3720 x__aux0 - 1 departureA + 1 departureB + 3720 occupiesA + 3720 occupiesB <= 7320",
-                "\\ departureA - departureB + n == 3",
-                " c2: 1 departureA - 1 departureB + 1 n = 3",
+                "\\ changeover A/B",
+                " changeover_A_B: 3720 x__aux0 + 1 startA - 1 startB <= 3600",
+                "\\ changeover A/B",
+                " changeover_A_B_2: -3720 x__aux0 - 1 startA + 1 startB + 3720 usesA + 3720 usesB <= 7320",
+                "\\ startA - startB + n == 3",
+                " c2: 1 n + 1 startA - 1 startB = 3",
                 "Bounds",
                 " constant_one = 1",
-                " 0 <= departureA <= 3600",
-                " 0 <= departureB <= 3600",
                 " -4 <= n <= +inf",
-                " occupiesA = 1",
+                " 0 <= startA <= 3600",
+                " 0 <= startB <= 3600",
+                " usesA = 1",
                 "Binaries",
-                " occupiesB",
+                " usesB",
                 " x__aux0",
                 "Generals",
                 " n",
-                " occupiesA",
+                " usesA",
                 "End",
             ],
             Lines(Problem1.Encode().ToLp()));
@@ -56,8 +57,8 @@ public sealed class ModelFilesTests {
     public void WithoutBigMTheConditionalRowsAreWrittenAsIndicators() {
         var lines = Lines(Problem1.EncodeLogic().ToLp());
 
-        Assert.Contains(" headway_A_B: x__aux0 = 1 -> 1 departureA - 1 departureB <= -120", lines);
-        Assert.Contains(lines, line => line.Contains("x__all0 = 1 -> ") && line.Contains("departureB <= -120"));
+        Assert.Contains(" changeover_A_B: x__aux0 = 1 -> 1 startA - 1 startB <= -120", lines);
+        Assert.Contains(lines, line => line.Contains("x__all0 = 1 -> ") && line.Contains("startB <= -120"));
         Assert.Contains(" x__all0", lines);
     }
 
@@ -71,23 +72,23 @@ public sealed class ModelFilesTests {
                 "ROWS",
                 " N  obj",
                 " L  capacity",
-                // departureA + n >= 2 is held as -departureA - n <= -2.
+                // startA + n >= 2 is held as -startA - n <= -2.
                 " L  c1",
                 " E  c2",
                 "COLUMNS",
-                "    departureA obj 1",
-                "    departureA capacity 1",
-                "    departureA c1 -1",
-                "    departureA c2 1",
-                "    departureB obj 0",
-                "    departureB capacity 1",
-                "    departureB c2 -2",
-                "    MARKER2 'MARKER' 'INTORG'",
+                "    MARKER0 'MARKER' 'INTORG'",
                 "    n obj -2",
                 "    n c1 -1",
-                "    MARKER2 'MARKER' 'INTEND'",
+                "    MARKER0 'MARKER' 'INTEND'",
+                "    startA obj 1",
+                "    startA capacity 1",
+                "    startA c1 -1",
+                "    startA c2 1",
+                "    startB obj 0",
+                "    startB capacity 1",
+                "    startB c2 -2",
                 "    MARKER3 'MARKER' 'INTORG'",
-                "    occupiesA obj 0",
+                "    usesA obj 0",
                 "    MARKER3 'MARKER' 'INTEND'",
                 "RHS",
                 "    rhs obj -5",
@@ -95,15 +96,15 @@ public sealed class ModelFilesTests {
                 "    rhs c1 -2",
                 "    rhs c2 0",
                 "BOUNDS",
-                " MI bnd departureA",
-                " UP bnd departureA 8",
-                " FR bnd departureB",
                 " LO bnd n 0",
                 " UP bnd n 3",
-                " FX bnd occupiesA 0",
+                " MI bnd startA",
+                " UP bnd startA 8",
+                " FR bnd startB",
+                " FX bnd usesA 0",
                 "ENDATA",
             ],
-            Lines(Problem.Maximise(DepartureA - 2 * N + 5).SubjectTo((DepartureA + DepartureB <= 10).WithName("capacity") & (DepartureA + N >= 2) & (DepartureA - 2 * DepartureB).EqualTo(0) & (DepartureA <= 8) & N.Between(0, 3) & !OccupiesA).Encode().ToMps()));
+            Lines(Problem.Maximise(StartA - 2 * N + 5).SubjectTo((StartA + StartB <= 10).WithName("capacity") & (StartA + N >= 2) & (StartA - 2 * StartB).EqualTo(0) & (StartA <= 8) & N.Between(0, 3) & !UsesA).Encode().ToMps()));
 
     [Fact]
     public void NamesAreMadeSafeAndKeptApart() {
@@ -117,8 +118,8 @@ public sealed class ModelFilesTests {
 
     [Fact]
     public void ARowWithTwoSidesIsARangeInMpsAndTwoRowsInLp() {
-        var programme = Problem.Minimise(DepartureA).SubjectTo((DepartureA >= 0) & (DepartureB >= 0)).Encode() with {
-            Rows = [new LinearRow(Solution.Empty.Values.Add(DepartureA, 1).Add(DepartureB, 1), 2, 6)],
+        var programme = Problem.Minimise(StartA).SubjectTo((StartA >= 0) & (StartB >= 0)).Encode() with {
+            Rows = [new LinearRow(Solution.Empty.Values.Add(StartA, 1).Add(StartB, 1), 2, 6)],
         };
 
         Assert.Contains("    rng c0 4", Lines(programme.ToMps()));
@@ -126,3 +127,4 @@ public sealed class ModelFilesTests {
         Assert.Equal(2, Lines(programme.ToLp()).Count(line => line.StartsWith(" c", StringComparison.Ordinal) && line.Contains("<=")));
     }
 }
+
