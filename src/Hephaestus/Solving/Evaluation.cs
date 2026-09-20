@@ -5,7 +5,7 @@ public static class Evaluation {
     extension(Solution solution) {
         /// <summary>The value of a linear expression under this solution.</summary>
         /// <exception cref="KeyNotFoundException">The expression mentions a variable the solved problem did not.</exception>
-        public double Value(ILinearExpression expression) => Evaluate(new LinearStep(solution, expression));
+        public double Value(ILinearExpression expression) => Evaluate(solution, expression);
 
         /// <summary>Whether a binary variable is set. (Read it as a number with <c>Value((ILinearExpression)variable)</c>.)</summary>
         public bool Value(BinaryVariable variable) => solution.ValueOf(variable) > 0.5;
@@ -14,7 +14,7 @@ public static class Evaluation {
         /// Whether a boolean expression holds under this solution. Comparisons are forgiven
         /// violations up to <paramref name="tolerance"/>, since solvers work in floating point.
         /// </summary>
-        public bool Value(IBooleanExpression expression, double tolerance = 1e-6) => Holds(new Step(solution, expression, tolerance));
+        public bool Value(IBooleanExpression expression, double tolerance = 1e-6) => Holds(solution, expression, tolerance);
 
         /// <summary>The value of a typed quantity under this solution.</summary>
         /// <param name="quantity">The quantity to read.</param>
@@ -57,46 +57,36 @@ public static class Evaluation {
                 : throw new KeyNotFoundException($"The solution has no value for '{variable.Name}': the variable does not occur in the problem that was solved.");
     }
 
-    private sealed record LinearStep(
-        Solution Solution,
-        ILinearExpression Expression
-    );
+    private static double Evaluate(Solution solution, ILinearExpression expression) => DeepRecursion.Guard(EvaluateUnguarded, solution, expression);
 
-    private static double Evaluate(LinearStep step) => DeepRecursion.Guard(EvaluateUnguarded, step);
-
-    private static double EvaluateUnguarded(LinearStep step) =>
-        step.Expression switch {
+    private static double EvaluateUnguarded(Solution solution, ILinearExpression expression) =>
+        expression switch {
             Constant constant => constant.Value,
-            IVariable variable => step.Solution.ValueOf(variable),
-            Product product => product.Coefficient * Evaluate(step with { Expression = product.Expression }),
-            NamedTerm named => Evaluate(step with { Expression = named.Expression }),
-            Sum sum => Evaluate(step with { Expression = sum.Left }) + Evaluate(step with { Expression = sum.Right }),
-            Maximum maximum => Math.Max(Evaluate(step with { Expression = maximum.Left }), Evaluate(step with { Expression = maximum.Right })),
-            Minimum minimum => Math.Min(Evaluate(step with { Expression = minimum.Left }), Evaluate(step with { Expression = minimum.Right })),
-            AbsoluteValue absolute => Math.Abs(Evaluate(step with { Expression = absolute.Operand })),
-            Conditional conditional => Evaluate(step with { Expression = step.Solution.Value(conditional.Condition) ? conditional.Then : conditional.Otherwise }),
-            _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
+            IVariable variable => solution.ValueOf(variable),
+            Product product => product.Coefficient * Evaluate(solution, product.Expression),
+            NamedTerm named => Evaluate(solution, named.Expression),
+            Sum sum => Evaluate(solution, sum.Left) + Evaluate(solution, sum.Right),
+            Maximum maximum => Math.Max(Evaluate(solution, maximum.Left), Evaluate(solution, maximum.Right)),
+            Minimum minimum => Math.Min(Evaluate(solution, minimum.Left), Evaluate(solution, minimum.Right)),
+            AbsoluteValue absolute => Math.Abs(Evaluate(solution, absolute.Operand)),
+            Conditional conditional => Evaluate(solution, solution.Value(conditional.Condition) ? conditional.Then : conditional.Otherwise),
+            _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
-    private sealed record Step(
-        Solution Solution,
-        IBooleanExpression Expression,
-        double Tolerance
-    );
+    private static bool Holds(Solution solution, IBooleanExpression expression, double tolerance) =>
+        DeepRecursion.Guard(HoldsUnguarded, solution, expression, tolerance);
 
-    private static bool Holds(Step step) => DeepRecursion.Guard(HoldsUnguarded, step);
-
-    private static bool HoldsUnguarded(Step step) =>
-        step.Expression switch {
+    private static bool HoldsUnguarded(Solution solution, IBooleanExpression expression, double tolerance) =>
+        expression switch {
             BooleanConstant constant => constant.Value,
-            BinaryVariable variable => step.Solution.Value(variable),
-            Comparison comparison => BooleanNormalisation.Holds(comparison.Relation, step.Solution.Value(comparison.Left - comparison.Right), step.Tolerance),
-            Negation negation => !Holds(step with { Expression = negation.Operand }),
-            NamedConstraint named => Holds(step with { Expression = named.Expression }),
-            Conjunction conjunction => Holds(step with { Expression = conjunction.Left }) && Holds(step with { Expression = conjunction.Right }),
-            Disjunction disjunction => Holds(step with { Expression = disjunction.Left }) || Holds(step with { Expression = disjunction.Right }),
-            Implication implication => !Holds(step with { Expression = implication.Antecedent }) || Holds(step with { Expression = implication.Consequent }),
-            Equivalence equivalence => Holds(step with { Expression = equivalence.Left }) == Holds(step with { Expression = equivalence.Right }),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {step.Expression.GetType().Name}."),
+            BinaryVariable variable => solution.Value(variable),
+            Comparison comparison => BooleanNormalisation.Holds(comparison.Relation, solution.Value(comparison.Left - comparison.Right), tolerance),
+            Negation negation => !Holds(solution, negation.Operand, tolerance),
+            NamedConstraint named => Holds(solution, named.Expression, tolerance),
+            Conjunction conjunction => Holds(solution, conjunction.Left, tolerance) && Holds(solution, conjunction.Right, tolerance),
+            Disjunction disjunction => Holds(solution, disjunction.Left, tolerance) || Holds(solution, disjunction.Right, tolerance),
+            Implication implication => !Holds(solution, implication.Antecedent, tolerance) || Holds(solution, implication.Consequent, tolerance),
+            Equivalence equivalence => Holds(solution, equivalence.Left, tolerance) == Holds(solution, equivalence.Right, tolerance),
+            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 }

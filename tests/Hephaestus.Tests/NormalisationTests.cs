@@ -131,4 +131,28 @@ public sealed class NormalisationTests {
 
         Assert.Equal(100_000, normalised.Operands.Count);
     }
+
+    [Fact]
+    public void NorDoesAVeryLongChainOfSums() {
+        var chain = Enumerable.Range(1, 100_000).Aggregate<int, ILinearExpression>(new Constant(0), (sum, index) => sum + index * (ILinearExpression)X);
+
+        var form = chain.Normalise();
+
+        Assert.Equal(100_000L * 100_001 / 2, form.Coefficients[X]);
+    }
+
+    [Fact]
+    public void NorDoesWritingOneOut() {
+        var chain = Enumerable.Range(0, 100_000).Aggregate<int, IBooleanExpression>(BooleanConstant.True, (all, index) => all & (X <= index));
+
+        Assert.EndsWith("(x <= 99999)", chain.Format(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void NorDoesReadingOneOffASolution() {
+        var chain = Enumerable.Range(1, 100_000).Aggregate<int, ILinearExpression>(new Constant(0), (sum, index) => sum + index * (ILinearExpression)X);
+        var solution = Solution.Empty.With(X, 1);
+
+        Assert.Equal(100_000L * 100_001 / 2, solution.Value(chain));
+    }
 }

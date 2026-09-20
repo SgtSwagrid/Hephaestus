@@ -28,7 +28,7 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
         var optimiser = context.MkOptimize();
         Configure(context, optimiser, Options ?? SolverOptions.Default);
         optimiser.Assert([.. symbols.Constants.Keys.OfType<BinaryVariable>().Select(variable => Domain(symbols, variable))]);
-        optimiser.Assert(Boolean(new Step(symbols, problem.Constraint)));
+        optimiser.Assert(Boolean(symbols, problem.Constraint));
         var handle = problem.Objective switch {
             Optimisation { Sense: ObjectiveSense.Minimise } => optimiser.MkMinimize(objective),
             Optimisation { Sense: ObjectiveSense.Maximise } => optimiser.MkMaximize(objective),
@@ -45,11 +45,6 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
     private sealed record Symbols(
         Context Context,
         ImmutableDictionary<IVariable, ArithExpr> Constants
-    );
-
-    private sealed record Step(
-        Symbols Symbols,
-        IBooleanExpression Expression
     );
 
     private static ArithExpr Declare(Context context, IVariable variable) =>
@@ -83,20 +78,20 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
         }
     }
 
-    private static BoolExpr Boolean(Step step) => DeepRecursion.Guard(BooleanUnguarded, step);
+    private static BoolExpr Boolean(Symbols symbols, IBooleanExpression expression) => DeepRecursion.Guard(BooleanUnguarded, symbols, expression);
 
-    private static BoolExpr BooleanUnguarded(Step step) =>
-        step.Expression switch {
-            BooleanConstant constant => step.Symbols.Context.MkBool(constant.Value),
-            BinaryVariable variable => step.Symbols.Context.MkEq(step.Symbols.Constants[variable], step.Symbols.Context.MkInt(1)),
-            Comparison comparison => Compare(step.Symbols.Context, comparison.Relation, Linear(step.Symbols, (comparison.Left - comparison.Right).Normalise())),
-            Negation negation => step.Symbols.Context.MkNot(Boolean(step with { Expression = negation.Operand })),
-            NamedConstraint named => Boolean(step with { Expression = named.Expression }),
-            Conjunction conjunction => step.Symbols.Context.MkAnd(Boolean(step with { Expression = conjunction.Left }), Boolean(step with { Expression = conjunction.Right })),
-            Disjunction disjunction => step.Symbols.Context.MkOr(Boolean(step with { Expression = disjunction.Left }), Boolean(step with { Expression = disjunction.Right })),
-            Implication implication => step.Symbols.Context.MkImplies(Boolean(step with { Expression = implication.Antecedent }), Boolean(step with { Expression = implication.Consequent })),
-            Equivalence equivalence => step.Symbols.Context.MkIff(Boolean(step with { Expression = equivalence.Left }), Boolean(step with { Expression = equivalence.Right })),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {step.Expression.GetType().Name}."),
+    private static BoolExpr BooleanUnguarded(Symbols symbols, IBooleanExpression expression) =>
+        expression switch {
+            BooleanConstant constant => symbols.Context.MkBool(constant.Value),
+            BinaryVariable variable => symbols.Context.MkEq(symbols.Constants[variable], symbols.Context.MkInt(1)),
+            Comparison comparison => Compare(symbols.Context, comparison.Relation, Linear(symbols, (comparison.Left - comparison.Right).Normalise())),
+            Negation negation => symbols.Context.MkNot(Boolean(symbols, negation.Operand)),
+            NamedConstraint named => Boolean(symbols, named.Expression),
+            Conjunction conjunction => symbols.Context.MkAnd(Boolean(symbols, conjunction.Left), Boolean(symbols, conjunction.Right)),
+            Disjunction disjunction => symbols.Context.MkOr(Boolean(symbols, disjunction.Left), Boolean(symbols, disjunction.Right)),
+            Implication implication => symbols.Context.MkImplies(Boolean(symbols, implication.Antecedent), Boolean(symbols, implication.Consequent)),
+            Equivalence equivalence => symbols.Context.MkIff(Boolean(symbols, equivalence.Left), Boolean(symbols, equivalence.Right)),
+            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 
     /// <summary><c>difference ~ 0</c>.</summary>

@@ -15,10 +15,28 @@ public static class DeepRecursion {
             ? function(argument)
             : OnFreshStack(function, argument);
 
+    /// <inheritdoc cref="Guard{TArgument, TResult}(Func{TArgument, TResult}, TArgument)"/>
+    public static TResult Guard<TFirst, TSecond, TResult>(Func<TFirst, TSecond, TResult> function, TFirst first, TSecond second) =>
+        RuntimeHelpers.TryEnsureSufficientExecutionStack()
+            ? function(first, second)
+            : OnFreshStack(function, first, second);
+
+    /// <inheritdoc cref="Guard{TArgument, TResult}(Func{TArgument, TResult}, TArgument)"/>
+    public static TResult Guard<TFirst, TSecond, TThird, TResult>(Func<TFirst, TSecond, TThird, TResult> function, TFirst first, TSecond second, TThird third) =>
+        RuntimeHelpers.TryEnsureSufficientExecutionStack()
+            ? function(first, second, third)
+            : OnFreshStack(function, first, second, third);
+
     // Kept separate so that the closure is only allocated on the rare path.
     private static TResult OnFreshStack<TArgument, TResult>(Func<TArgument, TResult> function, TArgument argument) =>
         Task.Factory
             .StartNew(() => function(argument), CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)
             .GetAwaiter()
             .GetResult();
+
+    private static TResult OnFreshStack<TFirst, TSecond, TResult>(Func<TFirst, TSecond, TResult> function, TFirst first, TSecond second) =>
+        OnFreshStack(arguments => function(arguments.First, arguments.Second), (First: first, Second: second));
+
+    private static TResult OnFreshStack<TFirst, TSecond, TThird, TResult>(Func<TFirst, TSecond, TThird, TResult> function, TFirst first, TSecond second, TThird third) =>
+        OnFreshStack(arguments => function(arguments.First, arguments.Second, arguments.Third), (First: first, Second: second, Third: third));
 }

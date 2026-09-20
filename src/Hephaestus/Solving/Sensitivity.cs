@@ -41,12 +41,6 @@ public static class Sensitivity {
         LinearRow Row
     );
 
-    private sealed record Step(
-        IBooleanExpression Expression,
-        bool Polarity,
-        Solution Solution
-    );
-
     private static ShadowPrices Priced(ISingleObjectiveProblem original, LinearisedProblem linearised, Solution solution, IMilpBackend backend, SolverOptions options, CancellationToken cancellationToken) {
         // The variables that stand for maxima are hidden from solutions, but what they stand for can be read off.
         var full = linearised.Definitions.Aggregate(solution, (known, definition) => known.With(definition.Variable, ValueOf(definition, known)));
@@ -74,7 +68,7 @@ public static class Sensitivity {
         };
 
     private static IEnumerable<PricedRow> RowsOf(string name, IBooleanExpression conjunct, Solution solution) =>
-        Active(new Step(conjunct, true, solution)).SelectMany(comparison => AsRow(comparison, solution)).Select(row => new PricedRow(name, row));
+        Active(conjunct, true, solution).SelectMany(comparison => AsRow(comparison, solution)).Select(row => new PricedRow(name, row));
 
     private static MilpProblem Programme(ISingleObjectiveProblem problem, ImmutableArray<PricedRow> rows, Solution solution) {
         var objective = Continuous(problem.Objective.Expression.Normalise(), solution);
@@ -94,29 +88,30 @@ public static class Sensitivity {
                     : $"The linear programme at the solution was not solved to optimality ({result.GetType().Name}), so it has no prices. Is the solution one of this problem?");
 
     /// <summary>The comparisons that are in force at the solution: both sides of what is conjunctive, and the side that holds of what is disjunctive.</summary>
-    private static IEnumerable<Comparison> Active(Step step) => DeepRecursion.Guard(ActiveUnguarded, step);
+    private static IEnumerable<Comparison> Active(IBooleanExpression expression, bool polarity, Solution solution) =>
+        DeepRecursion.Guard(ActiveUnguarded, expression, polarity, solution);
 
-    private static IEnumerable<Comparison> ActiveUnguarded(Step step) =>
-        step.Expression switch {
-            Comparison comparison => [Oriented(comparison, step)],
-            NamedConstraint named => Active(step with { Expression = named.Expression }),
-            Negation negation => Active(step with { Expression = negation.Operand, Polarity = !step.Polarity }),
-            Conjunction conjunction => Junction(step, conjunction.Left, conjunction.Right, isConjunctive: step.Polarity),
-            Disjunction disjunction => Junction(step, disjunction.Left, disjunction.Right, isConjunctive: !step.Polarity),
-            Implication implication => Active(step with { Expression = !implication.Antecedent | implication.Consequent }),
-            Equivalence equivalence => Active(step with { Expression = (equivalence.Left & equivalence.Right) | (!equivalence.Left & !equivalence.Right) }),
+    private static IEnumerable<Comparison> ActiveUnguarded(IBooleanExpression expression, bool polarity, Solution solution) =>
+        expression switch {
+            Comparison comparison => [Oriented(comparison, polarity, solution)],
+            NamedConstraint named => Active(named.Expression, polarity, solution),
+            Negation negation => Active(negation.Operand, !polarity, solution),
+            Conjunction conjunction => Junction(conjunction.Left, conjunction.Right, isConjunctive: polarity, polarity, solution),
+            Disjunction disjunction => Junction(disjunction.Left, disjunction.Right, isConjunctive: !polarity, polarity, solution),
+            Implication implication => Active(!implication.Antecedent | implication.Consequent, polarity, solution),
+            Equivalence equivalence => Active((equivalence.Left & equivalence.Right) | (!equivalence.Left & !equivalence.Right), polarity, solution),
             _ => [],
         };
 
-    private static IEnumerable<Comparison> Junction(Step step, IBooleanExpression left, IBooleanExpression right, bool isConjunctive) =>
-        isConjunctive ? [.. Active(step with { Expression = left }), .. Active(step with { Expression = right })]
-        : step.Solution.Value(left) == step.Polarity ? Active(step with { Expression = left })
-        : Active(step with { Expression = right });
+    private static IEnumerable<Comparison> Junction(IBooleanExpression left, IBooleanExpression right, bool isConjunctive, bool polarity, Solution solution) =>
+        isConjunctive ? [.. Active(left, polarity, solution), .. Active(right, polarity, solution)]
+        : solution.Value(left) == polarity ? Active(left, polarity, solution)
+        : Active(right, polarity, solution);
 
     /// <summary>A comparison under negation is the opposite comparison, and a disequality is whichever strict inequality holds.</summary>
-    private static Comparison Oriented(Comparison comparison, Step step) =>
-        (step.Polarity ? comparison.Relation : BooleanNormalisation.Opposite(comparison.Relation)) switch {
-            Relation.NotEqual => comparison with { Relation = step.Solution.Value(comparison.Left - comparison.Right) < 0 ? Relation.LessThan : Relation.GreaterThan },
+    private static Comparison Oriented(Comparison comparison, bool polarity, Solution solution) =>
+        (polarity ? comparison.Relation : BooleanNormalisation.Opposite(comparison.Relation)) switch {
+            Relation.NotEqual => comparison with { Relation = solution.Value(comparison.Left - comparison.Right) < 0 ? Relation.LessThan : Relation.GreaterThan },
             var relation => comparison with { Relation = relation },
         };
 
