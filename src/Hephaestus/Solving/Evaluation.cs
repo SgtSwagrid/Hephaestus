@@ -24,8 +24,8 @@ public static class Evaluation {
         /// this a start at 240 seconds reads as 08:03:59.99999999. The unrounded number is
         /// <c>solution.Value(quantity.Expression)</c>.
         /// </param>
-        public TValue Value<TValue>(ILinearlyEncodable<TValue> quantity, int decimalPlaces = 5) =>
-            quantity.Projection.Decode(Math.Round(solution.Value(quantity.Expression), decimalPlaces));
+        public TValue Value<TValue>(IReadableExpression<TValue> quantity, int decimalPlaces = 5) =>
+            quantity.Decoder.Decode(Math.Round(solution.Value(quantity.Expression), decimalPlaces));
 
         /// <summary>This solution with a value for one more variable.</summary>
         public Solution With(IVariable variable, double value) => solution with { Values = solution.Values.SetItem(variable, value) };

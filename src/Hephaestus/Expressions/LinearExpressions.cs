@@ -8,7 +8,7 @@ namespace Hephaestus;
 /// and <see cref="NamedTerm"/>. Expressions are plain data, kept exactly as written;
 /// all interpretation (normalisation, bounds, encoding, evaluation) happens in later passes.
 /// </summary>
-public interface ILinearExpression : IExpression<double>;
+public interface ILinearExpression;
 
 /// <summary>A fixed real number.</summary>
 public sealed record Constant(double Value) : ILinearExpression;

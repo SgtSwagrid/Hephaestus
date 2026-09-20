@@ -163,7 +163,38 @@ public sealed class ProjectionTests {
         Assert.Equal(Direction.Up, lift.Projection.Decode(true));
         Assert.Equal(Direction.Down, lift.Projection.Decode(false));
         Assert.True(lift.Projection.Encode(Direction.Up));
-        Assert.IsAssignableFrom<IExpression<Direction>>(lift);
+        Assert.IsAssignableFrom<ILogicallyEncodable<Direction>>(lift);
+    }
+
+    [Fact]
+    public void AnExpressionCanBeSeenAsOneOfAnotherType() {
+        var seconds = Variable.TimeSpan("seconds");
+
+        var minutes = seconds.Biselect(span => span.TotalMinutes, (double count) => TimeSpan.FromMinutes(count));
+
+        Assert.Equal(2d, Solution.Empty.With(seconds, TimeSpan.FromMinutes(2)).Value(minutes));
+        // Still writable, so it may still be constrained.
+        Assert.Equal("seconds <= 120", (minutes <= 2d).Format());
+    }
+
+    [Fact]
+    public void SelectLeavesAReadingThatNoConstraintCanMention() {
+        var seconds = Variable.TimeSpan("seconds");
+
+        IReadableExpression<string> written = seconds.Select(span => $"{span.TotalSeconds}s");
+
+        Assert.Equal("90s", Solution.Empty.With(seconds, TimeSpan.FromSeconds(90)).Value(written));
+        Assert.IsNotAssignableFrom<IWritableExpression<string>>(written);
+    }
+
+    [Fact]
+    public void AndPreselectLeavesOneNoSolutionCanBeAskedFor() {
+        var seconds = Variable.TimeSpan("seconds");
+
+        IWritableExpression<int> fromMinutes = seconds.Preselect((int count) => TimeSpan.FromMinutes(count));
+
+        Assert.Equal(120, fromMinutes.Encoder.Encode(2));
+        Assert.IsNotAssignableFrom<IReadableExpression<int>>(fromMinutes);
     }
 
     [Fact]

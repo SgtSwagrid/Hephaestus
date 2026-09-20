@@ -19,6 +19,14 @@ public static class ProjectionOperators {
             new SelectedEncoder<TOther, TRaw>(other => encoder.Encode(selector(other)));
     }
 
+    extension<TValue>(IProjection<TValue> projection) {
+        /// <inheritdoc cref="Biselect{TValue, TRaw, TOther}(IProjection{TValue, TRaw}, Func{TValue, TOther}, Func{TOther, TValue})"/>
+        public IProjection<TOther> Biselect<TOther>(Func<TValue, TOther> forward, Func<TOther, TValue> backward) =>
+            new SelectedNumberProjection<TOther>(
+                number => forward(projection.Decode(number)),
+                other => projection.Encode(backward(other)));
+    }
+
     extension<TValue, TRaw>(IProjection<TValue, TRaw> projection) {
         /// <summary>
         /// This projection seen as one of another type, given the correspondence between the two:
@@ -56,4 +64,16 @@ internal sealed record SelectedProjection<TValue, TRaw>(
 
     /// <inheritdoc/>
     public TRaw Encode(TValue value) => Writing(value);
+}
+
+/// <inheritdoc cref="SelectedDecoder{TValue, TRaw}"/>
+internal sealed record SelectedNumberProjection<TValue>(
+    Func<double, TValue> Reading,
+    Func<TValue, double> Writing
+) : IProjection<TValue> {
+    /// <inheritdoc/>
+    public TValue Decode(double representation) => Reading(representation);
+
+    /// <inheritdoc/>
+    public double Encode(TValue value) => Writing(value);
 }

@@ -49,12 +49,13 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 /// and give it whatever algebra suits.
 /// </para>
 /// </summary>
-public interface ILinearlyEncodable<TValue> : IExpression<TValue> {
-    /// <summary>The underlying linear expression, counted in the projection's own unit.</summary>
-    ILinearExpression Expression { get; }
-
-    /// <summary>How that number is read as a <typeparamref name="TValue"/>.</summary>
+public interface ILinearlyEncodable<TValue> : IReadableExpression<TValue>, IWritableExpression<TValue> {
+    /// <summary>How the underlying number and a <typeparamref name="TValue"/> stand for each other.</summary>
     IProjection<TValue> Projection { get; }
+
+    IDecoder<TValue, double> IReadableExpression<TValue>.Decoder => Projection;
+
+    IEncoder<TValue, double> IWritableExpression<TValue>.Encoder => Projection;
 }
 
 /// <summary>
@@ -62,7 +63,7 @@ public interface ILinearlyEncodable<TValue> : IExpression<TValue> {
 /// onto truth rather than onto the number line: a two-state type over a single binary, where
 /// <see cref="ILinearlyEncodable{TValue}"/> is a type over a column.
 /// </summary>
-public interface ILogicallyEncodable<TValue> : IExpression<TValue> {
+public interface ILogicallyEncodable<TValue> {
     /// <summary>The underlying boolean expression.</summary>
     IBooleanExpression Expression { get; }
 

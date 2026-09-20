@@ -1,21 +1,25 @@
 namespace Hephaestus;
 
-/// <summary>
-/// Something a solution gives a <typeparamref name="TValue"/> for. The reading itself is
-/// <c>solution.Value(expression)</c>; this is the type that says a reading exists.
-/// </summary>
-public interface IReadableExpression<out TValue>;
+/// <summary>A linear expression read as something else, through one or both halves of a projection.</summary>
+public interface IProjectedExpression {
+    /// <summary>The underlying linear expression, counted in the projection's own unit.</summary>
+    ILinearExpression Expression { get; }
+}
 
 /// <summary>
-/// Something a plain <typeparamref name="TValue"/> can stand for, in a model: <c>x + 5</c>,
-/// <c>flag &amp; true</c>, <c>runtime &lt;= Duration.FromMinutes(5)</c>.
+/// Something a solution gives a <typeparamref name="TValue"/> for. Where that is all it is, no
+/// constraint can mention it: <c>Select</c> gives one of these.
 /// </summary>
-public interface IWritableExpression<in TValue>;
+public interface IReadableExpression<out TValue> : IProjectedExpression {
+    /// <summary>How the underlying number is read as a <typeparamref name="TValue"/>.</summary>
+    IDecoder<TValue, double> Decoder { get; }
+}
 
 /// <summary>
-/// Both: a value of this type can be written into a model and read back out of a solution. The
-/// cases are <see cref="ILinearExpression"/> (over numbers), <see cref="IBooleanExpression"/> (over
-/// truths) and anything <see cref="ILinearlyEncodable{TValue}"/> read through a projection. A
-/// reading that no constraint can mention is an <see cref="IReadableExpression{TValue}"/> and not this.
+/// Something a plain <typeparamref name="TValue"/> can stand for, in a model. Where that is all it
+/// is, no solution can be asked for one: <c>Preselect</c> gives one of these.
 /// </summary>
-public interface IExpression<TValue> : IReadableExpression<TValue>, IWritableExpression<TValue>;
+public interface IWritableExpression<in TValue> : IProjectedExpression {
+    /// <summary>How a <typeparamref name="TValue"/> is written as a number.</summary>
+    IEncoder<TValue, double> Encoder { get; }
+}
