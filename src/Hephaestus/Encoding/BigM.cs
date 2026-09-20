@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Globalization;
 
 namespace Hephaestus;
 
@@ -43,11 +44,26 @@ internal static class BigM {
     private static double Allowance(Literal guard, AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
         Limited(form.Range(bounds.SetItem(guard.Variable, Off(guard)).Of).Upper, form, bounds, options);
 
-    /// <summary>A negative allowance is no allowance at all, since the row holds anyway; an infinite one cannot be written down.</summary>
+    /// <summary>A negative allowance is no allowance at all, since the row holds anyway; an infinite one cannot be written down, and a huge one had better be asked about.</summary>
     private static double Limited(double allowance, AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
         allowance <= 0 ? 0
         : double.IsPositiveInfinity(allowance) ? Fallback(form, bounds, options)
+        : allowance > options.MaximumBigM ? throw TooLarge(allowance, form, bounds, options)
         : allowance;
+
+    /// <summary>The variables to blame are those with the most room to move, which is what a big-M measures.</summary>
+    private static ModellingException TooLarge(double allowance, AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
+        new($"The big-M derived for the conditional constraint '{form.Format()} <= 0' is {allowance.ToString("G6", CultureInfo.InvariantCulture)}, "
+            + $"above the {nameof(EncodingOptions)}.{nameof(EncodingOptions.MaximumBigM)} of {options.MaximumBigM!.Value.ToString("G6", CultureInfo.InvariantCulture)}. "
+            + "A big-M this large swamps the solver's feasibility tolerance, so it may drop the constraint or honour it when it should not. "
+            + $"Narrow the bounds of {string.Join(", ", WidestVariables(form, bounds).Select(variable => $"'{variable.Name}'"))}, "
+            + "scale the constraint into smaller units, or raise the limit if the numbers really are that large.");
+
+    private static IEnumerable<IVariable> WidestVariables(AffineForm form, ImmutableDictionary<IVariable, Interval> bounds) =>
+        form.Coefficients
+            .OrderByDescending(term => bounds.Of(term.Key).Times(term.Value) is var scaled ? scaled.Upper - scaled.Lower : 0)
+            .Take(3)
+            .Select(term => term.Key);
 
     /// <summary>The value a guard's variable takes when the guard does not hold.</summary>
     private static Interval Off(Literal guard) => guard.IsPositive ? new Interval(0, 0) : new Interval(1, 1);

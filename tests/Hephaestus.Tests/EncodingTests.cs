@@ -200,6 +200,31 @@ public sealed class EncodingTests {
     }
 
     [Fact]
+    public void ABigMBeyondTheStatedLimitIsALoudErrorNamingTheWidestVariables() {
+        var constraint = X.Between(0, 1e9) & (OccupiesA | (X <= 5));
+
+        var exception = Assert.Throws<ModellingException>(() => Problem.Satisfy(constraint).Encode(new EncodingOptions(MaximumBigM: 1e6)));
+
+        Assert.Contains("'x'", exception.Message);
+        Assert.Contains(nameof(EncodingOptions.MaximumBigM), exception.Message);
+    }
+
+    [Fact]
+    public void ABigMWithinTheStatedLimitPassesWithoutComment() {
+        var constraint = X.Between(0, 1e9) & (OccupiesA | (X <= 5));
+
+        var encoded = Problem.Satisfy(constraint).Encode(new EncodingOptions(MaximumBigM: 1e10));
+
+        Assert.Equal(["-999999995*occupiesA + x <= 5"], encoded.Rows.Select(row => row.Format()));
+    }
+
+    [Fact]
+    public void NoLimitIsTheDefault() =>
+        Assert.Equal(
+            ["-999999995*occupiesA + x <= 5"],
+            Problem.Satisfy(X.Between(0, 1e9) & (OccupiesA | (X <= 5))).Encode().Rows.Select(row => row.Format()));
+
+    [Fact]
     public void EqualSubformulasShareOneAuxiliary() {
         var constraint = X.Between(0, 10) & Y.Between(0, 10) & ((X + Y <= 5) | (X >= 8)) & ((Y + X <= 5) | (Y >= 8));
 

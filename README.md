@@ -169,6 +169,8 @@ The MILP encoding runs in four pure steps:
 
 If some `M` is infinite, encoding fails with an error naming the variables that lack bounds. That is deliberate: a guessed big-M that is too small silently cuts off solutions, and the whole point is that wrong constraints should not fail silently. If you really want a guess, opt in with `new EncodingOptions(FallbackBigM: 1e6)`.
 
+The opposite trouble is a big-M that is derived perfectly correctly and is simply enormous: at a hundred million it swamps the solver's feasibility tolerance, and the answers stop meaning much. Nothing says so, because the bounds it came from looked reasonable. `new EncodingOptions(MaximumBigM: 1e6)` turns that into an error naming the row and the variables whose bounds are that wide.
+
 The first two steps are `problem.EncodeLogic()`, giving an `IndicatorProblem`; the last two are `.RelaxGuards()`, giving a `MilpProblem`; `problem.Encode()` is both. Either result can be printed with `.Format()`. Solvers with indicator or half-reified constraints (Gurobi, CP-SAT) stop after the first half and never see a big-M, and the Z3 backend skips all of it, because an SMT solver takes the boolean structure as it stands.
 
 ### Strictness
