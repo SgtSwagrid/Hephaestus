@@ -13,55 +13,49 @@ internal static class BooleanNormalisation {
         /// The gap that stands in for strictness over the reals: <c>e &lt; 0</c> becomes
         /// <c>e + epsilon &lt;= 0</c>. Whole-valued expressions use a gap of exactly one instead.
         /// </param>
-        public INormalForm Normalise(double epsilon) => Convert(new Step(expression, true, epsilon));
+        public INormalForm Normalise(double epsilon) => Convert(expression, true, epsilon);
     }
 
-    private sealed record Step(
-        IBooleanExpression Expression,
+    /// <summary>What a run of same-kind junctions is being gathered under; none of it changes as the run is walked.</summary>
+    private sealed record Gathering(
+        bool IsConjunctive,
         bool Polarity,
         double Epsilon
     );
 
-    private sealed record Collection(
-        Step Step,
-        bool IsConjunctive,
-        ImmutableList<INormalForm> Into
-    );
+    private static INormalForm Convert(IBooleanExpression expression, bool polarity, double epsilon) =>
+        DeepRecursion.Guard(ConvertUnguarded, expression, polarity, epsilon);
 
-    private static INormalForm Convert(Step step) => DeepRecursion.Guard(ConvertUnguarded, step);
-
-    private static INormalForm ConvertUnguarded(Step step) =>
-        step.Expression switch {
-            BooleanConstant constant => constant.Value == step.Polarity ? True : False,
-            BinaryVariable variable => new Literal(variable, step.Polarity),
-            Comparison comparison => OfComparison(comparison, step),
-            Negation negation => Convert(step with { Expression = negation.Operand, Polarity = !step.Polarity }),
-            NamedConstraint named => Convert(step with { Expression = named.Expression }),
-            Conjunction => OfJunction(step, isConjunctive: step.Polarity),
-            Disjunction => OfJunction(step, isConjunctive: !step.Polarity),
-            Implication implication => Convert(step with { Expression = !implication.Antecedent | implication.Consequent }),
-            Equivalence equivalence => Convert(step with { Expression = equivalence.Left.Implies(equivalence.Right) & equivalence.Right.Implies(equivalence.Left) }),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {step.Expression.GetType().Name}."),
+    private static INormalForm ConvertUnguarded(IBooleanExpression expression, bool polarity, double epsilon) =>
+        expression switch {
+            BooleanConstant constant => constant.Value == polarity ? True : False,
+            BinaryVariable variable => new Literal(variable, polarity),
+            Comparison comparison => OfComparison(comparison, polarity, epsilon),
+            Negation negation => Convert(negation.Operand, !polarity, epsilon),
+            NamedConstraint named => Convert(named.Expression, polarity, epsilon),
+            Conjunction => OfJunction(expression, new Gathering(IsConjunctive: polarity, polarity, epsilon)),
+            Disjunction => OfJunction(expression, new Gathering(IsConjunctive: !polarity, polarity, epsilon)),
+            Implication implication => Convert(!implication.Antecedent | implication.Consequent, polarity, epsilon),
+            Equivalence equivalence => Convert(equivalence.Left.Implies(equivalence.Right) & equivalence.Right.Implies(equivalence.Left), polarity, epsilon),
+            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 
-    private static INormalForm OfJunction(Step step, bool isConjunctive) =>
-        Junction(Collect(new Collection(step, isConjunctive, [])), isConjunctive);
+    private static INormalForm OfJunction(IBooleanExpression expression, Gathering gathering) =>
+        Junction(Collect(expression, gathering, []), gathering.IsConjunctive);
 
     /// <summary>Gathers the operands of a maximal run of same-kind junctions, left to right.</summary>
-    private static ImmutableList<INormalForm> Collect(Collection collection) => DeepRecursion.Guard(CollectUnguarded, collection);
+    private static ImmutableList<INormalForm> Collect(IBooleanExpression expression, Gathering gathering, ImmutableList<INormalForm> into) =>
+        DeepRecursion.Guard(CollectUnguarded, expression, gathering, into);
 
-    private static ImmutableList<INormalForm> CollectUnguarded(Collection collection) =>
-        collection.Step.Expression switch {
-            Conjunction conjunction when collection.Step.Polarity == collection.IsConjunctive => CollectBoth(collection, conjunction.Left, conjunction.Right),
-            Disjunction disjunction when collection.Step.Polarity != collection.IsConjunctive => CollectBoth(collection, disjunction.Left, disjunction.Right),
-            _ => Splice(collection.Into, Convert(collection.Step), collection.IsConjunctive),
+    private static ImmutableList<INormalForm> CollectUnguarded(IBooleanExpression expression, Gathering gathering, ImmutableList<INormalForm> into) =>
+        expression switch {
+            Conjunction conjunction when gathering.Polarity == gathering.IsConjunctive => CollectBoth(conjunction.Left, conjunction.Right, gathering, into),
+            Disjunction disjunction when gathering.Polarity != gathering.IsConjunctive => CollectBoth(disjunction.Left, disjunction.Right, gathering, into),
+            _ => Splice(into, Convert(expression, gathering.Polarity, gathering.Epsilon), gathering.IsConjunctive),
         };
 
-    private static ImmutableList<INormalForm> CollectBoth(Collection collection, IBooleanExpression left, IBooleanExpression right) =>
-        Collect(collection with {
-            Step = collection.Step with { Expression = right },
-            Into = Collect(collection with { Step = collection.Step with { Expression = left } }),
-        });
+    private static ImmutableList<INormalForm> CollectBoth(IBooleanExpression left, IBooleanExpression right, Gathering gathering, ImmutableList<INormalForm> into) =>
+        Collect(right, gathering, Collect(left, gathering, into));
 
     private static ImmutableList<INormalForm> Splice(ImmutableList<INormalForm> into, INormalForm operand, bool isConjunctive) =>
         operand switch {
@@ -81,11 +75,11 @@ internal static class BooleanNormalisation {
         : isConjunctive ? new All(operands)
         : new Any(operands);
 
-    private static INormalForm OfComparison(Comparison comparison, Step step) =>
+    private static INormalForm OfComparison(Comparison comparison, bool polarity, double epsilon) =>
         OfRelation(
             (comparison.Left - comparison.Right).Normalise(),
-            step.Polarity ? comparison.Relation : Opposite(comparison.Relation),
-            step.Epsilon);
+            polarity ? comparison.Relation : Opposite(comparison.Relation),
+            epsilon);
 
     private static INormalForm OfRelation(AffineForm difference, Relation relation, double epsilon) =>
         difference.IsConstant

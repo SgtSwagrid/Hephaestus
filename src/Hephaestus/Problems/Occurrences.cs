@@ -6,12 +6,12 @@ namespace Hephaestus;
 public static class Occurrences {
     extension(ILinearExpression expression) {
         /// <summary>Every variable mentioned in this expression, in the standard order.</summary>
-        public ImmutableSortedSet<IVariable> Variables => CollectLinear(new LinearStep(expression, Empty));
+        public ImmutableSortedSet<IVariable> Variables => CollectLinear(expression, Empty);
     }
 
     extension(IBooleanExpression expression) {
         /// <summary>Every variable mentioned in this expression, in the standard order.</summary>
-        public ImmutableSortedSet<IVariable> Variables => CollectBoolean(new BooleanStep(expression, Empty));
+        public ImmutableSortedSet<IVariable> Variables => CollectBoolean(expression, Empty);
     }
 
     extension(BinaryVariable variable) {
@@ -27,50 +27,42 @@ public static class Occurrences {
 
     private static ImmutableSortedSet<IVariable> Empty { get; } = ImmutableSortedSet.Create(VariableOrder.Comparer);
 
-    private sealed record LinearStep(
-        ILinearExpression Expression,
-        ImmutableSortedSet<IVariable> Found
-    );
+    private static ImmutableSortedSet<IVariable> CollectLinear(ILinearExpression expression, ImmutableSortedSet<IVariable> found) =>
+        DeepRecursion.Guard(CollectLinearUnguarded, expression, found);
 
-    private sealed record BooleanStep(
-        IBooleanExpression Expression,
-        ImmutableSortedSet<IVariable> Found
-    );
-
-    private static ImmutableSortedSet<IVariable> CollectLinear(LinearStep step) => DeepRecursion.Guard(CollectLinearUnguarded, step);
-
-    private static ImmutableSortedSet<IVariable> CollectLinearUnguarded(LinearStep step) =>
-        step.Expression switch {
-            Constant => step.Found,
-            IVariable variable => step.Found.Add(variable),
-            Product product => CollectLinear(step with { Expression = product.Expression }),
-            Sum sum => CollectLinear(new LinearStep(sum.Right, CollectLinear(step with { Expression = sum.Left }))),
-            Maximum maximum => CollectLinear(new LinearStep(maximum.Right, CollectLinear(step with { Expression = maximum.Left }))),
-            Minimum minimum => CollectLinear(new LinearStep(minimum.Right, CollectLinear(step with { Expression = minimum.Left }))),
-            AbsoluteValue absolute => CollectLinear(step with { Expression = absolute.Operand }),
-            NamedTerm named => CollectLinear(step with { Expression = named.Expression }),
-            Conditional conditional => CollectLinear(new LinearStep(conditional.Otherwise, CollectLinear(new LinearStep(conditional.Then, CollectBoolean(new BooleanStep(conditional.Condition, step.Found)))))),
-            _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
+    private static ImmutableSortedSet<IVariable> CollectLinearUnguarded(ILinearExpression expression, ImmutableSortedSet<IVariable> found) =>
+        expression switch {
+            Constant => found,
+            IVariable variable => found.Add(variable),
+            Product product => CollectLinear(product.Expression, found),
+            Sum sum => CollectLinear(sum.Right, CollectLinear(sum.Left, found)),
+            Maximum maximum => CollectLinear(maximum.Right, CollectLinear(maximum.Left, found)),
+            Minimum minimum => CollectLinear(minimum.Right, CollectLinear(minimum.Left, found)),
+            AbsoluteValue absolute => CollectLinear(absolute.Operand, found),
+            NamedTerm named => CollectLinear(named.Expression, found),
+            Conditional conditional => CollectLinear(conditional.Otherwise, CollectLinear(conditional.Then, CollectBoolean(conditional.Condition, found))),
+            _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
-    private static ImmutableSortedSet<IVariable> CollectBoolean(BooleanStep step) => DeepRecursion.Guard(CollectBooleanUnguarded, step);
+    private static ImmutableSortedSet<IVariable> CollectBoolean(IBooleanExpression expression, ImmutableSortedSet<IVariable> found) =>
+        DeepRecursion.Guard(CollectBooleanUnguarded, expression, found);
 
-    private static ImmutableSortedSet<IVariable> CollectBooleanUnguarded(BooleanStep step) =>
-        step.Expression switch {
-            BooleanConstant => step.Found,
-            BinaryVariable variable => step.Found.Add(variable),
-            Comparison comparison => CollectLinear(new LinearStep(comparison.Right, CollectLinear(new LinearStep(comparison.Left, step.Found)))),
-            Negation negation => CollectBoolean(step with { Expression = negation.Operand }),
-            NamedConstraint named => CollectBoolean(step with { Expression = named.Expression }),
-            Conjunction conjunction => CollectBoth(step, conjunction.Left, conjunction.Right),
-            Disjunction disjunction => CollectBoth(step, disjunction.Left, disjunction.Right),
-            Implication implication => CollectBoth(step, implication.Antecedent, implication.Consequent),
-            Equivalence equivalence => CollectBoth(step, equivalence.Left, equivalence.Right),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {step.Expression.GetType().Name}."),
+    private static ImmutableSortedSet<IVariable> CollectBooleanUnguarded(IBooleanExpression expression, ImmutableSortedSet<IVariable> found) =>
+        expression switch {
+            BooleanConstant => found,
+            BinaryVariable variable => found.Add(variable),
+            Comparison comparison => CollectLinear(comparison.Right, CollectLinear(comparison.Left, found)),
+            Negation negation => CollectBoolean(negation.Operand, found),
+            NamedConstraint named => CollectBoolean(named.Expression, found),
+            Conjunction conjunction => CollectBoth(conjunction.Left, conjunction.Right, found),
+            Disjunction disjunction => CollectBoth(disjunction.Left, disjunction.Right, found),
+            Implication implication => CollectBoth(implication.Antecedent, implication.Consequent, found),
+            Equivalence equivalence => CollectBoth(equivalence.Left, equivalence.Right, found),
+            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 
-    private static ImmutableSortedSet<IVariable> CollectBoth(BooleanStep step, IBooleanExpression left, IBooleanExpression right) =>
-        CollectBoolean(new BooleanStep(right, CollectBoolean(step with { Expression = left })));
+    private static ImmutableSortedSet<IVariable> CollectBoth(IBooleanExpression left, IBooleanExpression right, ImmutableSortedSet<IVariable> found) =>
+        CollectBoolean(right, CollectBoolean(left, found));
 
     private static ImmutableSortedSet<IVariable> DistinctlyNamed(ImmutableSortedSet<IVariable> variables) =>
         variables.GroupBy(variable => variable.Name).FirstOrDefault(group => group.Count() > 1) is { } clash

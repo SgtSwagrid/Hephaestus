@@ -35,7 +35,7 @@ public static class Names {
         /// The constraints that this one is a conjunction of, in the order written: a tree of
         /// <c>&amp;</c> is taken apart, and anything else, a named conjunction included, is one constraint.
         /// </summary>
-        public ImmutableArray<IBooleanExpression> Conjuncts => [.. Collect(new Step(expression, []))];
+        public ImmutableArray<IBooleanExpression> Conjuncts => [.. Collect(expression, [])];
     }
 
     extension(ILinearExpression expression) {
@@ -58,17 +58,13 @@ public static class Names {
         public Point<T, TDelta> WithName(string name) => point with { Expression = new NamedTerm(name, point.Expression) };
     }
 
-    private sealed record Step(
-        IBooleanExpression Expression,
-        ImmutableList<IBooleanExpression> Found
-    );
+    private static ImmutableList<IBooleanExpression> Collect(IBooleanExpression expression, ImmutableList<IBooleanExpression> found) =>
+        DeepRecursion.Guard(CollectUnguarded, expression, found);
 
-    private static ImmutableList<IBooleanExpression> Collect(Step step) => DeepRecursion.Guard(CollectUnguarded, step);
-
-    private static ImmutableList<IBooleanExpression> CollectUnguarded(Step step) =>
-        step.Expression switch {
-            Conjunction conjunction => Collect(new Step(conjunction.Right, Collect(step with { Expression = conjunction.Left }))),
-            BooleanConstant { Value: true } => step.Found,
-            _ => step.Found.Add(step.Expression),
+    private static ImmutableList<IBooleanExpression> CollectUnguarded(IBooleanExpression expression, ImmutableList<IBooleanExpression> found) =>
+        expression switch {
+            Conjunction conjunction => Collect(conjunction.Right, Collect(conjunction.Left, found)),
+            BooleanConstant { Value: true } => found,
+            _ => found.Add(expression),
         };
 }

@@ -10,12 +10,12 @@ namespace Hephaestus;
 public static class Formatting {
     extension(ILinearExpression expression) {
         /// <summary>The expression in mathematical notation.</summary>
-        public string Format() => string.Concat(WriteLinear(new LinearStep(expression, [])));
+        public string Format() => string.Concat(WriteLinear(expression, []));
     }
 
     extension(IBooleanExpression expression) {
         /// <summary>The expression in the same notation it is written in: <c>&amp;</c>, <c>|</c>, <c>!</c>, <c>=&gt;</c>, <c>&lt;=&gt;</c>.</summary>
-        public string Format() => string.Concat(WriteBoolean(new BooleanStep(expression, 0, [])));
+        public string Format() => string.Concat(WriteBoolean(expression, 0, []));
     }
 
     extension(BinaryVariable variable) {
@@ -68,70 +68,61 @@ public static class Formatting {
             .. columns.Select(column => $"  {Number(column.LowerBound)} <= {column.Variable.Name} <= {Number(column.UpperBound)}, {Kind(column.Variable)}"),
         ]);
 
-    private sealed record LinearStep(
-        ILinearExpression Expression,
-        ImmutableList<string> Tokens
-    );
+    private static ImmutableList<string> WriteLinear(ILinearExpression expression, ImmutableList<string> tokens) =>
+        DeepRecursion.Guard(WriteLinearUnguarded, expression, tokens);
 
-    private static ImmutableList<string> WriteLinear(LinearStep step) => DeepRecursion.Guard(WriteLinearUnguarded, step);
-
-    private static ImmutableList<string> WriteLinearUnguarded(LinearStep step) =>
-        step.Expression switch {
-            Constant constant => step.Tokens.Add(Number(constant.Value)),
-            IVariable variable => step.Tokens.Add(variable.Name),
-            NamedTerm named => step.Tokens.Add(named.Name),
-            Product { Coefficient: -1 } product => WriteOperand(product.Expression, step.Tokens.Add("-")),
-            Product product => WriteOperand(product.Expression, step.Tokens.Add(Number(product.Coefficient)).Add("*")),
-            Sum { Right: Product { Coefficient: -1 } subtracted } sum => WriteOperand(subtracted.Expression, WriteLinear(step with { Expression = sum.Left }).Add(" - ")),
-            Sum { Right: Product { Coefficient: < 0 } subtracted } sum => WriteLinear(new LinearStep(new Product(-subtracted.Coefficient, subtracted.Expression), WriteLinear(step with { Expression = sum.Left }).Add(" - "))),
-            Sum { Right: Constant { Value: < 0 } subtracted } sum => WriteLinear(step with { Expression = sum.Left }).Add(" - ").Add(Number(-subtracted.Value)),
-            Sum sum => WriteLinear(new LinearStep(sum.Right, WriteLinear(step with { Expression = sum.Left }).Add(" + "))),
-            Maximum maximum => WriteCall(step.Tokens.Add("max("), maximum.Left, maximum.Right),
-            Minimum minimum => WriteCall(step.Tokens.Add("min("), minimum.Left, minimum.Right),
-            AbsoluteValue absolute => WriteLinear(new LinearStep(absolute.Operand, step.Tokens.Add("abs("))).Add(")"),
-            Conditional conditional => WriteCall(WriteBoolean(new BooleanStep(conditional.Condition, 0, step.Tokens.Add("if("))).Add(", "), conditional.Then, conditional.Otherwise),
-            _ => throw new NotSupportedException($"Unknown kind of linear expression: {step.Expression.GetType().Name}."),
+    private static ImmutableList<string> WriteLinearUnguarded(ILinearExpression expression, ImmutableList<string> tokens) =>
+        expression switch {
+            Constant constant => tokens.Add(Number(constant.Value)),
+            IVariable variable => tokens.Add(variable.Name),
+            NamedTerm named => tokens.Add(named.Name),
+            Product { Coefficient: -1 } product => WriteOperand(product.Expression, tokens.Add("-")),
+            Product product => WriteOperand(product.Expression, tokens.Add(Number(product.Coefficient)).Add("*")),
+            Sum { Right: Product { Coefficient: -1 } subtracted } sum => WriteOperand(subtracted.Expression, WriteLinear(sum.Left, tokens).Add(" - ")),
+            Sum { Right: Product { Coefficient: < 0 } subtracted } sum => WriteLinear(new Product(-subtracted.Coefficient, subtracted.Expression), WriteLinear(sum.Left, tokens).Add(" - ")),
+            Sum { Right: Constant { Value: < 0 } subtracted } sum => WriteLinear(sum.Left, tokens).Add(" - ").Add(Number(-subtracted.Value)),
+            Sum sum => WriteLinear(sum.Right, WriteLinear(sum.Left, tokens).Add(" + ")),
+            Maximum maximum => WriteCall(tokens.Add("max("), maximum.Left, maximum.Right),
+            Minimum minimum => WriteCall(tokens.Add("min("), minimum.Left, minimum.Right),
+            AbsoluteValue absolute => WriteLinear(absolute.Operand, tokens.Add("abs(")).Add(")"),
+            Conditional conditional => WriteCall(WriteBoolean(conditional.Condition, 0, tokens.Add("if(")).Add(", "), conditional.Then, conditional.Otherwise),
+            _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
     private static ImmutableList<string> WriteCall(ImmutableList<string> tokens, ILinearExpression left, ILinearExpression right) =>
-        WriteLinear(new LinearStep(right, WriteLinear(new LinearStep(left, tokens)).Add(", "))).Add(")");
+        WriteLinear(right, WriteLinear(left, tokens).Add(", ")).Add(")");
 
     /// <summary>Writes the operand of a product or subtraction, in brackets if it would otherwise be misread.</summary>
     private static ImmutableList<string> WriteOperand(ILinearExpression operand, ImmutableList<string> tokens) =>
         operand is Sum or Constant { Value: < 0 } or Product { Coefficient: < 0 }
-            ? WriteLinear(new LinearStep(operand, tokens.Add("("))).Add(")")
-            : WriteLinear(new LinearStep(operand, tokens));
+            ? WriteLinear(operand, tokens.Add("(")).Add(")")
+            : WriteLinear(operand, tokens);
 
-    private sealed record BooleanStep(
-        IBooleanExpression Expression,
-        int Context,
-        ImmutableList<string> Tokens
-    );
-
-    private static ImmutableList<string> WriteBoolean(BooleanStep step) => DeepRecursion.Guard(WriteBooleanUnguarded, step);
+    private static ImmutableList<string> WriteBoolean(IBooleanExpression expression, int context, ImmutableList<string> tokens) =>
+        DeepRecursion.Guard(WriteBooleanUnguarded, expression, context, tokens);
 
     /// <summary>Brackets go around anything that binds more loosely than its context; comparisons nested in logic always get them.</summary>
-    private static ImmutableList<string> WriteBooleanUnguarded(BooleanStep step) =>
-        Precedence(step.Expression) < step.Context
-            ? WriteBare(step with { Tokens = step.Tokens.Add("(") }).Add(")")
-            : WriteBare(step);
+    private static ImmutableList<string> WriteBooleanUnguarded(IBooleanExpression expression, int context, ImmutableList<string> tokens) =>
+        Precedence(expression) < context
+            ? WriteBare(expression, tokens.Add("(")).Add(")")
+            : WriteBare(expression, tokens);
 
-    private static ImmutableList<string> WriteBare(BooleanStep step) =>
-        step.Expression switch {
-            BooleanConstant constant => step.Tokens.Add(constant.Value ? "true" : "false"),
-            BinaryVariable variable => step.Tokens.Add(variable.Name),
-            NamedConstraint named => step.Tokens.Add(named.Name),
-            Comparison comparison => WriteLinear(new LinearStep(comparison.Right, WriteLinear(new LinearStep(comparison.Left, step.Tokens)).Add($" {Symbol(comparison.Relation)} "))),
-            Negation negation => WriteBoolean(new BooleanStep(negation.Operand, 5, step.Tokens.Add("!"))),
-            Conjunction conjunction => WriteBinary(step, conjunction.Left, 4, " & ", conjunction.Right, 4),
-            Disjunction disjunction => WriteBinary(step, disjunction.Left, 3, " | ", disjunction.Right, 3),
-            Implication implication => WriteBinary(step, implication.Antecedent, 3, " => ", implication.Consequent, 2),
-            Equivalence equivalence => WriteBinary(step, equivalence.Left, 2, " <=> ", equivalence.Right, 2),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {step.Expression.GetType().Name}."),
+    private static ImmutableList<string> WriteBare(IBooleanExpression expression, ImmutableList<string> tokens) =>
+        expression switch {
+            BooleanConstant constant => tokens.Add(constant.Value ? "true" : "false"),
+            BinaryVariable variable => tokens.Add(variable.Name),
+            NamedConstraint named => tokens.Add(named.Name),
+            Comparison comparison => WriteLinear(comparison.Right, WriteLinear(comparison.Left, tokens).Add($" {Symbol(comparison.Relation)} ")),
+            Negation negation => WriteBoolean(negation.Operand, 5, tokens.Add("!")),
+            Conjunction conjunction => WriteBinary(conjunction.Left, 4, " & ", conjunction.Right, 4, tokens),
+            Disjunction disjunction => WriteBinary(disjunction.Left, 3, " | ", disjunction.Right, 3, tokens),
+            Implication implication => WriteBinary(implication.Antecedent, 3, " => ", implication.Consequent, 2, tokens),
+            Equivalence equivalence => WriteBinary(equivalence.Left, 2, " <=> ", equivalence.Right, 2, tokens),
+            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 
-    private static ImmutableList<string> WriteBinary(BooleanStep step, IBooleanExpression left, int leftContext, string symbol, IBooleanExpression right, int rightContext) =>
-        WriteBoolean(new BooleanStep(right, rightContext, WriteBoolean(new BooleanStep(left, leftContext, step.Tokens)).Add(symbol)));
+    private static ImmutableList<string> WriteBinary(IBooleanExpression left, int leftContext, string symbol, IBooleanExpression right, int rightContext, ImmutableList<string> tokens) =>
+        WriteBoolean(right, rightContext, WriteBoolean(left, leftContext, tokens).Add(symbol));
 
     private static int Precedence(IBooleanExpression expression) =>
         expression switch {
