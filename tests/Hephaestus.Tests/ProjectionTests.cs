@@ -120,6 +120,31 @@ public sealed class ProjectionTests {
         Assert.Equal(new SingleObjectiveProblem(Objective.Maximise(Start.Expression), BooleanConstant.True), Problem.Maximise(Start).SubjectTo(BooleanConstant.True));
     }
 
+    /// <summary>A type of a modeller's own, projected onto the number line, with an algebra of its own and nothing inherited.</summary>
+    private sealed record Money(ILinearExpression Expression, IProjection<decimal> Projection) : ILinearlyEncodable<decimal>;
+
+    [Fact]
+    public void ATypeOfYourOwnIsComparedReadAndOptimisedLikeTheBuiltInOnes() {
+        var cost = new Money(Variable.Continuous("cost"), new RealNumberProjection<decimal>());
+
+        // Comparison, against another of its kind and against a plain value.
+        Assert.Equal("cost <= 100", (cost <= 100m).Format());
+        Assert.Equal("cost >= budget", (cost >= new Money(Variable.Continuous("budget"), new RealNumberProjection<decimal>())).Format());
+        Assert.Equal("cost == 5", cost.EqualTo(5m).Format());
+        Assert.Equal("(0 <= cost) & (cost <= 9)", cost.Between(0m, 9m).Format());
+
+        // Reading, and optimising.
+        Assert.Equal(12.5m, Solution.Empty.With(cost, 12.5m).Value(cost));
+        Assert.Equal(new Optimisation(ObjectiveSense.Minimise, cost.Expression), Objective.Minimise(cost));
+    }
+
+    [Fact]
+    public void AmountsAndPositionsShareOneComparison() {
+        // Both reach the same operators through ILinearlyEncodable, so neither carries its own.
+        Assert.Equal("start <= 60", (Start <= Origin.AddMinutes(1)).Format());
+        Assert.Equal("runtime <= 60", (Runtime <= TimeSpan.FromMinutes(1)).Format());
+    }
+
     [Fact]
     public void DateTimeOffsetsBehaveLikeDateTimes() {
         var origin = new DateTimeOffset(Origin, TimeSpan.FromHours(10));

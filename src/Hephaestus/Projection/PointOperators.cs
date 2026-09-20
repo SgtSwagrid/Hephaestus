@@ -1,8 +1,9 @@
 namespace Hephaestus;
 
 /// <summary>
-/// The algebra of positions: point - point is a quantity, point &#177; quantity is a point, and
-/// points compare with points. There is deliberately no point + point and no scaling.
+/// The arithmetic of positions: point - point is a quantity, and point &#177; quantity is a point.
+/// There is deliberately no point + point and no scaling. Comparison and conversion are the same
+/// as for an amount and live on <see cref="ILinearlyEncodable{TValue}"/>.
 /// </summary>
 public static class PointOperators {
     extension<T, TDelta>(Point<T, TDelta>) {
@@ -17,51 +18,6 @@ public static class PointOperators {
 
         public static Point<T, TDelta> operator -(Point<T, TDelta> point, Quantity<TDelta> shift) => point with { Expression = point.Expression - shift.In(point.Projection.Delta) };
         public static Point<T, TDelta> operator -(Point<T, TDelta> point, TDelta shift) => point with { Expression = point.Expression - point.Projection.Delta.Encode(shift) };
-
-        public static IBooleanExpression operator <=(Point<T, TDelta> left, Point<T, TDelta> right) => left.Expression <= right.In(left.Projection);
-        public static IBooleanExpression operator <=(Point<T, TDelta> left, T right) => left.Expression <= left.Projection.Encode(right);
-        public static IBooleanExpression operator <=(T left, Point<T, TDelta> right) => right.Projection.Encode(left) <= right.Expression;
-
-        public static IBooleanExpression operator >=(Point<T, TDelta> left, Point<T, TDelta> right) => left.Expression >= right.In(left.Projection);
-        public static IBooleanExpression operator >=(Point<T, TDelta> left, T right) => left.Expression >= left.Projection.Encode(right);
-        public static IBooleanExpression operator >=(T left, Point<T, TDelta> right) => right.Projection.Encode(left) >= right.Expression;
-
-        public static IBooleanExpression operator <(Point<T, TDelta> left, Point<T, TDelta> right) => left.Expression < right.In(left.Projection);
-        public static IBooleanExpression operator <(Point<T, TDelta> left, T right) => left.Expression < left.Projection.Encode(right);
-        public static IBooleanExpression operator <(T left, Point<T, TDelta> right) => right.Projection.Encode(left) < right.Expression;
-
-        public static IBooleanExpression operator >(Point<T, TDelta> left, Point<T, TDelta> right) => left.Expression > right.In(left.Projection);
-        public static IBooleanExpression operator >(Point<T, TDelta> left, T right) => left.Expression > left.Projection.Encode(right);
-        public static IBooleanExpression operator >(T left, Point<T, TDelta> right) => right.Projection.Encode(left) > right.Expression;
-    }
-
-    extension<T, TDelta>(Point<T, TDelta> point) {
-        /// <summary>The constraint that this point coincides with <paramref name="other"/>.</summary>
-        public IBooleanExpression EqualTo(Point<T, TDelta> other) => point.Expression.EqualTo(other.In(point.Projection));
-
-        /// <inheritdoc cref="EqualTo{T, TDelta}(Point{T, TDelta}, Point{T, TDelta})"/>
-        public IBooleanExpression EqualTo(T other) => point.Expression.EqualTo(point.Projection.Encode(other));
-
-        /// <summary>The constraint that this point differs from <paramref name="other"/>.</summary>
-        public IBooleanExpression NotEqualTo(Point<T, TDelta> other) => point.Expression.NotEqualTo(other.In(point.Projection));
-
-        /// <inheritdoc cref="NotEqualTo{T, TDelta}(Point{T, TDelta}, Point{T, TDelta})"/>
-        public IBooleanExpression NotEqualTo(T other) => point.Expression.NotEqualTo(point.Projection.Encode(other));
-
-        /// <summary>The constraint <c>earliest &lt;= point &lt;= latest</c>.</summary>
-        public IBooleanExpression Between(T lower, T upper) => lower <= point & point <= upper;
-
-        /// <inheritdoc cref="Between{T, TDelta}(Point{T, TDelta}, T, T)"/>
-        public IBooleanExpression Between(Point<T, TDelta> lower, Point<T, TDelta> upper) => lower <= point & point <= upper;
-
-        /// <inheritdoc cref="Between{T, TDelta}(Point{T, TDelta}, T, T)"/>
-        public IBooleanExpression Between(T lower, Point<T, TDelta> upper) => lower <= point & point <= upper;
-
-        /// <inheritdoc cref="Between{T, TDelta}(Point{T, TDelta}, T, T)"/>
-        public IBooleanExpression Between(Point<T, TDelta> lower, T upper) => lower <= point & point <= upper;
-
-        /// <summary>The plain linear expression that locates this point under another projection.</summary>
-        public ILinearExpression In(IProjection<T> projection) => Projecting.Convert(point.Expression, point.Projection, projection);
     }
 }
 

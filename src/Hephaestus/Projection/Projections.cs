@@ -27,6 +27,24 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 }
 
 /// <summary>
+/// A linear expression read as a value of type <typeparamref name="TValue"/>, through a projection.
+/// It is what a <see cref="Quantity{T}"/> and a <see cref="Point{T, TDelta}"/> have in common:
+/// comparison, reading off a solution, naming and optimising are the same for both and are written
+/// once against this. Only the arithmetic differs, and that stays with each.
+/// <para>
+/// Implement it to have a type of your own treated alike; supply the expression and the projection,
+/// and give it whatever algebra suits.
+/// </para>
+/// </summary>
+public interface ILinearlyEncodable<TValue> {
+    /// <summary>The underlying linear expression, counted in the projection's own unit.</summary>
+    ILinearExpression Expression { get; }
+
+    /// <summary>How that number is read as a <typeparamref name="TValue"/>.</summary>
+    IProjection<TValue> Projection { get; }
+}
+
+/// <summary>
 /// A linear expression read as an amount of type <typeparamref name="T"/>: a duration, a length,
 /// a cost. Quantities can be added, subtracted, scaled and compared, with each other and with
 /// plain <typeparamref name="T"/> values.
@@ -34,7 +52,7 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 public sealed record Quantity<T>(
     ILinearExpression Expression,
     IProjection<T> Projection
-);
+) : ILinearlyEncodable<T>;
 
 /// <summary>
 /// A linear expression read as a position of type <typeparamref name="T"/>: a date-time, a
@@ -44,4 +62,6 @@ public sealed record Quantity<T>(
 public sealed record Point<T, TDelta>(
     ILinearExpression Expression,
     IPointProjection<T, TDelta> Projection
-);
+) : ILinearlyEncodable<T> {
+    IProjection<T> ILinearlyEncodable<T>.Projection => Projection;
+}

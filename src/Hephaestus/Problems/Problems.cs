@@ -103,17 +103,11 @@ public static class Problem {
     /// <summary>The problem of meeting the given objectives in order of priority, as yet unconstrained.</summary>
     public static IMultipleObjectiveProblem Lexicographic(IEnumerable<Prioritised> objectives) => Optimise(Objective.InOrder(objectives));
 
-    /// <summary>Minimises a typed quantity; the unit of its projection does not affect the optimum.</summary>
-    public static IOneShotProblem Minimise<T>(Quantity<T> objective) => Minimise(objective.Expression);
+    /// <summary>Minimises a typed expression, for example "as early as possible"; the unit of its projection does not affect the optimum.</summary>
+    public static IOneShotProblem Minimise<TValue>(ILinearlyEncodable<TValue> objective) => Minimise(objective.Expression);
 
-    /// <summary>Maximises a typed quantity; the unit of its projection does not affect the optimum.</summary>
-    public static IOneShotProblem Maximise<T>(Quantity<T> objective) => Maximise(objective.Expression);
-
-    /// <summary>Minimises a typed point, for example "as early as possible".</summary>
-    public static IOneShotProblem Minimise<T, TDelta>(Point<T, TDelta> objective) => Minimise(objective.Expression);
-
-    /// <summary>Maximises a typed point, for example "as late as possible".</summary>
-    public static IOneShotProblem Maximise<T, TDelta>(Point<T, TDelta> objective) => Maximise(objective.Expression);
+    /// <summary>Maximises a typed expression, for example "as late as possible"; the unit of its projection does not affect the optimum.</summary>
+    public static IOneShotProblem Maximise<TValue>(ILinearlyEncodable<TValue> objective) => Maximise(objective.Expression);
 }
 
 /// <summary>The steps by which a problem is built up. Each gives a new problem; <c>SubjectTo</c> and the objectives may come in any order.</summary>

@@ -1,8 +1,8 @@
 namespace Hephaestus;
 
 /// <summary>
-/// The algebra of amounts. Every operator reduces to the corresponding operator on the underlying
-/// linear expressions, after bringing the right-hand side into the left-hand side's projection.
+/// The arithmetic of amounts: what may be done to a quantity and not to a position. Comparison and
+/// conversion are the same for both and live on <see cref="ILinearlyEncodable{TValue}"/>.
 /// </summary>
 public static class QuantityOperators {
     extension<T>(Quantity<T>) {
@@ -18,60 +18,15 @@ public static class QuantityOperators {
         public static Quantity<T> operator *(double factor, Quantity<T> quantity) => quantity with { Expression = factor * quantity.Expression };
         public static Quantity<T> operator *(Quantity<T> quantity, double factor) => quantity with { Expression = factor * quantity.Expression };
         public static Quantity<T> operator /(Quantity<T> quantity, double divisor) => quantity with { Expression = quantity.Expression / divisor };
-
-        public static IBooleanExpression operator <=(Quantity<T> left, Quantity<T> right) => left.Expression <= right.In(left.Projection);
-        public static IBooleanExpression operator <=(Quantity<T> left, T right) => left.Expression <= left.Projection.Encode(right);
-        public static IBooleanExpression operator <=(T left, Quantity<T> right) => right.Projection.Encode(left) <= right.Expression;
-
-        public static IBooleanExpression operator >=(Quantity<T> left, Quantity<T> right) => left.Expression >= right.In(left.Projection);
-        public static IBooleanExpression operator >=(Quantity<T> left, T right) => left.Expression >= left.Projection.Encode(right);
-        public static IBooleanExpression operator >=(T left, Quantity<T> right) => right.Projection.Encode(left) >= right.Expression;
-
-        public static IBooleanExpression operator <(Quantity<T> left, Quantity<T> right) => left.Expression < right.In(left.Projection);
-        public static IBooleanExpression operator <(Quantity<T> left, T right) => left.Expression < left.Projection.Encode(right);
-        public static IBooleanExpression operator <(T left, Quantity<T> right) => right.Projection.Encode(left) < right.Expression;
-
-        public static IBooleanExpression operator >(Quantity<T> left, Quantity<T> right) => left.Expression > right.In(left.Projection);
-        public static IBooleanExpression operator >(Quantity<T> left, T right) => left.Expression > left.Projection.Encode(right);
-        public static IBooleanExpression operator >(T left, Quantity<T> right) => right.Projection.Encode(left) > right.Expression;
     }
 
     extension<T>(Quantity<T> quantity) {
-        /// <summary>The constraint that this quantity equals <paramref name="other"/>.</summary>
-        public IBooleanExpression EqualTo(Quantity<T> other) => quantity.Expression.EqualTo(other.In(quantity.Projection));
-
-        /// <inheritdoc cref="EqualTo{T}(Quantity{T}, Quantity{T})"/>
-        public IBooleanExpression EqualTo(T other) => quantity.Expression.EqualTo(quantity.Projection.Encode(other));
-
-        /// <summary>The constraint that this quantity differs from <paramref name="other"/>.</summary>
-        public IBooleanExpression NotEqualTo(Quantity<T> other) => quantity.Expression.NotEqualTo(other.In(quantity.Projection));
-
-        /// <inheritdoc cref="NotEqualTo{T}(Quantity{T}, Quantity{T})"/>
-        public IBooleanExpression NotEqualTo(T other) => quantity.Expression.NotEqualTo(quantity.Projection.Encode(other));
-
-        /// <summary>The constraint <c>lower &lt;= quantity &lt;= upper</c>.</summary>
-        public IBooleanExpression Between(T lower, T upper) => lower <= quantity & quantity <= upper;
-
-        /// <inheritdoc cref="Between{T}(Quantity{T}, T, T)"/>
-        public IBooleanExpression Between(Quantity<T> lower, Quantity<T> upper) => lower <= quantity & quantity <= upper;
-
-        /// <inheritdoc cref="Between{T}(Quantity{T}, T, T)"/>
-        public IBooleanExpression Between(T lower, Quantity<T> upper) => lower <= quantity & quantity <= upper;
-
-        /// <inheritdoc cref="Between{T}(Quantity{T}, T, T)"/>
-        public IBooleanExpression Between(Quantity<T> lower, T upper) => lower <= quantity & quantity <= upper;
-
         /// <summary>
         /// How many of <paramref name="unit"/> this quantity amounts to, as a plain linear expression:
         /// <c>delay.In(Duration.FromMinutes(1))</c> is the delay in minutes, ready for a cost function.
         /// </summary>
         public ILinearExpression In(T unit) => quantity.Expression / quantity.Projection.Encode(unit);
 
-        /// <summary>
-        /// The plain linear expression that measures this quantity under another projection, for
-        /// example a duration in minutes for use in a cost function.
-        /// </summary>
-        public ILinearExpression In(IProjection<T> projection) => Projecting.Convert(quantity.Expression, quantity.Projection, projection);
     }
 
     extension<T>(IEnumerable<Quantity<T>> quantities) {

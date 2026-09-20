@@ -24,14 +24,8 @@ public static class Evaluation {
         /// this a start at 240 seconds reads as 08:03:59.99999999. The unrounded number is
         /// <c>solution.Value(quantity.Expression)</c>.
         /// </param>
-        public T Value<T>(Quantity<T> quantity, int decimalPlaces = 5) =>
+        public TValue Value<TValue>(ILinearlyEncodable<TValue> quantity, int decimalPlaces = 5) =>
             quantity.Projection.Decode(Math.Round(solution.Value(quantity.Expression), decimalPlaces));
-
-        /// <summary>The value of a typed point under this solution.</summary>
-        /// <param name="point">The point to read.</param>
-        /// <param name="decimalPlaces"><inheritdoc cref="Value{T}(Solution, Quantity{T}, int)" path="/param[@name='decimalPlaces']"/></param>
-        public T Value<T, TDelta>(Point<T, TDelta> point, int decimalPlaces = 5) =>
-            point.Projection.Decode(Math.Round(solution.Value(point.Expression), decimalPlaces));
 
         /// <summary>This solution with a value for one more variable.</summary>
         public Solution With(IVariable variable, double value) => solution with { Values = solution.Values.SetItem(variable, value) };
@@ -40,11 +34,8 @@ public static class Evaluation {
         public Solution With(BinaryVariable variable, bool value) => solution.With(variable, value ? 1 : 0);
 
         /// <summary>This solution with a value for a typed variable.</summary>
-        /// <exception cref="ArgumentException">The quantity is a compound expression rather than a variable, so no one value can be given to it.</exception>
-        public Solution With<T>(Quantity<T> variable, T value) => solution.With(variable.Expression, variable.Projection.Encode(value));
-
-        /// <inheritdoc cref="With{T}(Solution, Quantity{T}, T)"/>
-        public Solution With<T, TDelta>(Point<T, TDelta> variable, T value) => solution.With(variable.Expression, variable.Projection.Encode(value));
+        /// <exception cref="ArgumentException">The variable is a compound expression rather than a variable, so no one value can be given to it.</exception>
+        public Solution With<TValue>(ILinearlyEncodable<TValue> variable, TValue value) => solution.With(variable.Expression, variable.Projection.Encode(value));
 
         private Solution With(ILinearExpression expression, double value) =>
             expression is IVariable variable
