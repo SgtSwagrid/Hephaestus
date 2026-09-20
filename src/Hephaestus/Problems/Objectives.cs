@@ -73,23 +73,17 @@ public static class Objective {
     /// <summary>The objective of making <paramref name="expression"/> as large as possible, give or take a tolerance for the sake of the objectives after it.</summary>
     public static Prioritised Maximise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) => new(Maximise(expression), absoluteTolerance, relativeTolerance);
 
-    /// <summary>The objective of making a typed quantity as small as possible.</summary>
-    public static Optimisation Minimise<T>(Quantity<T> quantity) => Minimise(quantity.Expression);
+    /// <summary>The objective of making a typed expression as small as possible.</summary>
+    public static Optimisation Minimise<TValue>(ILinearlyEncodable<TValue> quantity) => Minimise(quantity.Expression);
 
-    /// <summary>The objective of making a typed quantity as large as possible.</summary>
-    public static Optimisation Maximise<T>(Quantity<T> quantity) => Maximise(quantity.Expression);
+    /// <summary>The objective of making a typed expression as large as possible.</summary>
+    public static Optimisation Maximise<TValue>(ILinearlyEncodable<TValue> quantity) => Maximise(quantity.Expression);
 
     /// <summary>The objective of making a typed quantity as small as possible, give or take <paramref name="tolerance"/>.</summary>
-    public static Prioritised Minimise<T>(Quantity<T> quantity, T? tolerance = default, double relativeTolerance = 0) => new(Minimise(quantity), Encoded(quantity.Projection, tolerance), relativeTolerance);
+    public static Prioritised Minimise<T>(Quantity<T> quantity, T? tolerance = default, double relativeTolerance = 0) => new(Minimise(quantity.Expression), Encoded(quantity.Projection, tolerance), relativeTolerance);
 
     /// <summary>The objective of making a typed quantity as large as possible, give or take <paramref name="tolerance"/>.</summary>
-    public static Prioritised Maximise<T>(Quantity<T> quantity, T? tolerance = default, double relativeTolerance = 0) => new(Maximise(quantity), Encoded(quantity.Projection, tolerance), relativeTolerance);
-
-    /// <summary>The objective of making a typed point as early as possible.</summary>
-    public static Optimisation Minimise<T, TDelta>(Point<T, TDelta> point) => Minimise(point.Expression);
-
-    /// <summary>The objective of making a typed point as late as possible.</summary>
-    public static Optimisation Maximise<T, TDelta>(Point<T, TDelta> point) => Maximise(point.Expression);
+    public static Prioritised Maximise<T>(Quantity<T> quantity, T? tolerance = default, double relativeTolerance = 0) => new(Maximise(quantity.Expression), Encoded(quantity.Projection, tolerance), relativeTolerance);
 
     /// <summary>The objective of making a typed point as early as possible, give or take <paramref name="tolerance"/>.</summary>
     public static Prioritised Minimise<T, TDelta>(Point<T, TDelta> point, TDelta tolerance) => new(Minimise(point), Math.Abs(point.Projection.Delta.Encode(tolerance)));
