@@ -91,3 +91,24 @@ public sealed record Point<T, TDelta>(
 ) : ILinearlyEncodable<T> {
     IProjection<T> ILinearlyEncodable<T>.Projection => Projection;
 }
+
+/// <summary>Conversion between projections of the same type.</summary>
+internal static class Projecting {
+    /// <summary>
+    /// Re-expresses <paramref name="expression"/>, a number under <paramref name="from"/>, as the
+    /// number that stands for the same value under <paramref name="to"/>. Both being affine, the
+    /// conversion is <c>scale &#183; expression + offset</c>, pinned down by the images of zero and one.
+    /// </summary>
+    public static ILinearExpression Convert<T>(ILinearExpression expression, IProjection<T> from, IProjection<T> to) =>
+        from.Equals(to)
+            ? expression
+            : Affine(expression, scale: to.Encode(from.Decode(1)) - to.Encode(from.Decode(0)), offset: to.Encode(from.Decode(0)));
+
+    private static ILinearExpression Affine(ILinearExpression expression, double scale, double offset) =>
+        (scale == 1, offset == 0) switch {
+            (true, true) => expression,
+            (true, false) => expression + offset,
+            (false, true) => scale * expression,
+            (false, false) => scale * expression + offset,
+        };
+}

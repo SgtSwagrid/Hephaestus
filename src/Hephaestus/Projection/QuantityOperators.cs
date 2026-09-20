@@ -26,7 +26,6 @@ public static class QuantityOperators {
         /// <c>delay.In(Duration.FromMinutes(1))</c> is the delay in minutes, ready for a cost function.
         /// </summary>
         public ILinearExpression In(T unit) => quantity.Expression / quantity.Projection.Encode(unit);
-
     }
 
     extension<T>(IEnumerable<Quantity<T>> quantities) {
@@ -37,25 +36,4 @@ public static class QuantityOperators {
                 ? items[0] with { Expression = items.Select(item => item.In(items[0].Projection)).Sum() }
                 : throw new InvalidOperationException("Cannot sum an empty sequence of quantities: there is no projection to express the zero in.");
     }
-}
-
-/// <summary>Conversion between projections of the same type.</summary>
-internal static class Projecting {
-    /// <summary>
-    /// Re-expresses <paramref name="expression"/>, a number under <paramref name="from"/>, as the
-    /// number that stands for the same value under <paramref name="to"/>. Both being affine, the
-    /// conversion is <c>scale &#183; expression + offset</c>, pinned down by the images of zero and one.
-    /// </summary>
-    public static ILinearExpression Convert<T>(ILinearExpression expression, IProjection<T> from, IProjection<T> to) =>
-        from.Equals(to)
-            ? expression
-            : Affine(expression, scale: to.Encode(from.Decode(1)) - to.Encode(from.Decode(0)), offset: to.Encode(from.Decode(0)));
-
-    private static ILinearExpression Affine(ILinearExpression expression, double scale, double offset) =>
-        (scale == 1, offset == 0) switch {
-            (true, true) => expression,
-            (true, false) => expression + offset,
-            (false, true) => scale * expression,
-            (false, false) => scale * expression + offset,
-        };
 }

@@ -222,7 +222,7 @@ var penalty   = If(finish >= deadline, 50 + 2 * lateness, 0);  // one expression
 
 ### Typed expressions
 
-A `Quantity<T>` is a linear expression read as an *amount* of type `T` (a duration); a `Point<T, TDelta>` is one read as a *position* (a date-time) whose differences are amounts of `TDelta`. Each pairs an ordinary `ILinearExpression` with an `IProjection<T>`, an affine map between `T` and the solver's number line ("seconds since 08:00").
+A `Quantity<T>` is a linear expression read as an *amount* of type `T` (a duration); a `Point<T, TDelta>` is one read as a *position* (a date-time) whose differences are amounts of `TDelta`. Each pairs an ordinary `ILinearExpression` with an `IProjection<T>`, an affine map between `T` and the solver's number line ("seconds since 08:00"). Both are `ILinearlyEncodable<T>`, which is that pair and is where comparison, reading, naming and optimising are defined; only the arithmetic differs between them, and that is all each type carries. A record of your own that implements it is treated alike.
 
 The two types carry the right algebra, once, generically:
 
@@ -249,7 +249,7 @@ var start   = Variable.LocalDateTime("start", origin: shiftStart);
 var runtime     = Variable.Duration("runtime", unit: Duration.FromSeconds(30), inWholeUnits: true);  // quantised
 ```
 
-Supporting another type means writing one small record that implements `IProjection<T>` (or `IPointProjection<T, TDelta>`), plus, for a point type, the three one-line `T ± Quantity<TDelta>` operators that C# will not let the core declare generically (they delegate to `quantity.Beyond(origin, projection)`). Typed reads round the underlying number to five decimal places of the unit by default, so that solver noise does not turn 08:04:00 into 08:03:59.99999999.
+Supporting another type means writing one small record that implements `IProjection<T>` (or `IPointProjection<T, TDelta>`), plus, for a point type, the three one-line `T ± Quantity<TDelta>` operators that C# will not let the core declare generically (they delegate to `quantity.Beyond(origin, projection)`). A projection can also be had from one you have: `seconds.Biselect(TimeSpan.FromSeconds, span => (long)span.TotalSeconds)` re-views it as another type, and `Select` gives a decoder alone — a reading no constraint can mention. Projections built that way hold functions, so they do not compare equal; write a record where that matters. A projection onto `bool` rather than onto the number line (`IProjection<T, bool>`, `ILogicallyEncodable<T>`) carries a two-state type on a single binary. Typed reads round the underlying number to five decimal places of the unit by default, so that solver noise does not turn 08:04:00 into 08:03:59.99999999.
 
 ### Swapping the solver
 
