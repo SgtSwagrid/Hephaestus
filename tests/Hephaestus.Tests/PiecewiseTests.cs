@@ -11,9 +11,9 @@ public sealed class PiecewiseTests {
     private static readonly IntegerVariable M = Variable.Integer("m");
     private static readonly IBooleanExpression Box = X.Between(0, 10) & Y.Between(0, 10);
 
-    private static IEnumerable<string> Rows(ISingleObjectiveProblem problem) => problem.Encode().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal);
+    private static IEnumerable<string> Rows(IOneShotProblem problem) => problem.Encode().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal);
 
-    private static IEnumerable<string> Auxiliaries(ISingleObjectiveProblem problem) => problem.Encode().Columns.Where(column => column.IsAuxiliary).Select(column => column.Variable.Name).Order(StringComparer.Ordinal);
+    private static IEnumerable<string> Auxiliaries(IOneShotProblem problem) => problem.Encode().Columns.Where(column => column.IsAuxiliary).Select(column => column.Variable.Name).Order(StringComparer.Ordinal);
 
     [Fact]
     public void TheFunctionsOnlyBuildData() {

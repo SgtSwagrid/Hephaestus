@@ -22,12 +22,12 @@ public abstract class SensitivityContract {
 
     private const double Step = 0.01;
 
-    private double Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution.ObjectiveValue;
+    private double Optimum(IOneShotProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution.ObjectiveValue;
 
-    private ShadowPrices Prices(ISingleObjectiveProblem problem) => problem.ShadowPrices(Assert.IsType<Optimal>(Solver.Solve(problem)).Solution, Backend);
+    private ShadowPrices Prices(IOneShotProblem problem) => problem.ShadowPrices(Assert.IsType<Optimal>(Solver.Solve(problem)).Solution, Backend);
 
     /// <summary>The rate at which the optimum moves as <paramref name="loosened"/> takes the place of <paramref name="constraint"/>.</summary>
-    private double Rate(ISingleObjectiveProblem problem, IBooleanExpression constraint, IBooleanExpression loosened) =>
+    private double Rate(IOneShotProblem problem, IBooleanExpression constraint, IBooleanExpression loosened) =>
         (Optimum(Problem.Optimise(problem.Objective).SubjectTo(problem.Constraint.Conjuncts.Replace(constraint, loosened))) - Optimum(problem)) / Step;
 
     [Fact]

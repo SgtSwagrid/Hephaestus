@@ -21,7 +21,7 @@ public interface IConflictSolver : ISolver {
     /// Constraints (conjuncts of the problem's constraint, the very objects) among which a conflict
     /// lies; empty if the solver has nothing to offer. It need not be minimal.
     /// </summary>
-    ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default);
+    ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

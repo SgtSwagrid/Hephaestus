@@ -10,7 +10,7 @@ public sealed class ModelFilesTests {
     private static readonly IBooleanExpression Changeover =
         (!(UsesA & UsesB) | (StartA + 120 <= StartB) | (StartB + 120 <= StartA)).WithName("changeover A/B");
 
-    private static readonly ISingleObjectiveProblem Problem1 = Problem.Minimise(StartA + 2 * StartB + 7).SubjectTo(StartA.Between(0, 3600) & StartB.Between(0, 3600) & Changeover & UsesA & (StartA - StartB + N).EqualTo(3) & (N >= -4));
+    private static readonly IOneShotProblem Problem1 = Problem.Minimise(StartA + 2 * StartB + 7).SubjectTo(StartA.Between(0, 3600) & StartB.Between(0, 3600) & Changeover & UsesA & (StartA - StartB + N).EqualTo(3) & (N >= -4));
 
     private static string[] Lines(string text) => text.TrimEnd('\n').Split('\n');
 

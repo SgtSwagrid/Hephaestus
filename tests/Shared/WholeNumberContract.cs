@@ -23,7 +23,7 @@ public abstract class WholeNumberContract {
     private static IBooleanExpression Separated(ILinearExpression first, ILinearExpression second) =>
         (first + Changeover <= second) | (second + Changeover <= first);
 
-    private Solution Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
+    private Solution Optimum(IOneShotProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
 
     [Fact]
     public void ThreeJobsQueueForOneMachine() {
