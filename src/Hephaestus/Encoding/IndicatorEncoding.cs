@@ -68,8 +68,9 @@ internal static class IndicatorEncoding {
         };
 
     private static IndicatorProgram EnforceDisjunction(IndicatorProgram program, Any any, ImmutableList<Literal> guards, AuxiliaryNaming naming) {
-        var known = any.Operands.Select(operand => KnownLiteral(program, operand)).OfType<Literal>().ToImmutableList();
-        var compound = any.Operands.Where(operand => KnownLiteral(program, operand) is null).ToImmutableList();
+        var operands = any.Operands.Select(operand => (Operand: operand, Literal: KnownLiteral(program, operand))).ToImmutableList();
+        var known = operands.Select(operand => operand.Literal).OfType<Literal>().ToImmutableList();
+        var compound = operands.Where(operand => operand.Literal is null).Select(operand => operand.Operand).ToImmutableList();
         return compound.IsEmpty
             ? WithRow(program, AtLeastOne(known, guards))
             : EnforceLast(compound.SkipLast(1).Aggregate(new Defined(program, known), (defined, operand) => Define(defined, operand, naming)), compound[^1], guards, naming);
