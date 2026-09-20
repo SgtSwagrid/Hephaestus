@@ -43,12 +43,14 @@ Console.WriteLine(problem.Encode().Format());
 
 foreach (var (name, solver) in new (string, ISolver)[] { ("SCIP", OrToolsSolver.Create()), ("Z3", new Z3Solver()) }) {
     Console.WriteLine();
-    Console.WriteLine(solver.Solve(problem).Match(
-        optimal: solution => $"{name}: {Schedule(solution)} (total delay {solution.Value(totalDelay)})",
-        feasible: solution => $"{name}: {Schedule(solution)} (not proven optimal)",
-        infeasible: () => $"{name}: no schedule exists",
-        unbounded: () => $"{name}: unbounded",
-        unknown: reason => $"{name}: gave up ({reason})"));
+    Console.WriteLine(solver.Solve(problem) switch {
+        Optimal(var solution) => $"{name}: {Schedule(solution)} (total delay {solution.Value(totalDelay)})",
+        Feasible(var solution) => $"{name}: {Schedule(solution)} (not proven optimal)",
+        Infeasible => $"{name}: no schedule exists",
+        Unbounded => $"{name}: unbounded",
+        Unknown(var reason) => $"{name}: gave up ({reason})",
+        _ => throw new NotSupportedException($"Unknown kind of solve result: {name}."),
+    });
 }
 
 IBooleanExpression IsClashFree(Job first, Job second) =>

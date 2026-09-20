@@ -87,14 +87,16 @@ public sealed class SolvingTests {
     }
 
     [Fact]
-    public void ResultsAreMatchedExhaustively() {
+    public void EveryOutcomeIsATypeThatCanBeSwitchedOn() {
         static string Describe(ISolveResult result) =>
-            result.Match(
-                optimal: solution => $"optimal {solution.ObjectiveValue}",
-                feasible: solution => $"feasible {solution.ObjectiveValue}",
-                infeasible: () => "infeasible",
-                unbounded: () => "unbounded",
-                unknown: reason => $"unknown: {reason}");
+            result switch {
+                Optimal(var solution) => $"optimal {solution.ObjectiveValue}",
+                Feasible(var solution) => $"feasible {solution.ObjectiveValue}",
+                Infeasible => "infeasible",
+                Unbounded => "unbounded",
+                Unknown(var reason) => $"unknown: {reason}",
+                _ => throw new NotSupportedException($"Unknown kind of solve result: {result.GetType().Name}."),
+            };
 
         Assert.Equal("optimal 5", Describe(Solver.Solve(Problem.Maximise(M).SubjectTo(Domain))));
         Assert.Equal("infeasible", Describe(new Infeasible()));

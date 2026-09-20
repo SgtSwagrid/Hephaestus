@@ -122,17 +122,6 @@ internal static class BackendSolving {
 /// <summary>Functions over solve results.</summary>
 public static class SolveResults {
     extension(ISolveResult result) {
-        /// <summary>Handles every possible outcome; adding a case to <see cref="ISolveResult"/> would break callers loudly rather than silently.</summary>
-        public T Match<T>(Func<Solution, T> optimal, Func<Solution, T> feasible, Func<T> infeasible, Func<T> unbounded, Func<string, T> unknown) =>
-            result switch {
-                Optimal found => optimal(found.Solution),
-                Feasible found => feasible(found.Solution),
-                Infeasible => infeasible(),
-                Unbounded => unbounded(),
-                Unknown stopped => unknown(stopped.Reason),
-                _ => throw new NotSupportedException($"Unknown kind of solve result: {result.GetType().Name}."),
-            };
-
         /// <summary>The solution, whether or not it is proven optimal; null when there is none.</summary>
         public Solution? SolutionOrNull =>
             result switch {
