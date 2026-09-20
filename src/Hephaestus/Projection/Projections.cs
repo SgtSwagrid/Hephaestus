@@ -8,13 +8,26 @@ namespace Hephaestus;
 /// combined: the conversion between any two is recovered from where they send zero and one.
 /// Implement projections as records, so that equal projections compare equal.
 /// </summary>
-public interface IProjection<T> {
-    /// <summary>The number that stands for <paramref name="value"/>.</summary>
-    double Encode(T value);
+public interface IProjection<T> : IProjection<T, double>;
 
-    /// <summary>The value that <paramref name="number"/> stands for.</summary>
-    T Decode(double number);
+/// <summary>Reads a raw form from the solver as a <typeparamref name="TValue"/>. One half of a projection.</summary>
+public interface IDecoder<out TValue, in TRaw> {
+    /// <summary>The value that <paramref name="representation"/> stands for.</summary>
+    TValue Decode(TRaw representation);
 }
+
+/// <summary>Writes a <typeparamref name="TValue"/> as a raw form the solver understands. The other half.</summary>
+public interface IEncoder<in TValue, out TRaw> {
+    /// <summary>The raw form that stands for <paramref name="value"/>.</summary>
+    TRaw Encode(TValue value);
+}
+
+/// <summary>
+/// Both halves: what lets a value be written into a model and read back out of a solution. The raw
+/// form is a number for anything that becomes a column, and could be a truth for anything that
+/// becomes a binary.
+/// </summary>
+public interface IProjection<TValue, TRaw> : IDecoder<TValue, TRaw>, IEncoder<TValue, TRaw>;
 
 /// <summary>
 /// The projection of a type whose values are positions rather than amounts (date-times, not
@@ -36,12 +49,25 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 /// and give it whatever algebra suits.
 /// </para>
 /// </summary>
-public interface ILinearlyEncodable<TValue> {
+public interface ILinearlyEncodable<TValue> : IExpression<TValue> {
     /// <summary>The underlying linear expression, counted in the projection's own unit.</summary>
     ILinearExpression Expression { get; }
 
     /// <summary>How that number is read as a <typeparamref name="TValue"/>.</summary>
     IProjection<TValue> Projection { get; }
+}
+
+/// <summary>
+/// A boolean expression read as a value of type <typeparamref name="TValue"/>, through a projection
+/// onto truth rather than onto the number line: a two-state type over a single binary, where
+/// <see cref="ILinearlyEncodable{TValue}"/> is a type over a column.
+/// </summary>
+public interface ILogicallyEncodable<TValue> : IExpression<TValue> {
+    /// <summary>The underlying boolean expression.</summary>
+    IBooleanExpression Expression { get; }
+
+    /// <summary>How its truth is read as a <typeparamref name="TValue"/>.</summary>
+    IProjection<TValue, bool> Projection { get; }
 }
 
 /// <summary>

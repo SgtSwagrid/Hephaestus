@@ -7,7 +7,7 @@ namespace Hephaestus;
 /// <see cref="Equivalence"/>, <see cref="NamedConstraint"/> and <see cref="BinaryVariable"/>. Like linear expressions, boolean
 /// expressions are plain data kept exactly as written.
 /// </summary>
-public interface IBooleanExpression;
+public interface IBooleanExpression : IExpression<bool>;
 
 /// <summary>A fixed truth value.</summary>
 public sealed record BooleanConstant(bool Value) : IBooleanExpression {
