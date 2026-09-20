@@ -104,6 +104,29 @@ public sealed class PiecewiseTests {
         Assert.Equal(["_aux0", "_max0", "_max1"], Auxiliaries(Problem.Minimise(Max(X, Y) + Min(Y, X)).SubjectTo(Box)));
 
     [Fact]
+    public void LoweredConstraintsKnowWhichOnesWereWritten() {
+        var written = Box & (Max(X, Y) <= 8);
+
+        var constraints = Problem.Minimise(Max(X, Y)).SubjectTo(written).Linearise().Constraints(written);
+
+        // Those as written come first and in order, each beside what it was lowered to.
+        Assert.Equal(written.Conjuncts, constraints.Take(written.Conjuncts.Length).Select(constraint => constraint.Written));
+        Assert.Equal("_max0 <= 8", constraints[written.Conjuncts.Length - 1].Lowered.Format());
+        // What ties the maximum to its operands comes after, and nobody wrote it.
+        Assert.NotEmpty(constraints.Skip(written.Conjuncts.Length));
+        Assert.All(constraints.Skip(written.Conjuncts.Length), constraint => Assert.Null(constraint.Written));
+    }
+
+    [Fact]
+    public void AProblemWithNothingToLowerIsAllAsWritten() {
+        var written = Box & (X <= 8);
+
+        var constraints = Problem.Minimise(X).SubjectTo(written).Linearise().Constraints(written);
+
+        Assert.Equal(written.Conjuncts, constraints.Select(constraint => constraint.Written));
+    }
+
+    [Fact]
     public void FunctionsNestAndTheInnerOneIsTiedAsTheOuterOneNeeds() =>
         // Bounding max(x, min(y, z)) from above pushes the minimum down too, which it can only resist by choosing which operand it equals.
         Assert.Equal(["_aux0", "_max0", "_max1"], Auxiliaries(Problem.Satisfy(Box & Z.Between(0, 10) & (Max(X, Min(Y, Z)) <= 8))));
