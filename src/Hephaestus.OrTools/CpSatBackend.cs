@@ -115,7 +115,7 @@ public sealed record CpSatBackend : IIndicatorBackend {
             CpSolverStatus.Optimal => new Optimal(ReadSolution(solver, problem, variables)) { Statistics = ReadStatistics(solver, problem, hasSolution: true) },
             CpSolverStatus.Feasible => new Feasible(ReadSolution(solver, problem, variables)) { Statistics = ReadStatistics(solver, problem, hasSolution: true) },
             CpSolverStatus.Infeasible => new Infeasible { Statistics = ReadStatistics(solver, problem, hasSolution: false) },
-            CpSolverStatus.ModelInvalid => new Unknown($"CP-SAT rejected the model: {model.Validate()}"),
+            CpSolverStatus.ModelInvalid => new Unknown($"CP-SAT rejected the model: {model.Validate()}") { Statistics = ReadStatistics(solver, problem, hasSolution: false) },
             _ => new Unknown("CP-SAT stopped without a solution.") { Statistics = ReadStatistics(solver, problem, hasSolution: false) },
         };
 

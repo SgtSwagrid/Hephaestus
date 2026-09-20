@@ -40,10 +40,13 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend, IConflictB
         start.Where(entry => variables.ContainsKey(entry.Key)).ToList().ForEach(entry => variables[entry.Key].Start = entry.Value);
         model.SetObjective(Linear(singlyGuarded.Objective, variables), singlyGuarded.Sense == ObjectiveSense.Maximise ? GRB.MAXIMIZE : GRB.MINIMIZE);
         Configure(model, options);
-        using var logging = Logging(model, options.Log);
+        var logging = Logging(model, options.Log);
         model.Optimize();
+        var result = AsResult(Settled(model), model, variables);
 
-        return AsResult(Settled(model), model, variables);
+        // Gurobi holds the callback only through unmanaged hands, so it must be kept alive until the last solve is over.
+        GC.KeepAlive(logging);
+        return result;
     }
 
     /// <summary>An environment that prints nothing, not even the licence banner, which is why the flag is set before it starts.</summary>
@@ -149,15 +152,13 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend, IConflictB
         return callback;
     }
 
-    /// <summary>Gurobi's callbacks are by inheritance, hence a class. Disposing is only there for the <c>using</c> that keeps it alive.</summary>
-    private sealed class LogCallback(Action<string> log) : GRBCallback, IDisposable {
+    /// <summary>Gurobi's callbacks are by inheritance, hence a class.</summary>
+    private sealed class LogCallback(Action<string> log) : GRBCallback {
         protected override void Callback() {
             if (where == GRB.Callback.MESSAGE) {
                 log(GetStringInfo(GRB.Callback.MSG_STRING));
             }
         }
-
-        public void Dispose() { }
     }
 
     /// <summary>
