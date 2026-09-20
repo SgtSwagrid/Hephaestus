@@ -80,11 +80,6 @@ public static class PiecewiseLowering {
         Lifting State
     );
 
-    private sealed record Step<T>(
-        T Expression,
-        Lifting State
-    );
-
     /// <summary>How the rest of the problem leans on a variable: whether it would gain from one that is too small, too large, or both.</summary>
     [Flags]
     private enum Demand {
@@ -96,8 +91,8 @@ public static class PiecewiseLowering {
 
     private static LinearisedProblem Lower(ISingleObjectiveProblem problem, EncodingOptions options) {
         var start = new Lifting(ImmutableDictionary<object, IVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options, 0);
-        var constraint = Lift(new Step<IBooleanExpression>(problem.Constraint, start));
-        var objective = Lift(new Step<ILinearExpression>(problem.Objective.Expression, constraint.State));
+        var constraint = Lift(problem.Constraint, start);
+        var objective = Lift(problem.Objective.Expression, constraint.State);
         return objective.State.Definitions.IsEmpty
             ? new LinearisedProblem(problem, [])
             : Defined(problem.With(objective.Expression, constraint.Expression), objective.State.Definitions, options);
@@ -172,26 +167,25 @@ public static class PiecewiseLowering {
             _ => [],
         };
 
-    private static Lifted<ILinearExpression> Lift(Step<ILinearExpression> step) => DeepRecursion.Guard(LiftUnguarded, step);
+    private static Lifted<ILinearExpression> Lift(ILinearExpression expression, Lifting state) => DeepRecursion.Guard(LiftUnguarded, expression, state);
 
-    private static Lifted<ILinearExpression> LiftUnguarded(Step<ILinearExpression> step) =>
-        step.Expression switch {
-            Product product => Rebuilt(product, Lift(step with { Expression = product.Expression })),
-            NamedTerm named => Rebuilt(named, Lift(step with { Expression = named.Expression })),
-            Sum sum => Rebuilt(sum, Both(step.State, sum.Left, sum.Right)),
-            Maximum maximum => Named(Both(step.State, maximum.Left, maximum.Right), isNegated: false),
-            Minimum minimum => Named(Both(step.State, -minimum.Left, -minimum.Right), isNegated: true),
-            AbsoluteValue absolute => Named(Both(step.State, absolute.Operand, -absolute.Operand), isNegated: false),
-            Conditional conditional => Chosen(Lift(new Step<IBooleanExpression>(conditional.Condition, step.State)), conditional),
-            _ => new Lifted<ILinearExpression>(step.Expression, step.State),
+    private static Lifted<ILinearExpression> LiftUnguarded(ILinearExpression expression, Lifting state) =>
+        expression switch {
+            Product product => Rebuilt(product, Lift(product.Expression, state)),
+            NamedTerm named => Rebuilt(named, Lift(named.Expression, state)),
+            Sum sum => Rebuilt(sum, Both(state, sum.Left, sum.Right)),
+            Maximum maximum => Named(Both(state, maximum.Left, maximum.Right), isNegated: false),
+            Minimum minimum => Named(Both(state, -minimum.Left, -minimum.Right), isNegated: true),
+            AbsoluteValue absolute => Named(Both(state, absolute.Operand, -absolute.Operand), isNegated: false),
+            Conditional conditional => Chosen(Lift(conditional.Condition, state), conditional),
+            _ => new Lifted<ILinearExpression>(expression, state),
         };
 
     private static Lifted<(ILinearExpression Left, ILinearExpression Right)> Both(Lifting state, ILinearExpression left, ILinearExpression right) {
-        var first = Lift(new Step<ILinearExpression>(left, state));
-        var second = Lift(new Step<ILinearExpression>(right, first.State));
+        var first = Lift(left, state);
+        var second = Lift(right, first.State);
         return new Lifted<(ILinearExpression, ILinearExpression)>((first.Expression, second.Expression), second.State);
     }
-
     private static Lifted<ILinearExpression> Rebuilt(Product product, Lifted<ILinearExpression> operand) =>
         new(ReferenceEquals(operand.Expression, product.Expression) ? product : product with { Expression = operand.Expression }, operand.State);
 
@@ -240,20 +234,19 @@ public static class PiecewiseLowering {
         return state with { Known = state.Known.Add(key, variable), Definitions = state.Definitions.Add(define(variable)), NextIndex = fresh.Index + 1 };
     }
 
-    private static Lifted<IBooleanExpression> Lift(Step<IBooleanExpression> step) => DeepRecursion.Guard(LiftUnguarded, step);
+    private static Lifted<IBooleanExpression> Lift(IBooleanExpression expression, Lifting state) => DeepRecursion.Guard(LiftUnguarded, expression, state);
 
-    private static Lifted<IBooleanExpression> LiftUnguarded(Step<IBooleanExpression> step) =>
-        step.Expression switch {
-            Comparison comparison => Rebuilt(comparison, Both(step.State, comparison.Left, comparison.Right)),
-            Negation negation => Rebuilt(negation, Lift(step with { Expression = negation.Operand })),
-            NamedConstraint named => Rebuilt(named, Lift(step with { Expression = named.Expression })),
-            Conjunction conjunction => Rebuilt(conjunction, conjunction.Left, conjunction.Right, step.State, (left, right) => new Conjunction(left, right)),
-            Disjunction disjunction => Rebuilt(disjunction, disjunction.Left, disjunction.Right, step.State, (left, right) => new Disjunction(left, right)),
-            Implication implication => Rebuilt(implication, implication.Antecedent, implication.Consequent, step.State, (left, right) => new Implication(left, right)),
-            Equivalence equivalence => Rebuilt(equivalence, equivalence.Left, equivalence.Right, step.State, (left, right) => new Equivalence(left, right)),
-            _ => new Lifted<IBooleanExpression>(step.Expression, step.State),
+    private static Lifted<IBooleanExpression> LiftUnguarded(IBooleanExpression expression, Lifting state) =>
+        expression switch {
+            Comparison comparison => Rebuilt(comparison, Both(state, comparison.Left, comparison.Right)),
+            Negation negation => Rebuilt(negation, Lift(negation.Operand, state)),
+            NamedConstraint named => Rebuilt(named, Lift(named.Expression, state)),
+            Conjunction conjunction => Rebuilt(conjunction, conjunction.Left, conjunction.Right, state, (left, right) => new Conjunction(left, right)),
+            Disjunction disjunction => Rebuilt(disjunction, disjunction.Left, disjunction.Right, state, (left, right) => new Disjunction(left, right)),
+            Implication implication => Rebuilt(implication, implication.Antecedent, implication.Consequent, state, (left, right) => new Implication(left, right)),
+            Equivalence equivalence => Rebuilt(equivalence, equivalence.Left, equivalence.Right, state, (left, right) => new Equivalence(left, right)),
+            _ => new Lifted<IBooleanExpression>(expression, state),
         };
-
     private static Lifted<IBooleanExpression> Rebuilt(Comparison comparison, Lifted<(ILinearExpression Left, ILinearExpression Right)> sides) =>
         new(ReferenceEquals(sides.Expression.Left, comparison.Left) && ReferenceEquals(sides.Expression.Right, comparison.Right) ? comparison : comparison with { Left = sides.Expression.Left, Right = sides.Expression.Right }, sides.State);
 
@@ -265,8 +258,8 @@ public static class PiecewiseLowering {
 
     /// <summary>Lifts both operands of a connective, keeping the original node when neither changed.</summary>
     private static Lifted<IBooleanExpression> Rebuilt(IBooleanExpression original, IBooleanExpression left, IBooleanExpression right, Lifting state, Func<IBooleanExpression, IBooleanExpression, IBooleanExpression> rebuild) {
-        var first = Lift(new Step<IBooleanExpression>(left, state));
-        var second = Lift(new Step<IBooleanExpression>(right, first.State));
+        var first = Lift(left, state);
+        var second = Lift(right, first.State);
         return new Lifted<IBooleanExpression>(ReferenceEquals(first.Expression, left) && ReferenceEquals(second.Expression, right) ? original : rebuild(first.Expression, second.Expression), second.State);
     }
 }
