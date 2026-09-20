@@ -51,7 +51,10 @@ public static class PiecewiseLowering {
         public LinearisedProblem Linearise(EncodingOptions? options = null) => Lower(problem, options ?? EncodingOptions.Default);
     }
 
-    /// <summary>Identifies a maximum by the affine forms of its operands, so that <c>max(x + y, z)</c> and <c>max(y + x, z)</c> are one.</summary>
+    /// <summary>
+    /// Identifies a maximum by the affine forms of its operands, in a fixed order, so that
+    /// <c>max(x + y, z)</c>, <c>max(y + x, z)</c> and <c>max(z, x + y)</c> are all one.
+    /// </summary>
     private sealed record Shape(
         AffineForm Left,
         AffineForm Right
@@ -200,10 +203,23 @@ public static class PiecewiseLowering {
 
     /// <summary>The variable that stands for the maximum of the two operands, negated if it is really a minimum that is wanted.</summary>
     private static Lifted<ILinearExpression> Named(Lifted<(ILinearExpression Left, ILinearExpression Right)> operands, bool isNegated) {
-        var shape = new Shape(operands.Expression.Left.Normalise(), operands.Expression.Right.Normalise());
+        var shape = ShapeOf(operands.Expression.Left.Normalise(), operands.Expression.Right.Normalise());
         var state = Introduced(operands.State, shape, operands.State.Options.PiecewisePrefix, shape.Left.IsIntegral && shape.Right.IsIntegral, variable => new MaximumDefinition(variable, operands.Expression.Left, operands.Expression.Right));
         return new Lifted<ILinearExpression>(isNegated ? -state.Known[shape] : state.Known[shape], state);
     }
+
+    /// <summary>A maximum is the same maximum either way round, so its operands are put in a fixed order before it is looked up.</summary>
+    private static Shape ShapeOf(AffineForm left, AffineForm right) =>
+        Compared(left, right) <= 0 ? new Shape(left, right) : new Shape(right, left);
+
+    /// <summary>Any total order on forms will do, so long as it is the same one every time: by length, then term by term, then by constant.</summary>
+    private static int Compared(AffineForm left, AffineForm right) =>
+        left.Coefficients.Count - right.Coefficients.Count is var byLength and not 0 ? byLength
+        : left.Coefficients.Zip(right.Coefficients, Compared).FirstOrDefault(order => order != 0) is var byTerm and not 0 ? byTerm
+        : left.Constant.CompareTo(right.Constant);
+
+    private static int Compared(KeyValuePair<IVariable, double> left, KeyValuePair<IVariable, double> right) =>
+        VariableOrder.Comparer.Compare(left.Key, right.Key) is var byVariable and not 0 ? byVariable : left.Value.CompareTo(right.Value);
 
     /// <summary>The variable that stands for whichever branch the condition selects.</summary>
     private static Lifted<ILinearExpression> Chosen(Lifted<IBooleanExpression> condition, Conditional conditional) {

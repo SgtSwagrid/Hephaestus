@@ -90,6 +90,20 @@ public sealed class PiecewiseTests {
         Assert.Equal(["_max0", "_max1"], Auxiliaries(Problem.Satisfy(Box & (Max(X + Y, 3) <= 8) & (Max(Y + X, 3) + X <= 9) & (Abs(X) <= 4))));
 
     [Fact]
+    public void AMaximumIsTheSameMaximumEitherWayRound() =>
+        Assert.Equal(["_max0"], Auxiliaries(Problem.Minimise(Max(X, Y) + Max(Y, X)).SubjectTo(Box)));
+
+    [Fact]
+    public void SoIsAnAbsoluteValue() =>
+        // |x - y| and |y - x| are max(x - y, y - x) and max(y - x, x - y), which are one maximum.
+        Assert.Equal(["_max0"], Auxiliaries(Problem.Minimise(Abs(X - Y) + Abs(Y - X)).SubjectTo(Box)));
+
+    [Fact]
+    public void ButAMinimumIsNotAMaximum() =>
+        // The minimum is max(-y, -x), a different maximum; pushing it down as well costs the one binary.
+        Assert.Equal(["_aux0", "_max0", "_max1"], Auxiliaries(Problem.Minimise(Max(X, Y) + Min(Y, X)).SubjectTo(Box)));
+
+    [Fact]
     public void FunctionsNestAndTheInnerOneIsTiedAsTheOuterOneNeeds() =>
         // Bounding max(x, min(y, z)) from above pushes the minimum down too, which it can only resist by choosing which operand it equals.
         Assert.Equal(["_aux0", "_max0", "_max1"], Auxiliaries(Problem.Satisfy(Box & Z.Between(0, 10) & (Max(X, Min(Y, Z)) <= 8))));
