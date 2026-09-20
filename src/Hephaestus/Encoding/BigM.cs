@@ -1,12 +1,14 @@
 using System.Collections.Immutable;
+using System.Globalization;
 
 namespace Hephaestus;
 
 /// <summary>
 /// The one place big-M lives. A guarded row "if every guard holds then <c>e &lt;= 0</c>" becomes
-/// <c>e &lt;= M &#183; slack</c>, where slack counts the guards that are off and <c>M</c> is the
-/// largest value <c>e</c> can take within the propagated bounds: the tightest valid choice,
-/// derived separately for every row.
+/// <c>e &lt;= &#931; M&#7522; &#183; slack&#7522;</c>, with one term for each guard, whose slack is one
+/// exactly when that guard is off. The row only has to give way when some guard is off, so
+/// <c>M&#7522;</c> need only be the largest value <c>e</c> can take <em>while guard i is off</em>:
+/// the tightest valid choice, derived separately for every guard of every row.
 /// </summary>
 internal static class BigM {
     public static IEnumerable<LinearRow> Relax(GuardedRow row, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
@@ -25,12 +27,46 @@ internal static class BigM {
             { Upper: <= 0 } => [],
             // The row can never be satisfied, so the guards may not all hold.
             { Lower: > 0 } => [AsRow(IndicatorEncoding.AtLeastOne([], guards).Expression, isEquality: false)],
-            var range => [Relaxed(guards, form, double.IsPositiveInfinity(range.Upper) ? Fallback(form, bounds, options) : range.Upper)],
+            _ => [Relaxed(guards, form, bounds, options)],
         };
 
-    /// <summary><c>form - M &#183; slack &lt;= 0</c>.</summary>
-    private static LinearRow Relaxed(ImmutableList<Literal> guards, AffineForm form, double bigM) =>
-        AsRow(form.Plus(IndicatorEncoding.Slack(guards).Times(-bigM)), isEquality: false);
+    /// <summary><c>form - &#931; M&#7522; &#183; slack&#7522; &lt;= 0</c>, one term for each guard.</summary>
+    private static LinearRow Relaxed(ImmutableList<Literal> guards, AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
+        AsRow(
+            guards.Aggregate(form, (relaxed, guard) => relaxed.Plus(IndicatorEncoding.Slack(guard).Times(-Allowance(guard, form, bounds, options)))),
+            isEquality: false);
+
+    /// <summary>
+    /// The most the row may exceed zero by while this guard is off, which is the tightest coefficient
+    /// its slack can take. Fixing the guard's own variable is what makes this narrower than the row's
+    /// unconditional range, for a row that counts the very binary that guards it.
+    /// </summary>
+    private static double Allowance(Literal guard, AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
+        Limited(form.Range(bounds.SetItem(guard.Variable, Off(guard)).Of).Upper, form, bounds, options);
+
+    /// <summary>A negative allowance is no allowance at all, since the row holds anyway; an infinite one cannot be written down, and a huge one had better be asked about.</summary>
+    private static double Limited(double allowance, AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
+        allowance <= 0 ? 0
+        : double.IsPositiveInfinity(allowance) ? Fallback(form, bounds, options)
+        : allowance > options.MaximumBigM ? throw TooLarge(allowance, form, bounds, options)
+        : allowance;
+
+    /// <summary>The variables to blame are those with the most room to move, which is what a big-M measures.</summary>
+    private static ModellingException TooLarge(double allowance, AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
+        new($"The big-M derived for the conditional constraint '{form.Format()} <= 0' is {allowance.ToString("G6", CultureInfo.InvariantCulture)}, "
+            + $"above the {nameof(EncodingOptions)}.{nameof(EncodingOptions.MaximumBigM)} of {options.MaximumBigM!.Value.ToString("G6", CultureInfo.InvariantCulture)}. "
+            + "A big-M this large swamps the solver's feasibility tolerance, so it may drop the constraint or honour it when it should not. "
+            + $"Narrow the bounds of {string.Join(", ", WidestVariables(form, bounds).Select(variable => $"'{variable.Name}'"))}, "
+            + "scale the constraint into smaller units, or raise the limit if the numbers really are that large.");
+
+    private static IEnumerable<IVariable> WidestVariables(AffineForm form, ImmutableDictionary<IVariable, Interval> bounds) =>
+        form.Coefficients
+            .OrderByDescending(term => bounds.Of(term.Key).Times(term.Value) is var scaled ? scaled.Upper - scaled.Lower : 0)
+            .Take(3)
+            .Select(term => term.Key);
+
+    /// <summary>The value a guard's variable takes when the guard does not hold.</summary>
+    private static Interval Off(Literal guard) => guard.IsPositive ? new Interval(0, 0) : new Interval(1, 1);
 
     private static double Fallback(AffineForm form, ImmutableDictionary<IVariable, Interval> bounds, EncodingOptions options) =>
         options.FallbackBigM ?? throw new ModellingException(

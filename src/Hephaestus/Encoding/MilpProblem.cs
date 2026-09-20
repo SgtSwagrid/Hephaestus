@@ -57,6 +57,12 @@ public sealed record MilpProblem(
 /// (the default) to get an error naming the unbounded variables instead: a guessed big-M that is
 /// too small silently cuts off solutions, and one that is too large invites numerical trouble.
 /// </param>
+/// <param name="MaximumBigM">
+/// The largest big-M to accept. A big-M of a hundred million swamps a solver's feasibility
+/// tolerance and makes its answers arbitrary, but it is derived from bounds that look perfectly
+/// reasonable, so nothing says so. Set this to be told instead, with the row and the variables whose
+/// bounds are that wide. Leave it unset (the default) to accept whatever the bounds imply.
+/// </param>
 /// <param name="BoundPropagationRounds">
 /// The most sweeps of bound propagation to run over the unconditional constraints. The first sweep
 /// reads off stated bounds such as <c>x &lt;= 10</c>; later ones derive implied bounds.
@@ -67,6 +73,7 @@ public sealed record MilpProblem(
 public sealed record EncodingOptions(
     double StrictnessEpsilon = 1e-4,
     double? FallbackBigM = null,
+    double? MaximumBigM = null,
     int BoundPropagationRounds = 10,
     string AuxiliaryPrefix = "_aux",
     string PiecewisePrefix = "_max",
