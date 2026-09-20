@@ -44,14 +44,15 @@ public sealed record CpSatBackend : IIndicatorBackend {
                 + "have no finite bounds, stated or implied. State them as ordinary constraints (for example 0 <= n & n <= 100).")
             : problem;
 
+    /// <summary>A domain of whole numbers, so bounds round inwards; truncating towards zero would let a negative column keep a value its bounds forbid.</summary>
     private static IntVar Declare(CpModel model, Column column) =>
         column.Variable is BinaryVariable
             ? Restricted(model, model.NewBoolVar(column.Variable.Name), column)
-            : model.NewIntVar((long)column.LowerBound, (long)column.UpperBound, column.Variable.Name);
+            : model.NewIntVar(Ceiling(column.LowerBound), Floor(column.UpperBound), column.Variable.Name);
 
     private static BoolVar Restricted(CpModel model, BoolVar variable, Column column) {
         if (column.LowerBound > 0 || column.UpperBound < 1) {
-            model.AddLinearConstraint(variable, (long)column.LowerBound, (long)column.UpperBound);
+            model.AddLinearConstraint(variable, Ceiling(column.LowerBound), Floor(column.UpperBound));
         }
         return variable;
     }
@@ -95,6 +96,9 @@ public sealed record CpSatBackend : IIndicatorBackend {
 
     /// <summary>The largest whole number not above <paramref name="value"/>, forgiving floating-point error a hair's breadth below a whole number.</summary>
     private static long Floor(double value) => (long)Math.Floor(value + Dust(value));
+
+    /// <summary>The smallest whole number not below <paramref name="value"/>, forgiving the same hair's breadth above one.</summary>
+    private static long Ceiling(double value) => (long)Math.Ceiling(value - Dust(value));
 
     /// <summary>The floating-point error to forgive in a number of this size: a few ulps, never enough to reach a neighbouring whole number.</summary>
     private static double Dust(double value) => 1e-9 + 1e-13 * Math.Abs(value);

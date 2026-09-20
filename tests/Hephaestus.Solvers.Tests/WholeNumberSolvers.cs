@@ -48,3 +48,26 @@ public sealed class CpSatRefusalTests {
     public void LimitsAreRespected() =>
         Assert.IsType<Optimal>(CpSatSolver.Create(options: new SolverOptions(TimeLimit: TimeSpan.FromSeconds(10), RelativeGap: 0, Threads: 2)).Solve(Problem.Maximise(N).SubjectTo(N.Between(0, 5))));
 }
+
+/// <summary>CP-SAT works in whole numbers, so the bounds it is given must be narrowed to whole numbers the right way.</summary>
+public sealed class CpSatDomainTests {
+    private static readonly IntegerVariable N = Variable.Integer("n");
+
+    [Theory]
+    [InlineData(-4.5, -0.5, -4, -1)]
+    [InlineData(0.5, 4.5, 1, 4)]
+    [InlineData(-4.5, 4.5, -4, 4)]
+    public void FractionalBoundsOnAWholeNumberColumnRoundInwards(double lower, double upper, double smallest, double largest) {
+        var problem = new IndicatorProblem([new Column(N, lower, upper, IsAuxiliary: false)], [], ObjectiveSense.Minimise, AffineForm.Zero);
+
+        Assert.Equal(smallest, Optimum(problem with { Sense = ObjectiveSense.Minimise }));
+        Assert.Equal(largest, Optimum(problem with { Sense = ObjectiveSense.Maximise }));
+    }
+
+    private static double Optimum(IndicatorProblem problem) =>
+        Assert.IsType<Optimal>(new CpSatBackend().Solve(
+            problem with { Objective = AffineForm.Zero.PlusTerm(N, 1) },
+            Solution.Empty.Values,
+            SolverOptions.Default,
+            CancellationToken.None)).Solution.Values[N];
+}
