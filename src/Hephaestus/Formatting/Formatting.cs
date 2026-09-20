@@ -50,27 +50,23 @@ public static class Formatting {
 
     extension(IndicatorProblem problem) {
         /// <summary>The whole problem, one row or column per line.</summary>
-        public string Format() =>
-            string.Join(Environment.NewLine, [
-                $"{(problem.Sense == ObjectiveSense.Minimise ? "minimise" : "maximise")} {problem.Objective.Format()}",
-                "subject to",
-                .. problem.Rows.Select(row => $"  {row.Format()}"),
-                "where",
-                .. problem.Columns.Select(column => $"  {Number(column.LowerBound)} <= {column.Variable.Name} <= {Number(column.UpperBound)}, {Kind(column.Variable)}"),
-            ]);
+        public string Format() => Write(problem.Sense, problem.Objective, problem.Rows.Select(row => row.Format()), problem.Columns);
     }
 
     extension(MilpProblem problem) {
         /// <summary>The whole programme, one row or column per line.</summary>
-        public string Format() =>
-            string.Join(Environment.NewLine, [
-                $"{(problem.Sense == ObjectiveSense.Minimise ? "minimise" : "maximise")} {problem.Objective.Format()}",
-                "subject to",
-                .. problem.Rows.Select(row => $"  {row.Format()}"),
-                "where",
-                .. problem.Columns.Select(column => $"  {Number(column.LowerBound)} <= {column.Variable.Name} <= {Number(column.UpperBound)}, {Kind(column.Variable)}"),
-            ]);
+        public string Format() => Write(problem.Sense, problem.Objective, problem.Rows.Select(row => row.Format()), problem.Columns);
     }
+
+    /// <summary>A problem in either of the forms a backend takes; only the way a row is written tells them apart.</summary>
+    private static string Write(ObjectiveSense sense, AffineForm objective, IEnumerable<string> rows, IEnumerable<Column> columns) =>
+        string.Join(Environment.NewLine, [
+            $"{(sense == ObjectiveSense.Minimise ? "minimise" : "maximise")} {objective.Format()}",
+            "subject to",
+            .. rows.Select(row => $"  {row}"),
+            "where",
+            .. columns.Select(column => $"  {Number(column.LowerBound)} <= {column.Variable.Name} <= {Number(column.UpperBound)}, {Kind(column.Variable)}"),
+        ]);
 
     private sealed record LinearStep(
         ILinearExpression Expression,
