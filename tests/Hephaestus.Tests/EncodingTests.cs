@@ -274,6 +274,29 @@ public sealed class EncodingTests {
     }
 
     [Fact]
+    public void AndIsRecognisedBeforeTheGuardsAreRelaxedToo() {
+        Assert.True(Problem.Satisfy((X <= 1) & (X >= 2)).EncodeLogic().IsTriviallyInfeasible);
+        Assert.True(Problem.Satisfy(BooleanConstant.False).EncodeLogic().IsTriviallyInfeasible);
+        Assert.False(Problem.Satisfy((X <= 2) & (X >= 1)).EncodeLogic().IsTriviallyInfeasible);
+        // A row that fails only under its guards is not evidently anything; the guards may simply not hold.
+        Assert.False(Problem.Satisfy(X.Between(0, 10) & (OccupiesA | (X >= 20))).EncodeLogic().IsTriviallyInfeasible);
+    }
+
+    [Fact]
+    public void BothFormsOfLoweredProblemAnswerToTheOneType() {
+        var problem = Problem.Minimise(X).SubjectTo(X.Between(2, 8));
+
+        Assert.All<ILoweredProblem>(
+            [problem.Encode(), problem.EncodeLogic()],
+            lowered => {
+                Assert.Equal(ObjectiveSense.Minimise, lowered.Sense);
+                Assert.Equal(X, Assert.Single(lowered.Columns).Variable);
+                Assert.Equal(1, lowered.Objective.Coefficients[X]);
+                Assert.False(lowered.IsTriviallyInfeasible);
+            });
+    }
+
+    [Fact]
     public void TheObjectiveIsCarriedAcrossInNormalForm() {
         var encoded = Problem.Maximise(2 * (X + Y) - X + 7).SubjectTo(X.Between(0, 1) & Y.Between(0, 1)).Encode();
 

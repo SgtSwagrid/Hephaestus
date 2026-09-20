@@ -44,7 +44,12 @@ public sealed record MilpProblem(
     ImmutableArray<LinearRow> Rows,
     ObjectiveSense Sense,
     AffineForm Objective
-);
+) : ILoweredProblem {
+    /// <inheritdoc/>
+    public bool IsTriviallyInfeasible =>
+        Columns.Any(column => column.LowerBound > column.UpperBound)
+        || Rows.Any(row => row.Coefficients.IsEmpty && !(row.LowerBound <= 0 && 0 <= row.UpperBound));
+}
 
 /// <summary>Settings for lowering a problem to a <see cref="MilpProblem"/>.</summary>
 /// <param name="StrictnessEpsilon">
@@ -81,14 +86,4 @@ public sealed record EncodingOptions(
 ) {
     /// <summary>The default settings.</summary>
     public static EncodingOptions Default { get; } = new();
-}
-
-/// <summary>Functions over <see cref="MilpProblem"/>.</summary>
-public static class MilpProblems {
-    extension(MilpProblem problem) {
-        /// <summary>Whether infeasibility is evident without solving: contradictory stated bounds, or a constant row that fails.</summary>
-        public bool IsTriviallyInfeasible =>
-            problem.Columns.Any(column => column.LowerBound > column.UpperBound)
-            || problem.Rows.Any(row => row.Coefficients.IsEmpty && !(row.LowerBound <= 0 && 0 <= row.UpperBound));
-    }
 }

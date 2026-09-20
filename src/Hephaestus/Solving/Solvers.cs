@@ -54,15 +54,16 @@ public sealed record MilpSolver(
 ) : IConflictSolver {
     /// <inheritdoc/>
     public ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
-        Timed.Run(() => problem.Encode(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
-            ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
-            : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
-                .Presentable(encoded.Columns, problem.Objective.Expression, encodingTime);
+        BackendSolving.Solve(
+            problem,
+            () => problem.Encode(Encoding),
+            (encoded, start) => Backend.Solve(encoded, start, Options ?? SolverOptions.Default, cancellationToken),
+            startingFrom);
 
     /// <inheritdoc/>
     /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
     public ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default) =>
-        Backend is IConflictBackend backend ? Conflicts.Narrow(problem.EncodeLogic(Encoding), backend, Options ?? SolverOptions.Default, cancellationToken) : [];
+        BackendSolving.NarrowConflict(problem, Backend as IConflictBackend, Encoding, Options, cancellationToken);
 }
 
 /// <summary>
@@ -76,15 +77,46 @@ public sealed record IndicatorSolver(
 ) : IConflictSolver {
     /// <inheritdoc/>
     public ISolveResult Solve(ISingleObjectiveProblem problem, Solution? startingFrom = null, CancellationToken cancellationToken = default) =>
-        Timed.Run(() => problem.EncodeLogic(Encoding)) is var (encoded, encodingTime) && encoded.IsTriviallyInfeasible
-            ? new Infeasible { Statistics = new SolveStatistics(encodingTime, TimeSpan.Zero) }
-            : Timed.Run(() => Backend.Solve(encoded, startingFrom.Over(encoded.Columns), Options ?? SolverOptions.Default, cancellationToken))
-                .Presentable(encoded.Columns, problem.Objective.Expression, encodingTime);
+        BackendSolving.Solve(
+            problem,
+            () => problem.EncodeLogic(Encoding),
+            (encoded, start) => Backend.Solve(encoded, start, Options ?? SolverOptions.Default, cancellationToken),
+            startingFrom);
 
     /// <inheritdoc/>
-    /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
+    /// <inheritdoc cref="MilpSolver.NarrowConflict" path="/remarks"/>
     public ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, CancellationToken cancellationToken = default) =>
-        Backend is IConflictBackend backend ? Conflicts.Narrow(problem.EncodeLogic(Encoding), backend, Options ?? SolverOptions.Default, cancellationToken) : [];
+        BackendSolving.NarrowConflict(problem, Backend as IConflictBackend, Encoding, Options, cancellationToken);
+}
+
+/// <summary>
+/// What every solver wrapper does either side of its backend, whichever form of problem that backend
+/// takes. Only the encoding and the call itself differ between them.
+/// </summary>
+internal static class BackendSolving {
+    /// <summary>Encodes, solves, and presents the answer in the modeller's terms; an infeasibility the encoding already settles is not put to the backend at all.</summary>
+    public static ISolveResult Solve<TProblem>(
+        ISingleObjectiveProblem problem,
+        Func<TProblem> encode,
+        Func<TProblem, IReadOnlyDictionary<IVariable, double>, ISolveResult> solve,
+        Solution? startingFrom
+    ) where TProblem : ILoweredProblem =>
+        Solved(problem, Timed.Run(encode), solve, startingFrom);
+
+    private static ISolveResult Solved<TProblem>(
+        ISingleObjectiveProblem problem,
+        (TProblem Encoded, TimeSpan Elapsed) encoding,
+        Func<TProblem, IReadOnlyDictionary<IVariable, double>, ISolveResult> solve,
+        Solution? startingFrom
+    ) where TProblem : ILoweredProblem =>
+        encoding.Encoded.IsTriviallyInfeasible
+            ? new Infeasible { Statistics = new SolveStatistics(encoding.Elapsed, TimeSpan.Zero) }
+            : Timed.Run(() => solve(encoding.Encoded, startingFrom.Over(encoding.Encoded.Columns)))
+                .Presentable(encoding.Encoded.Columns, problem.Objective.Expression, encoding.Elapsed);
+
+    /// <summary>A conflict as the backend narrows it, where the backend can; empty where it cannot.</summary>
+    public static ImmutableArray<IBooleanExpression> NarrowConflict(ISingleObjectiveProblem problem, IConflictBackend? backend, EncodingOptions? encoding, SolverOptions? options, CancellationToken cancellationToken) =>
+        backend is null ? [] : Conflicts.Narrow(problem.EncodeLogic(encoding), backend, options ?? SolverOptions.Default, cancellationToken);
 }
 
 /// <summary>Functions over solve results.</summary>

@@ -241,7 +241,7 @@ Supporting another type means writing one small record that implements `IProject
 | conditional linear constraints | `IIndicatorBackend` | an `IndicatorProblem`: linear rows guarded by literals, no big-M | `GurobiBackend`, `CpSatBackend` |
 | linear constraints only | `IMilpBackend` | a `MilpProblem`: bounded columns, linear rows, a linear objective | `HighsBackend`, `OrToolsBackend` |
 
-`IndicatorSolver` and `MilpSolver` wrap the latter two into an `ISolver`: they encode, solve, hide the auxiliaries and snap whole-number variables. A backend is about a hundred lines.
+`IndicatorSolver` and `MilpSolver` wrap the latter two into an `ISolver`: they encode, solve, hide the auxiliaries and snap whole-number variables. Both forms of lowered problem are an `ILoweredProblem` — bounded columns, a sense, a linear objective, and whether infeasibility is already evident — which is everything those wrappers need either side of the backend, so they are one routine given two arguments. A backend is about a hundred lines.
 
 ```csharp
 GurobiSolver.Create()                       // indicator constraints, no big-M
