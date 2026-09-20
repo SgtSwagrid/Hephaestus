@@ -92,6 +92,61 @@ public sealed class EncodingTests {
     }
 
     [Fact]
+    public void EachGuardGetsABigMDerivedWithThatGuardOff() {
+        // A row that counts the very binary guarding it: with occupiesA off the row reaches 95, not the 105 it reaches unconditionally.
+        var constraint = X.Between(0, 100) & OccupiesA.Implies(X + 10 * (ILinearExpression)OccupiesA <= 5);
+
+        var encoded = Problem.Satisfy(constraint).Encode();
+
+        Assert.Equal(["105*occupiesA + x <= 100"], encoded.Rows.Select(row => row.Format()));
+    }
+
+    [Fact]
+    public void TheGuardsOfOneRowGetBigMValuesOfTheirOwn() {
+        var constraint = N.Between(0, 6) & (!OccupiesA | !OccupiesB | (N + 3 * (ILinearExpression)OccupiesA <= 4));
+
+        var encoded = Problem.Satisfy(constraint).Encode();
+
+        // With occupiesA off the row reaches 2 and with occupiesB off it reaches 5, so the two slacks are weighted apart.
+        Assert.Equal(["n + 5*occupiesA + 5*occupiesB <= 11"], encoded.Rows.Select(row => row.Format()));
+    }
+
+    [Fact]
+    public void AGuardThatTheRowHoldsWithoutIsNotRelaxedAgainstAtAll() {
+        // Without occupiesA the row is 0 <= x, which the bounds already say, so no big-M is needed and the row stays unconditional.
+        var constraint = X.Between(0, 10) & OccupiesA.Implies(5 * (ILinearExpression)OccupiesA <= X);
+
+        var encoded = Problem.Satisfy(constraint).Encode();
+
+        Assert.Equal(["5*occupiesA - x <= 0"], encoded.Rows.Select(row => row.Format()));
+    }
+
+    [Fact]
+    public void TheRelaxedRowsAdmitExactlyTheAssignmentsTheConstraintDoes() {
+        var constraint = N.Between(0, 6) & (!OccupiesA | !OccupiesB | (N + 3 * (ILinearExpression)OccupiesA <= 4));
+
+        var encoded = Problem.Satisfy(constraint).Encode();
+
+        Assert.All(
+            Assignments(encoded.Columns),
+            assignment => Assert.Equal(assignment.Value(constraint), Admits(encoded, assignment)));
+    }
+
+    /// <summary>Every whole-number assignment within the column bounds, which is all of them when every column is bounded and whole.</summary>
+    private static IEnumerable<Solution> Assignments(IEnumerable<Column> columns) =>
+        columns.Aggregate<Column, IEnumerable<Solution>>(
+            [Solution.Empty],
+            (partial, column) => partial.SelectMany(assignment =>
+                Enumerable
+                    .Range((int)column.LowerBound, (int)(column.UpperBound - column.LowerBound) + 1)
+                    .Select(value => assignment.With(column.Variable, value))));
+
+    private static bool Admits(MilpProblem problem, Solution assignment) =>
+        problem.Rows.All(row => Within(row, new AffineForm(row.Coefficients, 0).Evaluate(variable => assignment.Value(variable))));
+
+    private static bool Within(LinearRow row, double activity) => row.LowerBound <= activity && activity <= row.UpperBound;
+
+    [Fact]
     public void AnUnderivableBigMIsALoudErrorNamingTheCulprits() {
         var constraint = X.Between(0, 10) & ((X + Y <= 5) | (X >= 8));
 

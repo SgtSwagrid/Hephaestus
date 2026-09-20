@@ -51,9 +51,12 @@ internal static class IndicatorEncoding {
             ? AffineForm.Zero.PlusTerm(literal.Variable, 1)
             : AffineForm.Zero.PlusTerm(literal.Variable, -1).Plus(1);
 
+    /// <summary>One exactly when the guard is off, and nothing when it holds.</summary>
+    public static AffineForm Slack(Literal guard) => AsAffine(Negated(guard));
+
     /// <summary>The number of guards that are off: zero exactly when the guarded row must hold.</summary>
     public static AffineForm Slack(ImmutableList<Literal> guards) =>
-        guards.Aggregate(AffineForm.Zero, (slack, guard) => slack.Plus(AsAffine(Negated(guard))));
+        guards.Aggregate(AffineForm.Zero, (slack, guard) => slack.Plus(Slack(guard)));
 
     private static IndicatorProgram Enforce(IndicatorProgram program, INormalForm formula, ImmutableList<Literal> guards, AuxiliaryNaming naming) =>
         formula switch {
