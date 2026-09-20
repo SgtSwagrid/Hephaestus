@@ -90,12 +90,14 @@ var problem = Problem.Minimise(startA + startB)
     .SubjectTo(withinTheShift)
     .SubjectTo(isConflictFree & usesA & usesB);
 
-var summary = OrToolsSolver.Create().Solve(problem).Match(
-    optimal:    solution => $"A starts at {solution.Value(startA)}, B at {solution.Value(startB)}",
-    feasible:   solution => $"best found: {solution.ObjectiveValue}",
-    infeasible: () => "no schedule exists",
-    unbounded:  () => "unbounded",
-    unknown:    reason => $"the solver gave up: {reason}");
+var summary = OrToolsSolver.Create().Solve(problem) switch {
+    Optimal(var solution)  => $"A starts at {solution.Value(startA)}, B at {solution.Value(startB)}",
+    Feasible(var solution) => $"best found: {solution.ObjectiveValue}",
+    Infeasible             => "no schedule exists",
+    Unbounded              => "unbounded",
+    Unknown(var reason)    => $"the solver gave up: {reason}",
+    _                      => throw new NotSupportedException(),   // ISolveResult is an interface, so C# asks
+};
 ```
 
 Swap `OrToolsSolver.Create()` for `OrToolsSolver.Create(OrToolsSolverId.Highs)` or `new Z3Solver()` and nothing else changes. `samples/MachineScheduling` is a slightly larger version in NodaTime types.

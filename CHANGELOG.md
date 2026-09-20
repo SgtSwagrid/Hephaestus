@@ -12,6 +12,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - `ISolver.Solve` and the two backend interfaces take a starting solution, so a cancellation token passed positionally must now be named.
 - The objective value of a solution is now the objective as written, read off the solution, rather than the solver's own figure.
 
+### Removed
+
+- `result.Match(optimal: ..., feasible: ...)`. A `switch` expression over `Optimal`, `Feasible`, `Infeasible`, `Unbounded` and `Unknown` says the same thing in the language's own syntax, with positional patterns for the solution and the reason.
+
 ### Added
 
 - Core (`Hephaestus.Optimisation`): immutable linear and boolean expression records with C# 14 extension operators; problems as a single constraint with an optional objective; normalisation to affine and negation normal forms; MILP encoding with guarded rows, bound propagation and per-row derived big-M values; typed `Quantity<T>` and `Point<T, TDelta>` expressions with projections for `TimeSpan`, `DateTime` and `DateTimeOffset`; the `ISolver` and `IMilpBackend` seams.
