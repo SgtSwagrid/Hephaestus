@@ -107,6 +107,22 @@ public sealed class NormalisationTests {
             N.NotEqualTo(3).Normalise(1e-4));
     }
 
+    [Theory]
+    [InlineData(Relation.LessThan, Relation.GreaterThanOrEqual)]
+    [InlineData(Relation.LessThanOrEqual, Relation.GreaterThan)]
+    [InlineData(Relation.Equal, Relation.NotEqual)]
+    [InlineData(Relation.NotEqual, Relation.Equal)]
+    [InlineData(Relation.GreaterThanOrEqual, Relation.LessThan)]
+    [InlineData(Relation.GreaterThan, Relation.LessThanOrEqual)]
+    public void EveryRelationHasAnOpposite(Relation relation, Relation opposite) {
+        Assert.Equal(opposite, BooleanNormalisation.Opposite(relation));
+        Assert.Equal(relation, BooleanNormalisation.Opposite(opposite));
+    }
+
+    [Fact]
+    public void AnUnknownRelationHasNoOpposite() =>
+        Assert.Throws<NotSupportedException>(() => BooleanNormalisation.Opposite((Relation)99));
+
     [Fact]
     public void AVeryLongChainOfConjunctionsDoesNotOverflowTheStack() {
         var chain = Enumerable.Range(0, 100_000).Aggregate<int, IBooleanExpression>(BooleanConstant.True, (all, index) => all & (Variable.Continuous($"v{index}") <= index));

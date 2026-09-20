@@ -115,19 +115,9 @@ public static class Sensitivity {
 
     /// <summary>A comparison under negation is the opposite comparison, and a disequality is whichever strict inequality holds.</summary>
     private static Comparison Oriented(Comparison comparison, Step step) =>
-        (step.Polarity ? comparison.Relation : Opposite(comparison.Relation)) switch {
+        (step.Polarity ? comparison.Relation : BooleanNormalisation.Opposite(comparison.Relation)) switch {
             Relation.NotEqual => comparison with { Relation = step.Solution.Value(comparison.Left - comparison.Right) < 0 ? Relation.LessThan : Relation.GreaterThan },
             var relation => comparison with { Relation = relation },
-        };
-
-    private static Relation Opposite(Relation relation) =>
-        relation switch {
-            Relation.LessThan => Relation.GreaterThanOrEqual,
-            Relation.LessThanOrEqual => Relation.GreaterThan,
-            Relation.Equal => Relation.NotEqual,
-            Relation.NotEqual => Relation.Equal,
-            Relation.GreaterThanOrEqual => Relation.LessThan,
-            _ => Relation.LessThanOrEqual,
         };
 
     /// <summary>

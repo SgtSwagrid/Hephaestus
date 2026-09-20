@@ -109,7 +109,8 @@ internal static class BooleanNormalisation {
     private static AffineForm WithPositiveLead(AffineForm form) =>
         form.Coefficients.First().Value < 0 ? form.Negated : form;
 
-    private static Relation Opposite(Relation relation) =>
+    /// <summary>The relation that holds exactly when this one does not.</summary>
+    internal static Relation Opposite(Relation relation) =>
         relation switch {
             Relation.LessThan => Relation.GreaterThanOrEqual,
             Relation.LessThanOrEqual => Relation.GreaterThan,
