@@ -145,6 +145,114 @@ public sealed class ProjectionTests {
         Assert.Equal("runtime <= 60", (Runtime <= TimeSpan.FromMinutes(1)).Format());
     }
 
+    private enum Direction { Down, Up }
+
+    /// <summary>A two-state type over one binary: projected onto truth rather than onto the number line.</summary>
+    private sealed record DirectionProjection : IProjection<Direction, bool> {
+        public bool Encode(Direction value) => value == Direction.Up;
+
+        public Direction Decode(bool representation) => representation ? Direction.Up : Direction.Down;
+    }
+
+    private sealed record Switch(IBooleanExpression Expression, IProjection<Direction, bool> Projection) : ILogicallyEncodable<Direction>;
+
+    [Fact]
+    public void AValueCanBeProjectedOntoATruthRatherThanANumber() {
+        var lift = new Switch(Variable.Binary("up"), new DirectionProjection());
+
+        Assert.Equal(Direction.Up, lift.Projection.Decode(true));
+        Assert.Equal(Direction.Down, lift.Projection.Decode(false));
+        Assert.True(lift.Projection.Encode(Direction.Up));
+        Assert.IsAssignableFrom<ILogicallyEncodable<Direction>>(lift);
+    }
+
+    [Fact]
+    public void OneValueReadsEveryKindOfExpression() {
+        var flag = Variable.Binary("flag");
+        var count = Variable.Integer<int>("count");
+        var cost = Variable.Continuous<decimal>("cost");
+        var runtime = Variable.TimeSpan("runtime");
+        var start = Variable.DateTime("start", Origin);
+        var solution = Solution.Empty
+            .With(flag, true)
+            .With(count, 3)
+            .With(cost, 12.5m)
+            .With(runtime, TimeSpan.FromMinutes(2))
+            .With(start, Origin.AddMinutes(5));
+
+        // One name, and the type of the answer follows the thing asked about.
+        Assert.Equal(1d, solution.Value((ILinearExpression)flag));
+        Assert.True(solution.Value(flag));
+        Assert.True(solution.Value(flag & (count >= 1)));
+        Assert.Equal(3, solution.Value(count));
+        Assert.Equal(12.5m, solution.Value(cost));
+        Assert.Equal(TimeSpan.FromMinutes(2), solution.Value(runtime));
+        Assert.Equal(Origin.AddMinutes(5), solution.Value(start));
+        Assert.Equal("120s", solution.Value(runtime.Select(span => $"{span.TotalSeconds}s")));
+        Assert.Equal(2d, solution.Value(runtime.Biselect(span => span.TotalMinutes, (double m) => TimeSpan.FromMinutes(m))));
+    }
+
+    [Fact]
+    public void AnExpressionCanBeSeenAsOneOfAnotherType() {
+        var seconds = Variable.TimeSpan("seconds");
+
+        var minutes = seconds.Biselect(span => span.TotalMinutes, (double count) => TimeSpan.FromMinutes(count));
+
+        Assert.Equal(2d, Solution.Empty.With(seconds, TimeSpan.FromMinutes(2)).Value(minutes));
+        // Still writable, so it may still be constrained.
+        Assert.Equal("seconds <= 120", (minutes <= 2d).Format());
+    }
+
+    [Fact]
+    public void SelectLeavesAReadingThatNoConstraintCanMention() {
+        var seconds = Variable.TimeSpan("seconds");
+
+        IReadableExpression<string> written = seconds.Select(span => $"{span.TotalSeconds}s");
+
+        Assert.Equal("90s", Solution.Empty.With(seconds, TimeSpan.FromSeconds(90)).Value(written));
+        Assert.IsNotAssignableFrom<IWritableExpression<string>>(written);
+    }
+
+    [Fact]
+    public void AndPreselectLeavesOneNoSolutionCanBeAskedFor() {
+        var seconds = Variable.TimeSpan("seconds");
+
+        IWritableExpression<int> fromMinutes = seconds.Preselect((int count) => TimeSpan.FromMinutes(count));
+
+        Assert.Equal(120, fromMinutes.Encoder.Encode(2));
+        Assert.IsNotAssignableFrom<IReadableExpression<int>>(fromMinutes);
+    }
+
+    [Fact]
+    public void AProjectionCanBeSeenAsOneOfAnotherType() {
+        var seconds = new TimeSpanProjection(TimeSpan.FromSeconds(1));
+
+        var minutes = seconds.Biselect(span => span.TotalMinutes, (double count) => TimeSpan.FromMinutes(count));
+
+        Assert.Equal(2, minutes.Decode(120));
+        Assert.Equal(120, minutes.Encode(2));
+    }
+
+    [Fact]
+    public void AndSelectedIntoAReadingNoConstraintCouldMention() {
+        var seconds = new TimeSpanProjection(TimeSpan.FromSeconds(1));
+
+        IDecoder<string, double> written = seconds.Select(span => $"{span.TotalSeconds}s");
+
+        Assert.Equal("90s", written.Decode(90));
+        // It reads, and that is all: there is no Encode to put one back into a model.
+        Assert.IsNotAssignableFrom<IEncoder<string, double>>(written);
+    }
+
+    [Fact]
+    public void AnEncoderCanTakeSomethingElseFirst() {
+        var seconds = new TimeSpanProjection(TimeSpan.FromSeconds(1));
+
+        IEncoder<int, double> fromMinutes = seconds.Preselect((int count) => TimeSpan.FromMinutes(count));
+
+        Assert.Equal(120, fromMinutes.Encode(2));
+    }
+
     [Fact]
     public void DateTimeOffsetsBehaveLikeDateTimes() {
         var origin = new DateTimeOffset(Origin, TimeSpan.FromHours(10));

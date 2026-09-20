@@ -8,13 +8,26 @@ namespace Hephaestus;
 /// combined: the conversion between any two is recovered from where they send zero and one.
 /// Implement projections as records, so that equal projections compare equal.
 /// </summary>
-public interface IProjection<T> {
-    /// <summary>The number that stands for <paramref name="value"/>.</summary>
-    double Encode(T value);
+public interface IProjection<T> : IProjection<T, double>;
 
-    /// <summary>The value that <paramref name="number"/> stands for.</summary>
-    T Decode(double number);
+/// <summary>Reads a raw form from the solver as a <typeparamref name="TValue"/>. One half of a projection.</summary>
+public interface IDecoder<out TValue, in TRaw> {
+    /// <summary>The value that <paramref name="representation"/> stands for.</summary>
+    TValue Decode(TRaw representation);
 }
+
+/// <summary>Writes a <typeparamref name="TValue"/> as a raw form the solver understands. The other half.</summary>
+public interface IEncoder<in TValue, out TRaw> {
+    /// <summary>The raw form that stands for <paramref name="value"/>.</summary>
+    TRaw Encode(TValue value);
+}
+
+/// <summary>
+/// Both halves: what lets a value be written into a model and read back out of a solution. The raw
+/// form is a number for anything that becomes a column, and could be a truth for anything that
+/// becomes a binary.
+/// </summary>
+public interface IProjection<TValue, TRaw> : IDecoder<TValue, TRaw>, IEncoder<TValue, TRaw>;
 
 /// <summary>
 /// The projection of a type whose values are positions rather than amounts (date-times, not
@@ -36,12 +49,26 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 /// and give it whatever algebra suits.
 /// </para>
 /// </summary>
-public interface ILinearlyEncodable<TValue> {
-    /// <summary>The underlying linear expression, counted in the projection's own unit.</summary>
-    ILinearExpression Expression { get; }
-
-    /// <summary>How that number is read as a <typeparamref name="TValue"/>.</summary>
+public interface ILinearlyEncodable<TValue> : IDecodedExpression<TValue>, IWritableExpression<TValue> {
+    /// <summary>How the underlying number and a <typeparamref name="TValue"/> stand for each other.</summary>
     IProjection<TValue> Projection { get; }
+
+    IDecoder<TValue, double> IDecodedExpression<TValue>.Decoder => Projection;
+
+    IEncoder<TValue, double> IWritableExpression<TValue>.Encoder => Projection;
+}
+
+/// <summary>
+/// A boolean expression read as a value of type <typeparamref name="TValue"/>, through a projection
+/// onto truth rather than onto the number line: a two-state type over a single binary, where
+/// <see cref="ILinearlyEncodable{TValue}"/> is a type over a column.
+/// </summary>
+public interface ILogicallyEncodable<TValue> {
+    /// <summary>The underlying boolean expression.</summary>
+    IBooleanExpression Expression { get; }
+
+    /// <summary>How its truth is read as a <typeparamref name="TValue"/>.</summary>
+    IProjection<TValue, bool> Projection { get; }
 }
 
 /// <summary>
@@ -64,4 +91,25 @@ public sealed record Point<T, TDelta>(
     IPointProjection<T, TDelta> Projection
 ) : ILinearlyEncodable<T> {
     IProjection<T> ILinearlyEncodable<T>.Projection => Projection;
+}
+
+/// <summary>Conversion between projections of the same type.</summary>
+internal static class Projecting {
+    /// <summary>
+    /// Re-expresses <paramref name="expression"/>, a number under <paramref name="from"/>, as the
+    /// number that stands for the same value under <paramref name="to"/>. Both being affine, the
+    /// conversion is <c>scale &#183; expression + offset</c>, pinned down by the images of zero and one.
+    /// </summary>
+    public static ILinearExpression Convert<T>(ILinearExpression expression, IProjection<T> from, IProjection<T> to) =>
+        from.Equals(to)
+            ? expression
+            : Affine(expression, scale: to.Encode(from.Decode(1)) - to.Encode(from.Decode(0)), offset: to.Encode(from.Decode(0)));
+
+    private static ILinearExpression Affine(ILinearExpression expression, double scale, double offset) =>
+        (scale == 1, offset == 0) switch {
+            (true, true) => expression,
+            (true, false) => expression + offset,
+            (false, true) => scale * expression,
+            (false, false) => scale * expression + offset,
+        };
 }
