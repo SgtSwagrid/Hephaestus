@@ -145,6 +145,18 @@ public sealed class NamesAndConflictsTests {
         Assert.DoesNotContain(encoded.Columns.Single(column => column.Variable.Name == "_max0").Variable, encoded.BoundOrigins.Keys);
     }
 
+    [Fact]
+    public void WhereTwoConstraintsStateTheSameBoundTheOneWrittenFirstIsNamed() {
+        var constraint =
+            (M <= 5).WithName("upper first") & (M <= 5).WithName("upper second")
+            & (M >= 1).WithName("lower first") & (M >= 1).WithName("lower second");
+
+        var encoded = Problem.Minimise(M).SubjectTo(constraint).EncodeLogic();
+
+        Assert.Equal("lower first", encoded.BoundOrigins[M].Lower!.Name);
+        Assert.Equal("upper first", encoded.BoundOrigins[M].Upper!.Name);
+    }
+
     /// <summary>Offers a fixed answer when asked to narrow a conflict down, and otherwise solves by trying everything.</summary>
     private sealed record OfferingBackend(Func<IndicatorProblem, ImmutableArray<IBooleanExpression>> Offer, List<int> Sizes) : IMilpBackend, IConflictBackend {
         public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>

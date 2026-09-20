@@ -58,7 +58,7 @@ public static class MilpEncoding {
     /// longer the stated one, and is put down to nothing.
     /// </summary>
     private static IndicatorProblem WithOrigins(IEnumerable<GuardedRow> statedRows, ImmutableDictionary<IVariable, Interval> stated, IndicatorProblem problem) {
-        var tightest = statedRows.SelectMany(StatedBy).GroupBy(bound => (bound.Variable, bound.IsUpper)).ToImmutableDictionary(group => group.Key, group => group.Aggregate((best, next) => (next.Value > best.Value) == best.IsUpper ? best : next).Origin);
+        var tightest = statedRows.SelectMany(StatedBy).GroupBy(bound => (bound.Variable, bound.IsUpper)).ToImmutableDictionary(group => group.Key, group => group.Aggregate((best, next) => IsTighter(next, best) ? next : best).Origin);
         return problem with {
             BoundOrigins = problem.Columns
                 .Select(column => KeyValuePair.Create(column.Variable, new BoundOrigin(
@@ -68,6 +68,10 @@ public static class MilpEncoding {
                 .ToImmutableDictionary(),
         };
     }
+
+    /// <summary>A smaller upper bound binds, as does a larger lower one; where two are equal neither is tighter, and the one written first is kept.</summary>
+    private static bool IsTighter(StatedBound bound, StatedBound than) =>
+        bound.IsUpper ? bound.Value < than.Value : bound.Value > than.Value;
 
     /// <summary><c>c&#183;x + k &lt;= 0</c> bounds <c>x</c> from above if <c>c</c> is positive and from below if not; an equation does both.</summary>
     private static IEnumerable<StatedBound> StatedBy(GuardedRow row) =>
