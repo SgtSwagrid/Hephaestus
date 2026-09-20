@@ -123,15 +123,13 @@ public static class IndicatorProblems {
         : ConjoinAfresh(state, row);
 
     private static Conjoining ConjoinAfresh(Conjoining state, GuardedRow row) {
-        var index = Enumerable
-            .Range(state.NextIndex, int.MaxValue - state.NextIndex)
-            .First(candidate => state.Problem.Columns.All(column => column.Variable.Name != state.Prefix + candidate));
-        var all = new Literal(new BinaryVariable(state.Prefix + index), IsPositive: true);
+        var fresh = FreshNames.After(state.NextIndex, state.Prefix, name => state.Problem.Columns.Any(column => column.Variable.Name == name));
+        var all = new Literal(new BinaryVariable(fresh.Name), IsPositive: true);
         return WithRows(
             state with {
                 Problem = state.Problem with { Columns = state.Problem.Columns.Add(new Column(all.Variable, 0, 1, IsAuxiliary: true)) },
                 Conjunctions = state.Conjunctions.Add(Key(row.Guards), all),
-                NextIndex = index + 1,
+                NextIndex = fresh.Index + 1,
             },
             [IndicatorEncoding.AtLeastOne([all], row.Guards) with { Origin = row.Origin }, row with { Guards = [all] }]);
     }
