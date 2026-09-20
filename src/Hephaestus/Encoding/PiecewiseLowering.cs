@@ -36,6 +36,12 @@ public sealed record LinearisedProblem(
     public ImmutableSortedSet<IVariable> Auxiliaries => Definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
 }
 
+/// <summary>A constraint of a lowered problem, beside the one it was written as, where anybody wrote it.</summary>
+public sealed record LoweredConstraint(
+    IBooleanExpression Lowered,
+    IBooleanExpression? Written
+);
+
 /// <summary>
 /// The pass that lowers <see cref="Maximum"/>, <see cref="Minimum"/> and <see cref="AbsoluteValue"/>
 /// to linear form. All three are maxima (<c>min(a, b) = -max(-a, -b)</c> and <c>|e| = max(e, -e)</c>),
@@ -50,6 +56,20 @@ public static class PiecewiseLowering {
         /// <exception cref="ModellingException">An expression is not finite.</exception>
         public LinearisedProblem Linearise(EncodingOptions? options = null) => Lower(problem, options ?? EncodingOptions.Default);
     }
+
+    extension(LinearisedProblem linearised) {
+        /// <summary>
+        /// The constraints of the lowered problem, each beside the one it was written as. Lowering
+        /// keeps the constraints in the order they were written and adds its own after them: what
+        /// ties a maximum to its operands, which nobody wrote and which nothing is put down to.
+        /// </summary>
+        /// <param name="original">The constraint the problem was lowered from.</param>
+        public ImmutableArray<LoweredConstraint> Constraints(IBooleanExpression original) =>
+            Paired(linearised.Problem.Constraint.Conjuncts, original.Conjuncts);
+    }
+
+    private static ImmutableArray<LoweredConstraint> Paired(ImmutableArray<IBooleanExpression> lowered, ImmutableArray<IBooleanExpression> written) =>
+        [.. lowered.Select((constraint, index) => new LoweredConstraint(constraint, index < written.Length ? written[index] : null))];
 
     /// <summary>
     /// Identifies a maximum by the affine forms of its operands, in a fixed order, so that

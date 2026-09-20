@@ -44,10 +44,9 @@ public static class Sensitivity {
     private static ShadowPrices Priced(ISingleObjectiveProblem original, LinearisedProblem linearised, Solution solution, IMilpBackend backend, SolverOptions options, CancellationToken cancellationToken) {
         // The variables that stand for maxima are hidden from solutions, but what they stand for can be read off.
         var full = linearised.Definitions.Aggregate(solution, (known, definition) => known.With(definition.Variable, ValueOf(definition, known)));
-        // Lowering keeps the conjuncts in order and adds its own after them, which go unpriced (and unnamed).
-        var written = original.Constraint.Conjuncts;
-        var rows = linearised.Problem.Constraint.Conjuncts
-            .SelectMany((lowered, index) => RowsOf(index < written.Length ? written[index].Name : "", lowered, full))
+        // The constraints that lowering added go unpriced, having no name to quote a price under.
+        var rows = linearised.Constraints(original.Constraint)
+            .SelectMany(constraint => RowsOf(constraint.Written?.Name ?? "", constraint.Lowered, full))
             .ToImmutableArray();
         var programme = Programme(linearised.Problem, rows, full);
         var duals = Duals(backend.Solve(programme, full.Values.Where(entry => !entry.Key.IsIntegral).ToImmutableDictionary(), options, cancellationToken), rows.Length);
@@ -57,7 +56,7 @@ public static class Sensitivity {
             .GroupBy(entry => entry.Name)
             .ToImmutableDictionary(group => group.Key, group => group.Sum(entry => entry.Dual))
             // A constraint with no row in force (a bound on a whole-number variable, say) has no price to speak of.
-            .SetItems(written.Select(conjunct => conjunct.Name).Except(rows.Select(row => row.Name)).Select(name => KeyValuePair.Create(name, 0.0))));
+            .SetItems(original.Constraint.Conjuncts.Select(conjunct => conjunct.Name).Except(rows.Select(row => row.Name)).Select(name => KeyValuePair.Create(name, 0.0))));
     }
 
     private static double ValueOf(IDefinition definition, Solution solution) =>

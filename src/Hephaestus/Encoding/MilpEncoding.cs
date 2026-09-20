@@ -25,11 +25,11 @@ public static class MilpEncoding {
     }
 
     private static IndicatorProblem Lower(ISingleObjectiveProblem original, EncodingOptions options) {
-        var (problem, definitions) = original.Linearise(options);
+        var linearised = original.Linearise(options);
+        var (problem, definitions) = linearised;
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet();
-        // Lowering keeps the conjuncts in order and adds its own after them, so a row can be put down to the constraint as it was written.
-        var written = original.Constraint.Conjuncts;
-        var conjuncts = problem.Constraint.Conjuncts.Select((lowered, index) => (Origin: index < written.Length ? written[index] : lowered, Formula: lowered.Normalise(options.StrictnessEpsilon)));
+        // A row is put down to the constraint as it was written; one that nobody wrote stands for itself.
+        var conjuncts = linearised.Constraints(original.Constraint).Select(constraint => (Origin: constraint.Written ?? constraint.Lowered, Formula: constraint.Lowered.Normalise(options.StrictnessEpsilon)));
         // A maximum that the problem turns out not to lean on is never tied down, and would take its operands with it.
         var variables = problem.Variables.Union(original.Variables);
         var program = IndicatorEncoding.Encode(conjuncts, new AuxiliaryNaming([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix));
