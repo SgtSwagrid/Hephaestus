@@ -4,6 +4,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+## [0.1.0-beta.2] - 2026-09-20
+
 ### Changed
 
 - Problems are built fluently: `Problem.Minimise(objective).SubjectTo(constraint)` takes the place of `Problem.Minimise(objective, subjectTo: constraint)`, and likewise for `Maximise` and `Lexicographic`. `SubjectTo` can be repeated or given several constraints at once, `Minimise(a, b, c)` takes objectives in order of priority, and `ThenMinimise` / `ThenMaximise` add more.
