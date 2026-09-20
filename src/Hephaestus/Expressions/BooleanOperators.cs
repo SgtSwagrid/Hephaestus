@@ -11,7 +11,7 @@ public static class BooleanOperators {
         public static IBooleanExpression operator |(IBooleanExpression left, IBooleanExpression right) => new Disjunction(left, right);
         public static IBooleanExpression operator ^(IBooleanExpression left, IBooleanExpression right) => new Negation(new Equivalence(left, right));
 
-        // Plain truth values mix in on either side, for constraints that depend on known data: isFreight & (departure >= curfew).
+        // Plain truth values mix in on either side, for constraints that depend on known data: isUrgent & (start <= cutoff).
         public static IBooleanExpression operator &(IBooleanExpression left, bool right) => new Conjunction(left, new BooleanConstant(right));
         public static IBooleanExpression operator &(bool left, IBooleanExpression right) => new Conjunction(new BooleanConstant(left), right);
         public static IBooleanExpression operator |(IBooleanExpression left, bool right) => new Disjunction(left, new BooleanConstant(right));
@@ -35,7 +35,7 @@ public static class BooleanOperators {
     }
 
     extension(bool condition) {
-        /// <summary>The constraint that <paramref name="consequent"/> holds if this known condition does: <c>train.IsFreight.Implies(departure &gt;= curfew)</c>.</summary>
+        /// <summary>The constraint that <paramref name="consequent"/> holds if this known condition does: <c>job.IsUrgent.Implies(start &lt;= cutoff)</c>.</summary>
         public IBooleanExpression Implies(IBooleanExpression consequent) => new Implication(new BooleanConstant(condition), consequent);
 
         /// <summary>The constraint that <paramref name="other"/> holds exactly when this known condition does.</summary>

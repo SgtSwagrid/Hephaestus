@@ -75,7 +75,7 @@ public sealed class GurobiTests {
     [Fact]
     public void GurobiReadsBackModelFilesIndicatorsIncluded() {
         var slots = Enumerable.Range(0, 5).Select(index => Variable.Continuous($"slot {index}")).ToList();
-        var separated = slots.SelectMany((first, index) => slots.Skip(index + 1).Select(second => ((first + 90 <= second) | (second + 90 <= first)).WithName($"headway {first.Name}/{second.Name}")));
+        var separated = slots.SelectMany((first, index) => slots.Skip(index + 1).Select(second => ((first + 90 <= second) | (second + 90 <= first)).WithName($"changeover {first.Name}/{second.Name}")));
         var problem = Problem.Minimise(slots.Sum() + A * slots[0] + 3).SubjectTo(slots.AllOf(slot => slot.Between(0, 3600)) & separated.AllOf() & (!(A & B & C) | (slots[0] >= 50)) & A & B & C);
         var expected = Optimum(GurobiSolver.Create(), problem);
 
@@ -102,7 +102,7 @@ public sealed class GurobiTests {
     [Fact]
     public void AnInfeasibilityIsNarrowedDownByGurobiItself() {
         var slots = Enumerable.Range(0, 40).Select(index => Variable.Continuous($"slot{index}")).ToList();
-        var padding = slots.AllOf(slot => slot.Between(0, 3600)) & slots.Zip(slots.Skip(1), (first, second) => ((first + 90 <= second) | (second + 90 <= first)).WithName($"headway {first.Name}/{second.Name}")).AllOf();
+        var padding = slots.AllOf(slot => slot.Between(0, 3600)) & slots.Zip(slots.Skip(1), (first, second) => ((first + 90 <= second) | (second + 90 <= first)).WithName($"changeover {first.Name}/{second.Name}")).AllOf();
         var (early, late, gate) = ((X <= 100).WithName("x early"), (X >= 50 + 60 * A).WithName("x late"), (A | (slots[3] >= 4000)).WithName("gate"));
         var solver = (IConflictSolver)GurobiLicence.Require(GurobiSolver.Create());
 

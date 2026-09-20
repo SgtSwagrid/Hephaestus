@@ -38,7 +38,7 @@ public sealed record Quantity<T>(
 
 /// <summary>
 /// A linear expression read as a position of type <typeparamref name="T"/>: a date-time, a
-/// chainage. Points can be compared and shifted by quantities of <typeparamref name="TDelta"/>, and
+/// position. Points can be compared and shifted by quantities of <typeparamref name="TDelta"/>, and
 /// the difference of two points is such a quantity; adding or scaling points does not type-check.
 /// </summary>
 public sealed record Point<T, TDelta>(

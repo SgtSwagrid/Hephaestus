@@ -16,8 +16,8 @@ public abstract class SensitivityContract {
 
     private static readonly ContinuousVariable Doors = Variable.Continuous("doors");
     private static readonly ContinuousVariable Windows = Variable.Continuous("windows");
-    private static readonly ContinuousVariable DepartureA = Variable.Continuous("departureA");
-    private static readonly ContinuousVariable DepartureB = Variable.Continuous("departureB");
+    private static readonly ContinuousVariable StartA = Variable.Continuous("startA");
+    private static readonly ContinuousVariable StartB = Variable.Continuous("startB");
     private static readonly BinaryVariable Express = Variable.Binary("express");
 
     private const double Step = 0.01;
@@ -61,27 +61,27 @@ public abstract class SensitivityContract {
 
     [Fact]
     public void WithLogicAndWholeNumbersThePricesAreThoseOfTheChoicesMade() {
-        var release = (DepartureA >= 100).WithName("release");
-        var headway = ((DepartureA + 120 + 60 * Express <= DepartureB) | (DepartureB + 120 <= DepartureA)).WithName("headway");
-        var horizon = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600);
-        var problem = Problem.Minimise(DepartureB + 2 * DepartureA - 50 * Express).SubjectTo(horizon & release & (DepartureB >= 200) & headway & Express.Implies(DepartureB >= 300));
+        var release = (StartA >= 100).WithName("release");
+        var changeover = ((StartA + 120 + 60 * Express <= StartB) | (StartB + 120 <= StartA)).WithName("changeover");
+        var horizon = StartA.Between(0, 3600) & StartB.Between(0, 3600);
+        var problem = Problem.Minimise(StartB + 2 * StartA - 50 * Express).SubjectTo(horizon & release & (StartB >= 200) & changeover & Express.Implies(StartB >= 300));
 
         var prices = Prices(problem);
 
         // B may not go before 200, so A goes first at 100 and B follows at 220; being an express would cost more than it earns.
         Assert.Equal(3, prices.Of(release), precision: 6);
-        Assert.Equal(Rate(problem, release, DepartureA >= 100 + Step), prices.Of(release), precision: 4);
-        // Raising the right-hand side of the side in force, departureB, lets B go that much sooner.
-        Assert.Equal(-1, prices.Of(headway), precision: 6);
+        Assert.Equal(Rate(problem, release, StartA >= 100 + Step), prices.Of(release), precision: 4);
+        // Raising the right-hand side of the side in force, startB, lets B go that much sooner.
+        Assert.Equal(-1, prices.Of(changeover), precision: 6);
         Assert.Equal(0, prices.Of(horizon), precision: 6);
-        Assert.Equal(0, prices.Of(DepartureB >= 200), precision: 6);
+        Assert.Equal(0, prices.Of(StartB >= 200), precision: 6);
     }
 
     [Fact]
     public void PiecewiseFunctionsArePricedThroughTheSideThatIsInForce() {
-        var latest = (Max(DepartureA, DepartureB) <= 500).WithName("latest");
-        var (releaseA, releaseB) = ((DepartureA >= 100).WithName("release A"), (DepartureB >= 250).WithName("release B"));
-        var problem = Problem.Minimise(Max(DepartureA, DepartureB) + 0.1 * DepartureA).SubjectTo(releaseA & releaseB & latest);
+        var latest = (Max(StartA, StartB) <= 500).WithName("latest");
+        var (releaseA, releaseB) = ((StartA >= 100).WithName("release A"), (StartB >= 250).WithName("release B"));
+        var problem = Problem.Minimise(Max(StartA, StartB) + 0.1 * StartA).SubjectTo(releaseA & releaseB & latest);
 
         var prices = Prices(problem);
 

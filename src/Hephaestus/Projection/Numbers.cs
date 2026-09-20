@@ -30,7 +30,7 @@ public sealed record RealNumberProjection<T> : IProjection<T> where T : IFloatin
 /// </summary>
 public static class NumberVariables {
     extension(Variable) {
-        /// <summary>A whole-number variable that is read back as a <typeparamref name="T"/>: <c>Variable.Integer&lt;int&gt;("trains")</c>.</summary>
+        /// <summary>A whole-number variable that is read back as a <typeparamref name="T"/>: <c>Variable.Integer&lt;int&gt;("jobs")</c>.</summary>
         public static Quantity<T> Integer<T>(string name) where T : IBinaryInteger<T> => new(Variable.Integer(name), new WholeNumberProjection<T>());
 
         /// <summary>A real-valued variable that is read back as a <typeparamref name="T"/>: <c>Variable.Continuous&lt;decimal&gt;("cost")</c>.</summary>

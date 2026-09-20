@@ -22,12 +22,12 @@
 Optimisation models are specified as mathematics. Hephaestus lets the code *be* that mathematics, so that reviewing a constraint is a direct comparison with its specification:
 
 ```
-occ_A ∧ occ_B  ⟹  (dep_A + h ≤ dep_B) ∨ (dep_B + h ≤ dep_A)
+use_A ∧ use_B  ⟹  (start_A + c ≤ start_B) ∨ (start_B + c ≤ start_A)
 ```
 
 ```csharp
-var isSeparated    = (departureA + headway <= departureB) | (departureB + headway <= departureA);
-var isConflictFree = !(occupiesA & occupiesB) | isSeparated;
+var isSeparated    = (startA + changeover <= startB) | (startB + changeover <= startA);
+var isConflictFree = !(usesA & usesB) | isSeparated;
 ```
 
 There are no auxiliary booleans to declare, no gadget factories, and no big-M to work out by hand: the boolean structure is lowered to linear constraints automatically, and every big-M is derived from the bounds your constraints already state. The solver underneath is swappable.
@@ -58,29 +58,29 @@ Hephaestus is in beta, so `--prerelease` is needed for now, and the API may chan
 using Hephaestus;
 using Hephaestus.OrTools;
 
-var departureA = Variable.Continuous("departureA");
-var departureB = Variable.Continuous("departureB");
-var occupiesA  = Variable.Binary("occupiesA");
-var occupiesB  = Variable.Binary("occupiesB");
-const double headway = 120;
+var startA = Variable.Continuous("startA");
+var startB = Variable.Continuous("startB");
+var usesA  = Variable.Binary("usesA");
+var usesB  = Variable.Binary("usesB");
+const double changeover = 120;
 
-var withinTheHour  = departureA.Between(0, 3600) & departureB.Between(0, 3600);
-var isSeparated    = (departureA + headway <= departureB) | (departureB + headway <= departureA);
-var isConflictFree = !(occupiesA & occupiesB) | isSeparated;
+var withinTheShift = startA.Between(0, 3600) & startB.Between(0, 3600);
+var isSeparated    = (startA + changeover <= startB) | (startB + changeover <= startA);
+var isConflictFree = !(usesA & usesB) | isSeparated;
 
-var problem = Problem.Minimise(departureA + departureB)
-    .SubjectTo(withinTheHour)
-    .SubjectTo(isConflictFree & occupiesA & occupiesB);
+var problem = Problem.Minimise(startA + startB)
+    .SubjectTo(withinTheShift)
+    .SubjectTo(isConflictFree & usesA & usesB);
 
 var summary = OrToolsSolver.Create().Solve(problem).Match(
-    optimal:    solution => $"A leaves at {solution.Value(departureA)}, B at {solution.Value(departureB)}",
+    optimal:    solution => $"A starts at {solution.Value(startA)}, B at {solution.Value(startB)}",
     feasible:   solution => $"best found: {solution.ObjectiveValue}",
-    infeasible: () => "no timetable exists",
+    infeasible: () => "no schedule exists",
     unbounded:  () => "unbounded",
     unknown:    reason => $"the solver gave up: {reason}");
 ```
 
-Swap `OrToolsSolver.Create()` for `OrToolsSolver.Create(OrToolsSolverId.Highs)` or `new Z3Solver()` and nothing else changes. `samples/TrainHeadway` is a slightly larger version in NodaTime types.
+Swap `OrToolsSolver.Create()` for `OrToolsSolver.Create(OrToolsSolverId.Highs)` or `new Z3Solver()` and nothing else changes. `samples/MachineScheduling` is a slightly larger version in NodaTime types.
 
 ## 🧠 The ideas
 
@@ -91,9 +91,9 @@ There are two algebraic data types, each an interface with a handful of sealed r
 - `ILinearExpression`: `Constant`, `Sum`, `Product`, and the variables.
 - `IBooleanExpression`: `BooleanConstant`, `Comparison`, `Negation`, `Conjunction`, `Disjunction`, `Implication`, `Equivalence`, and `BinaryVariable`.
 
-Keeping them apart makes illegal compositions unrepresentable: `x * y` (unless one of them is a binary variable), `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` belongs to both types, so `occupiesA + occupiesB <= 1` and `occupiesA & occupiesB` are both fine.
+Keeping them apart makes illegal compositions unrepresentable: `x * y` (unless one of them is a binary variable), `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` belongs to both types, so `usesA + usesB <= 1` and `usesA & usesB` are both fine.
 
-Operators (`+ - * /`, `<= >= < >`, `& | ! ^`, plus `EqualTo`, `NotEqualTo`, `Between`, `Implies`, `Iff`) are extension members that do nothing but construct records: `a + b` *is* `new Sum(a, b)`. Plain values mix in on either side: `x + 5`, `5 + x`, `0 <= x`, and, for constraints that depend on known data, `train.IsFreight.Implies(departure >= curfew)` or `isPeak & (headway >= 180)`. Nothing is flattened or simplified at construction time. All interpretation happens later, in separate passes over the data:
+Operators (`+ - * /`, `<= >= < >`, `& | ! ^`, plus `EqualTo`, `NotEqualTo`, `Between`, `Implies`, `Iff`) are extension members that do nothing but construct records: `a + b` *is* `new Sum(a, b)`. Plain values mix in on either side: `x + 5`, `5 + x`, `0 <= x`, and, for constraints that depend on known data, `job.IsUrgent.Implies(start <= cutoff)` or `isRush & (changeover >= 180)`. Nothing is flattened or simplified at construction time. All interpretation happens later, in separate passes over the data:
 
 | Pass | Function |
 | --- | --- |
@@ -122,18 +122,18 @@ The constraints of a model are still there to be had: `constraint.Conjuncts` tak
 ### Names, and explaining infeasibility
 
 ```csharp
-var isSeparated    = ((departureA + headway <= departureB) | (departureB + headway <= departureA)).WithName("separated");
-var isConflictFree = (!(occupiesA & occupiesB) | isSeparated).WithName("headway A/B");
+var isSeparated    = ((startA + changeover <= startB) | (startB + changeover <= startA)).WithName("separated");
+var isConflictFree = (!(usesA & usesB) | isSeparated).WithName("changeover A/B");
 
-isConflictFree.Format()                     // "headway A/B"
-((NamedConstraint)isConflictFree).Expression.Format()    // "!(occupiesA & occupiesB) | separated"
+isConflictFree.Format()                     // "changeover A/B"
+((NamedConstraint)isConflictFree).Expression.Format()    // "!(usesA & usesB) | separated"
 ```
 
 Any expression, boolean, linear or typed, can be given a name with `WithName`. A name changes nothing about what an expression means; it is what the expression is called wherever it is written out, including inside a larger one. An expression without one goes by the way it is written, so every constraint has a usable `Name` from the start.
 
 ```csharp
 if (solver.Solve(problem) is Infeasible) {
-    var conflict = solver.FindConflict(problem);        // "headway A/B", "A leaves early", "B leaves early", "0 <= departureA", ...
+    var conflict = solver.FindConflict(problem);        // "changeover A/B", "A starts early", "B starts early", "0 <= startA", ...
 }
 ```
 
@@ -142,13 +142,13 @@ if (solver.Solve(problem) is Infeasible) {
 ### Shadow prices
 
 ```csharp
-var platformFree = (departure >= release).WithName("platform free");
-var problem      = Problem.Minimise(totalDelay).SubjectTo(platformFree & ...);
+var machineFree = (start >= release).WithName("machine free");
+var problem      = Problem.Minimise(totalDelay).SubjectTo(machineFree & ...);
 
 var solution = solver.Solve(problem).SolutionOrNull!;
 var prices   = problem.ShadowPrices(solution, new GurobiBackend());
 
-prices.Of(platformFree)      // seconds of total delay per second by which `release` is raised
+prices.Of(machineFree)      // seconds of total delay per second by which `release` is raised
 prices.ByName                // every constraint, by name
 ```
 
@@ -164,7 +164,7 @@ The MILP encoding runs in four pure steps:
 
 1. **Normalise** to negation normal form, with comparisons as `affine form <= 0` or `== 0`.
 2. **Encode the logic** as *guarded rows*, "if these literals all hold then `e <= 0`", introducing as few auxiliary binaries as possible. In a disjunction the existing literals become guards, and only the compound disjuncts *other than the last* need an auxiliary. `(a + h <= b) | (b + h <= a)` comes out as the textbook either-or with one binary; `flag.Iff(x >= 5)` needs none. Equal subformulas share one auxiliary.
-3. **Propagate bounds** (feasibility-based bound tightening) over the unconditional rows. `x <= 3600` bounds `x` directly; `arrival == departure + run` bounds `arrival` once `departure` and `run` are bounded; and so on down the line until nothing changes.
+3. **Propagate bounds** (feasibility-based bound tightening) over the unconditional rows. `x <= 3600` bounds `x` directly; `finish == start + runtime` bounds `finish` once `start` and `runtime` are bounded; and so on down the line until nothing changes.
 4. **Relax each guard** with `e <= Σ Mᵢ · (1 if guard i is off, else 0)`. The row only has to give way once some guard is off, so `Mᵢ` need only be the largest value `e` can take *while guard i is off* — the tightest valid choice, derived separately for every guard of every row. A guard the row holds without costs nothing at all. Rows that can never bind are dropped; rows that can never hold forbid their guards outright.
 
 If some `M` is infinite, encoding fails with an error naming the variables that lack bounds. That is deliberate: a guessed big-M that is too small silently cuts off solutions, and the whole point is that wrong constraints should not fail silently. If you really want a guess, opt in with `new EncodingOptions(FallbackBigM: 1e6)`.
@@ -179,23 +179,23 @@ Over whole-valued expressions, `n < 5` is exactly `n <= 4`. Over the reals a MIL
 
 ### Reified truth values
 
-To use the truth of a constraint as a number (say, to count violated soft constraints), tie it to a binary variable yourself: `isLate.Iff(arrival >= deadline)`, then use `isLate` in the objective. `Iff` binds in both directions.
+To use the truth of a constraint as a number (say, to count violated soft constraints), tie it to a binary variable yourself: `isLate.Iff(finish >= deadline)`, then use `isLate` in the objective. `Iff` binds in both directions.
 
 ### Min, max, absolute value and conditionals
 
 ```csharp
 using static Hephaestus.Piecewise;
 
-var isPunctual = Abs(arrival - booked) <= tolerance;
+var isOnTime   = Abs(finish - promised) <= tolerance;
 var makespan   = Max(finishes);
-var problem    = Problem.Minimise(makespan + 10 * Abs(arrival - booked)).SubjectTo(...);
+var problem    = Problem.Minimise(makespan + 10 * Abs(finish - promised)).SubjectTo(...);
 ```
 
 `Max`, `Min` and `Abs` are records like everything else, and work on plain and typed expressions alike. When a problem is encoded, each becomes an auxiliary variable tied to its operands (all three are maxima: `min(a, b) = -max(-a, -b)` and `|e| = max(e, -e)`), and equal ones share a variable. How it is tied depends on how the problem leans on it. Minimising a maximum, or bounding an absolute value from above, only tempts the solver to make the variable too small, so `m >= a & m >= b` is enough and no binary variable is spent; that is the usual linear-programming idiom, found for you. Only a use that rewards a larger value (`Abs(x - y) >= 5`, or maximising a maximum) adds `m <= a | m <= b`, which costs one binary. The variable is bounded by the bounds of its operands, so its big-M is derived like any other.
 
 ```csharp
-var dwellCost = stops * dwell;                                  // dwell if the train stops, else nothing
-var penalty   = If(arrival >= deadline, 50 + 2 * lateness, 0);  // one expression or another
+var setupCost = needsSetup * setupTime;                        // the setup time if it is needed, else nothing
+var penalty   = If(finish >= deadline, 50 + 2 * lateness, 0);  // one expression or another
 ```
 
 `If(condition, then, otherwise)` is lowered by the same pass, and the product of a binary variable and an expression is `If(binary, expression, 0)`: the one product of two expressions that stays linear, and the only one that compiles. With a binary variable for a condition it costs two conditional rows and no further binary, which Gurobi and CP-SAT take as they stand and the others get as the textbook big-M rows, with M derived from the bounds of the expression. Like a maximum, it is only held from the side on which the problem could otherwise cheat.
@@ -207,26 +207,26 @@ A `Quantity<T>` is a linear expression read as an *amount* of type `T` (a durati
 The two types carry the right algebra, once, generically:
 
 ```csharp
-Quantity<Duration>               runTime  = arrival - departure;          // point - point
-Point<LocalDateTime, Duration>   earliest = departure + dwell + minimum;  // point + quantity
-IBooleanExpression               onTime   = arrival <= deadline;          // compare with plain values
-Point<LocalDateTime, Duration>   release  = start + dwell;                // plain value + quantity
-//                                          arrival + departure           // does not compile
-//                                          2 * arrival                   // does not compile
-//                                          arrival <= dwell              // does not compile
+Quantity<Duration>               elapsed  = finish - start;          // point - point
+Point<LocalDateTime, Duration>   earliest = start + runtime + slack;     // point + quantity
+IBooleanExpression               onTime   = finish <= deadline;         // compare with plain values
+Point<LocalDateTime, Duration>   release  = shiftStart + runtime;           // plain value + quantity
+//                                          finish + start            // does not compile
+//                                          2 * finish                // does not compile
+//                                          finish <= runtime         // does not compile
 ```
 
-Plain values of the right type are welcome wherever an expression is, on either side (`Duration.FromMinutes(2) + departure`, `start <= departure`, `dwell.Between(minimum, arrival - departure)`), and `delay.In(Duration.FromMinutes(1))` turns a quantity back into a plain linear expression ("delay in minutes") for a cost function.
+Plain values of the right type are welcome wherever an expression is, on either side (`Duration.FromMinutes(2) + start`, `shiftStart <= start`, `runtime.Between(minimum, finish - start)`), and `delay.In(Duration.FromMinutes(1))` turns a quantity back into a plain linear expression ("delay in minutes") for a cost function.
 
-Plain numbers can be typed too: `Variable.Integer<int>("trains")` is a `Quantity<int>` and `Variable.Continuous<decimal>("cost")` a `Quantity<decimal>`, for any integer or floating-point type. A count then reads back as an `int`, already made whole (a solver's 2.9999999 is a three), and kinds of number do not mix: `trains + 1.5` does not compile. Where they must mix, `trains.Expression` is the ordinary expression underneath.
+Plain numbers can be typed too: `Variable.Integer<int>("jobs")` is a `Quantity<int>` and `Variable.Continuous<decimal>("cost")` a `Quantity<decimal>`, for any integer or floating-point type. A count then reads back as an `int`, already made whole (a solver's 2.9999999 is a three), and kinds of number do not mix: `jobs + 1.5` does not compile. Where they must mix, `jobs.Expression` is the ordinary expression underneath.
 
-Solutions are read back in the same types: `solution.Value(arrival)` is a `LocalDateTime`, and so is `solution.Value(departure + dwell)`; any expression can be read, not just variables. Expressions under different projections (minutes against seconds, different origins) are reconciled automatically.
+Solutions are read back in the same types: `solution.Value(finish)` is a `LocalDateTime`, and so is `solution.Value(start + runtime)`; any expression can be read, not just variables. Expressions under different projections (minutes against seconds, different origins) are reconciled automatically.
 
 The core ships projections for `TimeSpan`, `DateTime` and `DateTimeOffset`; `Hephaestus.Optimisation.NodaTime` adds `Duration`, `Instant`, `LocalDateTime`, `LocalDate` (in `Period`s of whole days), `LocalTime`, `OffsetDateTime` and `ZonedDateTime`:
 
 ```csharp
-var departure = Variable.LocalDateTime("departure", origin: start);
-var dwell     = Variable.Duration("dwell", unit: Duration.FromSeconds(30), inWholeUnits: true);  // quantised
+var start   = Variable.LocalDateTime("start", origin: shiftStart);
+var runtime     = Variable.Duration("runtime", unit: Duration.FromSeconds(30), inWholeUnits: true);  // quantised
 ```
 
 Supporting another type means writing one small record that implements `IProjection<T>` (or `IPointProjection<T, TDelta>`), plus, for a point type, the three one-line `T ± Quantity<TDelta>` operators that C# will not let the core declare generically (they delegate to `quantity.Beyond(origin, projection)`). Typed reads round the underlying number to five decimal places of the unit by default, so that solver noise does not turn 08:04:00 into 08:03:59.99999999.
@@ -271,7 +271,7 @@ result.RelativeGap                                // how far a Feasible result m
 ### Several objectives
 
 ```csharp
-var problem = Problem.Minimise(totalDelay, platformChanges)       // in order of priority
+var problem = Problem.Minimise(totalDelay, machineChanges)       // in order of priority
     .ThenMaximise(slack)
     .SubjectTo(constraint);
 
@@ -283,10 +283,10 @@ Objectives that are to be traded off against each other need nothing special: we
 An objective is a value in its own right, so it can be built once and set against one set of constraints after another:
 
 ```csharp
-var punctualThenCheap = Objective.Minimise(totalDelay).ThenMinimise(cost, relativeTolerance: 0.05);
+var promptThenCheap = Objective.Minimise(totalDelay).ThenMinimise(cost, relativeTolerance: 0.05);
 
-var baseline = solver.Solve(Problem.Optimise(punctualThenCheap).SubjectTo(timetable));
-var blockade = solver.Solve(Problem.Optimise(punctualThenCheap).SubjectTo(timetable, trackTwoIsClosed));
+var baseline  = solver.Solve(Problem.Optimise(promptThenCheap).SubjectTo(schedule));
+var breakdown = solver.Solve(Problem.Optimise(promptThenCheap).SubjectTo(schedule, machineTwoIsDown));
 ```
 
 The kinds of objective are the kinds of problem. An `ISingleObjective` is `Objective.None` or an `Optimisation` (a sense and an expression); an `ILexicographicObjective` is a list of those, each with the tolerance that only makes sense among several. A problem is its objective and its constraint, and is an `ISingleObjectiveProblem` or an `IMultipleObjectiveProblem` accordingly. The result is `Optimal` only if every stage was, its objective value is that of the first objective (read the others with `solution.Value(...)`), and the solver's limits apply to each stage separately.
@@ -294,9 +294,9 @@ The kinds of objective are the kinds of problem. An `ISingleObjective` is `Objec
 ### Writing a model to a file
 
 ```csharp
-File.WriteAllText("timetable.lp",  problem.Encode().ToLp());        // big-M rows
-File.WriteAllText("timetable.mps", problem.Encode().ToMps());
-File.WriteAllText("timetable.lp",  problem.EncodeLogic().ToLp());   // indicator constraints, no big-M
+File.WriteAllText("schedule.lp",  problem.Encode().ToLp());        // big-M rows
+File.WriteAllText("schedule.mps", problem.Encode().ToMps());
+File.WriteAllText("schedule.lp",  problem.EncodeLogic().ToLp());   // indicator constraints, no big-M
 ```
 
 LP and MPS are the formats that every solver reads, so a model can be opened in `gurobi_cl`, tuned with `grbtune`, kept as a benchmark, or sent to a solver's support desk. Rows know which constraint they were encoded from (`row.Origin`): a constraint that was given a name lends it to its rows, and in LP the constraint as written sits in a comment above each. Names are reduced to letters, digits and underscores and kept unique, since neither format allows much more. The files are tested by reading them back with HiGHS and Gurobi and reaching the same optimum.
@@ -304,10 +304,10 @@ LP and MPS are the formats that every solver reads, so a model can be opened in 
 ### Warm starts
 
 ```csharp
-var yesterday = solver.Solve(timetable).SolutionOrNull;
-var today     = solver.Solve(timetableWithOneMoreTrain, startingFrom: yesterday);
+var yesterday = solver.Solve(schedule).SolutionOrNull;
+var today     = solver.Solve(scheduleWithOneMoreJob, startingFrom: yesterday);
 
-var byHand    = Solution.Empty.With(departureA, start.PlusMinutes(5)).With(occupiesA, true);
+var byHand    = Solution.Empty.With(startA, shiftStart.PlusMinutes(5)).With(usesA, true);
 ```
 
 A starting solution is a hint and nothing more: it may cover only some of the variables, mention ones the problem lacks, or be infeasible, and the answer is the same, only perhaps sooner. Only the modeller's own variables are passed on; the auxiliaries of the encoding are left for the solver to fill in, which keeps a start valid across problems whose encodings differ. Gurobi, CP-SAT, SCIP, CBC and standalone HiGHS take the hint; Z3 has no use for one.
@@ -326,11 +326,11 @@ A starting solution is a hint and nothing more: it may cover only some of the va
 ```bash
 dotnet build
 dotnet test
-dotnet run --project samples/TrainHeadway
+dotnet run --project samples/MachineScheduling
 dotnet pack --configuration Release --output artefacts
 ```
 
-The test projects use xunit.v3 on Microsoft.Testing.Platform (see `global.json`). `tests/Hephaestus.Tests/EncodingEquivalenceTests.cs` is the one to read first: it checks, exhaustively over a grid and for hundreds of random formulas, that an assignment satisfies a formula exactly when it extends to a solution of the encoded rows.
+The test projects use xunit.v3 on Microsoft.Testing.Machine (see `global.json`). `tests/Hephaestus.Tests/EncodingEquivalenceTests.cs` is the one to read first: it checks, exhaustively over a grid and for hundreds of random formulas, that an assignment satisfies a formula exactly when it extends to a solution of the encoded rows.
 
 Publishing a GitHub release tagged `v1.2.3` tests, packs and publishes version `1.2.3` of every package to nuget.org, and publishes the API documentation. See [CONTRIBUTING.md](CONTRIBUTING.md#-publishing-workflow).
 

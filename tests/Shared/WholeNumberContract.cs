@@ -4,48 +4,48 @@ using static Hephaestus.Piecewise;
 namespace Hephaestus.Contracts;
 
 /// <summary>
-/// The contract for problems posed entirely in whole numbers, such as a timetable in whole seconds.
+/// The contract for problems posed entirely in whole numbers, such as a schedule in whole seconds.
 /// CP-SAT can only take part here; every other solver runs it too, so that they are seen to agree.
 /// </summary>
 public abstract class WholeNumberContract {
     protected abstract ISolver Solver { get; }
 
-    private static readonly IntegerVariable DepartureA = Variable.Integer("departureA");
-    private static readonly IntegerVariable DepartureB = Variable.Integer("departureB");
-    private static readonly IntegerVariable DepartureC = Variable.Integer("departureC");
-    private static readonly BinaryVariable OccupiesA = Variable.Binary("occupiesA");
-    private static readonly BinaryVariable OccupiesB = Variable.Binary("occupiesB");
+    private static readonly IntegerVariable StartA = Variable.Integer("startA");
+    private static readonly IntegerVariable StartB = Variable.Integer("startB");
+    private static readonly IntegerVariable StartC = Variable.Integer("startC");
+    private static readonly BinaryVariable UsesA = Variable.Binary("usesA");
+    private static readonly BinaryVariable UsesB = Variable.Binary("usesB");
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly BinaryVariable Flag = Variable.Binary("flag");
 
-    private const double Headway = 120;
+    private const double Changeover = 120;
 
     private static IBooleanExpression Separated(ILinearExpression first, ILinearExpression second) =>
-        (first + Headway <= second) | (second + Headway <= first);
+        (first + Changeover <= second) | (second + Changeover <= first);
 
     private Solution Optimum(ISingleObjectiveProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
 
     [Fact]
-    public void ThreeTrainsQueueForOneTrack() {
-        var departures = new[] { DepartureA, DepartureB, DepartureC };
+    public void ThreeJobsQueueForOneMachine() {
+        var starts = new[] { StartA, StartB, StartC };
         var constraint =
-            departures.AllOf(departure => departure.Between(0, 3600))
-            & (DepartureA >= 60) & (DepartureC >= 30)
-            & Separated(DepartureA, DepartureB) & Separated(DepartureA, DepartureC) & Separated(DepartureB, DepartureC);
+            starts.AllOf(start => start.Between(0, 3600))
+            & (StartA >= 60) & (StartC >= 30)
+            & Separated(StartA, StartB) & Separated(StartA, StartC) & Separated(StartB, StartC);
 
-        var solution = Optimum(Problem.Minimise(departures.Sum()).SubjectTo(constraint));
+        var solution = Optimum(Problem.Minimise(starts.Sum()).SubjectTo(constraint));
 
         Assert.Equal(0 + 120 + 240, solution.ObjectiveValue);
         Assert.True(solution.Value(constraint));
     }
 
     [Fact]
-    public void SeparationAppliesOnlyToTrainsThatShareTheTrack() {
-        var constraint = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & (!(OccupiesA & OccupiesB) | Separated(DepartureA, DepartureB));
+    public void SeparationAppliesOnlyToJobsThatShareTheMachine() {
+        var constraint = StartA.Between(0, 3600) & StartB.Between(0, 3600) & (!(UsesA & UsesB) | Separated(StartA, StartB));
 
-        Assert.Equal(120, Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint & OccupiesA & OccupiesB)).ObjectiveValue);
-        Assert.Equal(0, Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint & OccupiesA & !OccupiesB)).ObjectiveValue);
-        Assert.Equal(120, Optimum(Problem.Minimise(DepartureA + DepartureB + 1000 * (2 - OccupiesA - OccupiesB)).SubjectTo(constraint)).ObjectiveValue);
+        Assert.Equal(120, Optimum(Problem.Minimise(StartA + StartB).SubjectTo(constraint & UsesA & UsesB)).ObjectiveValue);
+        Assert.Equal(0, Optimum(Problem.Minimise(StartA + StartB).SubjectTo(constraint & UsesA & !UsesB)).ObjectiveValue);
+        Assert.Equal(120, Optimum(Problem.Minimise(StartA + StartB + 1000 * (2 - UsesA - UsesB)).SubjectTo(constraint)).ObjectiveValue);
     }
 
     [Fact]
@@ -86,12 +86,12 @@ public abstract class WholeNumberContract {
 
     [Fact]
     public void BoundsThatAreOnlyImpliedAreEnough() {
-        var arrival = Variable.Integer("arrival");
-        var constraint = DepartureA.Between(0, 100) & N.Between(10, 20) & arrival.EqualTo(DepartureA + N) & Flag.Iff(arrival >= 90);
+        var finish = Variable.Integer("finish");
+        var constraint = StartA.Between(0, 100) & N.Between(10, 20) & finish.EqualTo(StartA + N) & Flag.Iff(finish >= 90);
 
-        var solution = Optimum(Problem.Maximise(arrival - 50 * Flag).SubjectTo(constraint));
+        var solution = Optimum(Problem.Maximise(finish - 50 * Flag).SubjectTo(constraint));
 
-        Assert.Equal(89, solution.Value(arrival));
+        Assert.Equal(89, solution.Value(finish));
         Assert.False(solution.Value(Flag));
     }
 
@@ -113,31 +113,31 @@ public abstract class WholeNumberContract {
 
     [Fact]
     public void QuantisedTypedVariablesAreWholeNumbersUnderneath() {
-        var start = new DateTime(2026, 9, 19, 8, 0, 0);
-        var departure = Variable.DateTime("departure", origin: start, inWholeUnits: true);
-        var dwell = Variable.TimeSpan("dwell", unit: TimeSpan.FromSeconds(30), inWholeUnits: true);
-        var constraint = departure.Between(start, start.AddHours(1)) & dwell.Between(TimeSpan.FromSeconds(45), TimeSpan.FromMinutes(5)) & (departure >= start.AddMinutes(10) + dwell);
+        var shiftStart = new DateTime(2026, 9, 19, 8, 0, 0);
+        var start = Variable.DateTime("start", origin: shiftStart, inWholeUnits: true);
+        var runtime = Variable.TimeSpan("runtime", unit: TimeSpan.FromSeconds(30), inWholeUnits: true);
+        var constraint = start.Between(shiftStart, shiftStart.AddHours(1)) & runtime.Between(TimeSpan.FromSeconds(45), TimeSpan.FromMinutes(5)) & (start >= shiftStart.AddMinutes(10) + runtime);
 
-        var solution = Optimum(Problem.Minimise(departure).SubjectTo(constraint));
+        var solution = Optimum(Problem.Minimise(start).SubjectTo(constraint));
 
-        Assert.Equal(TimeSpan.FromSeconds(60), solution.Value(dwell));
-        Assert.Equal(start.AddMinutes(11), solution.Value(departure));
+        Assert.Equal(TimeSpan.FromSeconds(60), solution.Value(runtime));
+        Assert.Equal(shiftStart.AddMinutes(11), solution.Value(start));
     }
 
     [Fact]
     public void PiecewiseFunctionsOfWholeNumbersStayWhole() {
-        var domain = DepartureA.Between(0, 100) & DepartureB.Between(0, 100);
+        var domain = StartA.Between(0, 100) & StartB.Between(0, 100);
 
-        Assert.Equal(60, Optimum(Problem.Minimise(Max(DepartureA, DepartureB)).SubjectTo(domain & (DepartureA + DepartureB >= 120))).ObjectiveValue);
-        Assert.Equal(100, Optimum(Problem.Maximise(Abs(DepartureA - DepartureB)).SubjectTo(domain)).ObjectiveValue);
-        Assert.Equal(7, Optimum(Problem.Maximise(Min(DepartureA, 7)).SubjectTo(domain)).ObjectiveValue);
-        Assert.Equal(40, Optimum(Problem.Minimise(DepartureA).SubjectTo(domain & (Abs(DepartureA - 50) <= 10) & (Max(DepartureA, DepartureB) >= 30))).ObjectiveValue);
+        Assert.Equal(60, Optimum(Problem.Minimise(Max(StartA, StartB)).SubjectTo(domain & (StartA + StartB >= 120))).ObjectiveValue);
+        Assert.Equal(100, Optimum(Problem.Maximise(Abs(StartA - StartB)).SubjectTo(domain)).ObjectiveValue);
+        Assert.Equal(7, Optimum(Problem.Maximise(Min(StartA, 7)).SubjectTo(domain)).ObjectiveValue);
+        Assert.Equal(40, Optimum(Problem.Minimise(StartA).SubjectTo(domain & (Abs(StartA - 50) <= 10) & (Max(StartA, StartB) >= 30))).ObjectiveValue);
     }
 
     [Fact]
     public void AStartingSolutionChangesNothingButTheRoute() {
-        var problem = Problem.Minimise(DepartureA + DepartureB).SubjectTo(DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Separated(DepartureA, DepartureB));
-        var starts = new[] { Solution.Empty.With(DepartureA, 300).With(DepartureB, 600), Solution.Empty.With(DepartureA, 0.4), Solution.Empty.With(DepartureA, 5).With(DepartureB, 6) };
+        var problem = Problem.Minimise(StartA + StartB).SubjectTo(StartA.Between(0, 3600) & StartB.Between(0, 3600) & Separated(StartA, StartB));
+        var starts = new[] { Solution.Empty.With(StartA, 300).With(StartB, 600), Solution.Empty.With(StartA, 0.4), Solution.Empty.With(StartA, 5).With(StartB, 6) };
 
         // The solver is fetched first, because a solver that has to be skipped says so by throwing, which Assert.All would count as a failure.
         var solver = Solver;
@@ -147,11 +147,11 @@ public abstract class WholeNumberContract {
 
     [Fact]
     public void ObjectivesAreMetInOrderOfPriority() {
-        var constraint = DepartureA.Between(0, 3600) & DepartureB.Between(0, 3600) & Separated(DepartureA, DepartureB);
+        var constraint = StartA.Between(0, 3600) & StartB.Between(0, 3600) & Separated(StartA, StartB);
 
-        var solution = Optimum(Problem.Minimise(DepartureA + DepartureB).SubjectTo(constraint).Then(Objective.Minimise(DepartureB)).Then(Objective.Maximise(N)), N.Between(0, 3));
+        var solution = Optimum(Problem.Minimise(StartA + StartB).SubjectTo(constraint).Then(Objective.Minimise(StartB)).Then(Objective.Maximise(N)), N.Between(0, 3));
 
-        Assert.Equal((120, 0, 3), (solution.Value(DepartureA), solution.Value(DepartureB), solution.Value(N)));
+        Assert.Equal((120, 0, 3), (solution.Value(StartA), solution.Value(StartB), solution.Value(N)));
     }
 
     private Solution Optimum(IMultipleObjectiveProblem problem, IBooleanExpression also) =>
@@ -159,22 +159,22 @@ public abstract class WholeNumberContract {
 
     [Fact]
     public void ConditionalsOfWholeNumbersStayWhole() {
-        var domain = DepartureA.Between(0, 100) & N.Between(0, 5);
+        var domain = StartA.Between(0, 100) & N.Between(0, 5);
 
-        Assert.Equal(100 + 5, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N)).SubjectTo(domain & OccupiesA)).ObjectiveValue);
-        Assert.Equal(200, Optimum(Problem.Maximise(OccupiesA * DepartureA + If(!OccupiesA, 200, N)).SubjectTo(domain)).ObjectiveValue);
-        Assert.Equal(3, Optimum(Problem.Minimise(If(DepartureA >= 50, N + 3, DepartureA)).SubjectTo(domain & (DepartureA >= 10))).ObjectiveValue);
+        Assert.Equal(100 + 5, Optimum(Problem.Maximise(UsesA * StartA + If(!UsesA, 200, N)).SubjectTo(domain & UsesA)).ObjectiveValue);
+        Assert.Equal(200, Optimum(Problem.Maximise(UsesA * StartA + If(!UsesA, 200, N)).SubjectTo(domain)).ObjectiveValue);
+        Assert.Equal(3, Optimum(Problem.Minimise(If(StartA >= 50, N + 3, StartA)).SubjectTo(domain & (StartA >= 10))).ObjectiveValue);
     }
 
     [Fact]
     public void CountsAreSolvedAndReadBackAsWholeNumbersOfTheirOwnType() {
-        var (trains, platforms) = (Variable.Integer<int>("trains"), Variable.Integer<int>("platforms"));
-        var passengers = Variable.Integer<long>("passengers");
-        var constraint = trains.Between(0, 40) & platforms.Between(1, 6) & (trains <= 6 * platforms) & (passengers.Expression <= 850 * trains.Expression) & (passengers >= 9000L);
+        var (jobs, machines) = (Variable.Integer<int>("jobs"), Variable.Integer<int>("machines"));
+        var units = Variable.Integer<long>("units");
+        var constraint = jobs.Between(0, 40) & machines.Between(1, 6) & (jobs <= 6 * machines) & (units.Expression <= 850 * jobs.Expression) & (units >= 9000L);
 
-        var solution = Optimum(Problem.Minimise(100 * platforms.Expression + 7 * trains.Expression).SubjectTo(constraint));
+        var solution = Optimum(Problem.Minimise(100 * machines.Expression + 7 * jobs.Expression).SubjectTo(constraint));
 
-        Assert.Equal((11, 2, 9000L), (solution.Value(trains), solution.Value(platforms), solution.Value(passengers)));
-        Assert.IsType<int>(solution.Value(trains));
+        Assert.Equal((11, 2, 9000L), (solution.Value(jobs), solution.Value(machines), solution.Value(units)));
+        Assert.IsType<int>(solution.Value(jobs));
     }
 }

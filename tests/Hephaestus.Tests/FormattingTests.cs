@@ -19,7 +19,7 @@ public sealed class FormattingTests {
     }
 
     [Fact]
-    public void TheHeadwayConstraintReadsLikeItsSpecification() {
+    public void TheChangeoverConstraintReadsLikeItsSpecification() {
         var separated = (X + 120 <= Y) | (Y + 120 <= X);
         var conflictFree = !(A & B) | separated;
 

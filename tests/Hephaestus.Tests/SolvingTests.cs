@@ -77,8 +77,8 @@ public sealed class SolvingTests {
     [Theory]
     [InlineData(true, 3)]
     [InlineData(false, 0)]
-    public void KnownConditionsSwitchConstraintsOnAndOff(bool isFreight, double expected) =>
-        Assert.Equal(expected, Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M).SubjectTo(Domain & isFreight.Implies(M >= 3) & (!isFreight | (N <= 1))))).Solution.Value(M));
+    public void KnownConditionsSwitchConstraintsOnAndOff(bool isUrgent, double expected) =>
+        Assert.Equal(expected, Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M).SubjectTo(Domain & isUrgent.Implies(M >= 3) & (!isUrgent | (N <= 1))))).Solution.Value(M));
 
     [Fact]
     public void InfeasibilityIsReported() {
@@ -127,9 +127,9 @@ public sealed class SolvingTests {
     [Fact]
     public void AStartingSolutionReachesTheBackendAsValuesForItsOwnColumns() {
         var backend = new RecordingBackend([]);
-        var start = Solution.Empty.With(M, 2.2).With(A, true).With(Variable.Integer("stranger"), 9);
+        var hint = Solution.Empty.With(M, 2.2).With(A, true).With(Variable.Integer("stranger"), 9);
 
-        new MilpSolver(backend).Solve(Problem.Minimise(M).SubjectTo(Domain & ((M >= 2) | A)), startingFrom: start);
+        new MilpSolver(backend).Solve(Problem.Minimise(M).SubjectTo(Domain & ((M >= 2) | A)), startingFrom: hint);
 
         // The stranger is dropped, the whole-number variable is rounded, and n and the auxiliary binary are left to the solver.
         Assert.Equal([KeyValuePair.Create<IVariable, double>(A, 1), KeyValuePair.Create<IVariable, double>(M, 2)], backend.Starts.Single().OrderBy(entry => entry.Key.Name));
@@ -147,15 +147,15 @@ public sealed class SolvingTests {
     [Fact]
     public void AStartingSolutionCanBeBuiltByHandInTheTypesOfTheModel() {
         var origin = new DateTime(2026, 9, 19, 8, 0, 0);
-        var departure = Variable.DateTime("departure", origin);
-        var dwell = Variable.TimeSpan("dwell", unit: TimeSpan.FromMinutes(1));
+        var start = Variable.DateTime("start", origin);
+        var runtime = Variable.TimeSpan("runtime", unit: TimeSpan.FromMinutes(1));
 
-        var start = Solution.Empty.With(departure, origin.AddMinutes(5)).With(dwell, TimeSpan.FromSeconds(90)).With(A, false);
+        var hint = Solution.Empty.With(start, origin.AddMinutes(5)).With(runtime, TimeSpan.FromSeconds(90)).With(A, false);
 
-        Assert.Equal(300, start.Values[Variable.Continuous("departure")]);
-        Assert.Equal(1.5, start.Values[Variable.Continuous("dwell")]);
-        Assert.Equal(0, start.Values[A]);
-        Assert.Throws<ArgumentException>(() => Solution.Empty.With(departure + dwell, origin));
+        Assert.Equal(300, hint.Values[Variable.Continuous("start")]);
+        Assert.Equal(1.5, hint.Values[Variable.Continuous("runtime")]);
+        Assert.Equal(0, hint.Values[A]);
+        Assert.Throws<ArgumentException>(() => Solution.Empty.With(start + runtime, origin));
     }
 
     /// <summary>Solves with the exhaustive backend, and remembers what each solve was asked and where it started from.</summary>
@@ -234,12 +234,12 @@ public sealed class SolvingTests {
     public void TypedObjectivesTakeTypedTolerances() {
         var origin = new DateTime(2026, 9, 19, 8, 0, 0);
         var delay = Variable.TimeSpan("delay", unit: TimeSpan.FromMinutes(1));
-        var departure = Variable.DateTime("departure", origin);
+        var start = Variable.DateTime("start", origin);
 
         Assert.Equal(new Prioritised(Objective.Minimise(delay.Expression), 1.5), Objective.Minimise(delay, tolerance: TimeSpan.FromSeconds(90)));
         Assert.Equal(new Prioritised(Objective.Maximise(delay.Expression), 0, 0.1), Objective.Maximise(delay, relativeTolerance: 0.1));
-        Assert.Equal(new Prioritised(Objective.Minimise(departure.Expression), 30), Objective.Minimise(departure, tolerance: TimeSpan.FromSeconds(30)));
-        Assert.Equal(new Prioritised(Objective.Maximise(departure.Expression)), Objective.Maximise(departure));
+        Assert.Equal(new Prioritised(Objective.Minimise(start.Expression), 30), Objective.Minimise(start, tolerance: TimeSpan.FromSeconds(30)));
+        Assert.Equal(new Prioritised(Objective.Maximise(start.Expression)), Objective.Maximise(start));
     }
 
     [Fact]
