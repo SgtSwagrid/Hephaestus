@@ -14,6 +14,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Typed expressions are made of components, each a `LinearComponent` (a number) or a `LogicalComponent` (a truth), rather than of one linear expression: `IProjectedExpression.Expression` is now `Components`, and the decoders and encoders of typed expressions read and write an `ImmutableArray<double>` with one entry for each component. `IEncodable<TValue>` is the common type of everything typed; `ILinearlyEncodable<TValue>` and `ILogicallyEncodable<TValue>` are its cases of one number and of one truth, and keep their `Expression`.
 - Comparison, `EqualTo`, `NotEqualTo`, `Between` and `solution.With` are written against `IEncodable<TValue>` and work entry by entry, truths being ordered by implication. `ILogicallyEncodable<TValue>` gains them, and `solution.Value`, as a result.
 - The tolerance of `Objective.Minimise(quantity, tolerance)` and `Objective.Maximise(quantity, tolerance)` is no longer optional, as it already was not for a point. For a relative tolerance alone, pass a zero one: `Objective.Maximise(delay, TimeSpan.Zero, relativeTolerance: 0.1)`.
+- `ILexicographicObjective` and `IMultipleObjectiveProblem` are gone, each having had one case, whose data it repeated: use the records `LexicographicObjective` and `MultipleObjectiveProblem` in their place. A problem is an `IOneShotProblem` or a `MultipleObjectiveProblem`, and an objective an `ISingleObjective` or a `LexicographicObjective`.
 
 ### Fixed
 

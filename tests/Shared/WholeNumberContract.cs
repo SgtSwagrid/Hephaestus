@@ -154,7 +154,7 @@ public abstract class WholeNumberContract {
         Assert.Equal((120, 0, 3), (solution.Value(StartA), solution.Value(StartB), solution.Value(N)));
     }
 
-    private Solution Optimum(IMultipleObjectiveProblem problem, IBooleanExpression also) =>
+    private Solution Optimum(MultipleObjectiveProblem problem, IBooleanExpression also) =>
         Assert.IsType<Optimal>(Solver.Solve(problem.SubjectTo(also))).Solution;
 
     [Fact]

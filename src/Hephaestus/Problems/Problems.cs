@@ -6,7 +6,7 @@ namespace Hephaestus;
 /// An optimisation problem: an objective, and the single constraint it is subject to. The
 /// constraints of a model are conjoined into that one with <c>SubjectTo</c>, <c>&amp;</c> or
 /// <c>AllOf()</c>, and can be had back as its <c>Conjuncts</c>. A problem is either an
-/// <see cref="IOneShotProblem"/> or an <see cref="IMultipleObjectiveProblem"/>, according to
+/// <see cref="IOneShotProblem"/> or a <see cref="MultipleObjectiveProblem"/>, according to
 /// its objective; any solver solves either, and what concerns the constraint alone (explaining
 /// infeasibility, say) takes either.
 /// </summary>
@@ -29,14 +29,6 @@ public interface IOneShotProblem : IProblem {
     IObjective IProblem.Objective => Objective;
 }
 
-/// <summary>A problem with several objectives, which comes down to a sequence of one-shot problems.</summary>
-public interface IMultipleObjectiveProblem : IProblem {
-    /// <inheritdoc cref="IProblem.Objective"/>
-    new ILexicographicObjective Objective { get; }
-
-    IObjective IProblem.Objective => Objective;
-}
-
 /// <summary>The problem of satisfying a constraint, with nothing to optimise. Written <see cref="Problem.Satisfy"/>.</summary>
 public sealed record SatisfactionProblem(
     IBooleanExpression Constraint
@@ -55,11 +47,13 @@ public sealed record SingleObjectiveProblem(
     ISingleObjective IOneShotProblem.Objective => Objective;
 }
 
-/// <inheritdoc cref="IMultipleObjectiveProblem"/>
+/// <summary>A problem with several objectives, which comes down to a sequence of one-shot problems.</summary>
 public sealed record MultipleObjectiveProblem(
-    ILexicographicObjective Objective,
+    LexicographicObjective Objective,
     IBooleanExpression Constraint
-) : IMultipleObjectiveProblem;
+) : IProblem {
+    IObjective IProblem.Objective => Objective;
+}
 
 /// <summary>
 /// Where problems start: <c>Problem.Minimise(cost).SubjectTo(constraint)</c>. A problem is a value,
@@ -78,7 +72,7 @@ public static class Problem {
         };
 
     /// <summary>The problem of pursuing several objectives in order of priority, as yet unconstrained.</summary>
-    public static IMultipleObjectiveProblem Optimise(ILexicographicObjective objective) => new MultipleObjectiveProblem(objective, BooleanConstant.True);
+    public static MultipleObjectiveProblem Optimise(LexicographicObjective objective) => new(objective, BooleanConstant.True);
 
     /// <summary>The problem of making <paramref name="objective"/> as small as possible, as yet unconstrained.</summary>
     public static IOneShotProblem Minimise(ILinearExpression objective) => Optimise(Objective.Minimise(objective));
@@ -90,16 +84,16 @@ public static class Problem {
     /// The problem of making several objectives as small as possible, in order of priority:
     /// <c>Minimise(a, b, c)</c> is <c>Minimise(a).ThenMinimise(b).ThenMinimise(c)</c>.
     /// </summary>
-    public static IMultipleObjectiveProblem Minimise(params IEnumerable<ILinearExpression> objectives) => Lexicographic(objectives.Select(objective => new Prioritised(Objective.Minimise(objective))));
+    public static MultipleObjectiveProblem Minimise(params IEnumerable<ILinearExpression> objectives) => Lexicographic(objectives.Select(objective => new Prioritised(Objective.Minimise(objective))));
 
     /// <summary>
     /// The problem of making several objectives as large as possible, in order of priority:
     /// <c>Maximise(a, b, c)</c> is <c>Maximise(a).ThenMaximise(b).ThenMaximise(c)</c>.
     /// </summary>
-    public static IMultipleObjectiveProblem Maximise(params IEnumerable<ILinearExpression> objectives) => Lexicographic(objectives.Select(objective => new Prioritised(Objective.Maximise(objective))));
+    public static MultipleObjectiveProblem Maximise(params IEnumerable<ILinearExpression> objectives) => Lexicographic(objectives.Select(objective => new Prioritised(Objective.Maximise(objective))));
 
     /// <summary>The problem of meeting the given objectives in order of priority, as yet unconstrained.</summary>
-    public static IMultipleObjectiveProblem Lexicographic(IEnumerable<Prioritised> objectives) => Optimise(Objective.InOrder(objectives));
+    public static MultipleObjectiveProblem Lexicographic(IEnumerable<Prioritised> objectives) => Optimise(Objective.InOrder(objectives));
 
     /// <summary>Minimises a typed expression, for example "as early as possible"; the unit of its projection does not affect the optimum.</summary>
     public static IOneShotProblem Minimise<TValue>(ILinearlyEncodable<TValue> objective) => Minimise(objective.Expression);
@@ -119,7 +113,7 @@ public static class ProblemBuilding {
         public IProblem SubjectTo(IBooleanExpression constraint) =>
             problem switch {
                 IOneShotProblem single => single.SubjectTo(constraint),
-                IMultipleObjectiveProblem multiple => multiple.SubjectTo(constraint),
+                MultipleObjectiveProblem multiple => multiple.SubjectTo(constraint),
                 _ => throw new NotSupportedException($"Unknown kind of problem: {problem.GetType().Name}."),
             };
 
@@ -130,21 +124,21 @@ public static class ProblemBuilding {
         // defined by what they do to it: problem.ThenMinimise(x) is the problem of problem.Objective.ThenMinimise(x).
 
         /// <summary>The same problem with a further objective, which matters only among the solutions that are best for those it has.</summary>
-        public IMultipleObjectiveProblem Then(Prioritised objective) => new MultipleObjectiveProblem(problem.Objective.Then(objective), problem.Constraint);
+        public MultipleObjectiveProblem Then(Prioritised objective) => new(problem.Objective.Then(objective), problem.Constraint);
 
         /// <summary>The same problem with further objectives, to be made small, in order, among the solutions that are best for those it has.</summary>
-        public IMultipleObjectiveProblem ThenMinimise(params IEnumerable<ILinearExpression> expressions) => new MultipleObjectiveProblem(problem.Objective.ThenMinimise(expressions), problem.Constraint);
+        public MultipleObjectiveProblem ThenMinimise(params IEnumerable<ILinearExpression> expressions) => new(problem.Objective.ThenMinimise(expressions), problem.Constraint);
 
         /// <summary>The same problem with further objectives, to be made large, in order, among the solutions that are best for those it has.</summary>
-        public IMultipleObjectiveProblem ThenMaximise(params IEnumerable<ILinearExpression> expressions) => new MultipleObjectiveProblem(problem.Objective.ThenMaximise(expressions), problem.Constraint);
+        public MultipleObjectiveProblem ThenMaximise(params IEnumerable<ILinearExpression> expressions) => new(problem.Objective.ThenMaximise(expressions), problem.Constraint);
 
         /// <summary>The same problem with a further objective, to be made small, which may give up so much of its optimum for the sake of those after it.</summary>
-        public IMultipleObjectiveProblem ThenMinimise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
-            new MultipleObjectiveProblem(problem.Objective.ThenMinimise(expression, absoluteTolerance, relativeTolerance), problem.Constraint);
+        public MultipleObjectiveProblem ThenMinimise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
+            new(problem.Objective.ThenMinimise(expression, absoluteTolerance, relativeTolerance), problem.Constraint);
 
         /// <summary>The same problem with a further objective, to be made large, which may give up so much of its optimum for the sake of those after it.</summary>
-        public IMultipleObjectiveProblem ThenMaximise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
-            new MultipleObjectiveProblem(problem.Objective.ThenMaximise(expression, absoluteTolerance, relativeTolerance), problem.Constraint);
+        public MultipleObjectiveProblem ThenMaximise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
+            new(problem.Objective.ThenMaximise(expression, absoluteTolerance, relativeTolerance), problem.Constraint);
     }
 
     extension(IOneShotProblem problem) {
@@ -164,12 +158,12 @@ public static class ProblemBuilding {
                 : new SatisfactionProblem(constraint);
     }
 
-    extension(IMultipleObjectiveProblem problem) {
+    extension(MultipleObjectiveProblem problem) {
         /// <inheritdoc cref="SubjectTo(IProblem, IBooleanExpression)"/>
-        public IMultipleObjectiveProblem SubjectTo(IBooleanExpression constraint) => new MultipleObjectiveProblem(problem.Objective, problem.Constraint.And(constraint));
+        public MultipleObjectiveProblem SubjectTo(IBooleanExpression constraint) => new(problem.Objective, problem.Constraint.And(constraint));
 
         /// <inheritdoc cref="SubjectTo(IProblem, IEnumerable{IBooleanExpression})"/>
-        public IMultipleObjectiveProblem SubjectTo(params IEnumerable<IBooleanExpression> constraints) => problem.SubjectTo(constraints.AllOf());
+        public MultipleObjectiveProblem SubjectTo(params IEnumerable<IBooleanExpression> constraints) => problem.SubjectTo(constraints.AllOf());
     }
 
     extension(IBooleanExpression constraint) {
