@@ -4,6 +4,16 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+### Added
+
+- `Zip` puts any two typed expressions side by side as one of a pair, whatever each is made of: `start.Zip(runtime)`, or a number and a truth with `runtime.Zip(flag.AsEncodable())`. The pair is compared entry by entry, read with `solution.Value`, given a starting value with `solution.With`, and zipped again. `Select` and `Biselect` take a pair's halves (`x.Zip(y).Biselect((a, b) => new Location(a, b), place => (place.X, place.Y))`), `Sequence()` makes many into one array-valued expression, and `AsEncodable()` lets plain linear and boolean expressions join in.
+- `Vector<T>`, a fixed number of expressions combined entry by entry through `Zip` and `Select`: `u.Zip(v).Select((a, b) => a + b)`. Vectors of quantities add, subtract, scale, `Sum`, take a `Dot` product with plain weights, and compare with vectors, plain arrays and plain values in every entry (`u + v < [4, 5, 6]`); they are read back as vectors of values.
+
+### Changed
+
+- Typed expressions are made of components, each a `LinearComponent` (a number) or a `LogicalComponent` (a truth), rather than of one linear expression: `IProjectedExpression.Expression` is now `Components`, and the decoders and encoders of typed expressions read and write an `ImmutableArray<double>` with one entry for each component. `IEncodable<TValue>` is the common type of everything typed; `ILinearlyEncodable<TValue>` and `ILogicallyEncodable<TValue>` are its cases of one number and of one truth, and keep their `Expression`.
+- Comparison, `EqualTo`, `NotEqualTo`, `Between` and `solution.With` are written against `IEncodable<TValue>` and work entry by entry, truths being ordered by implication. `ILogicallyEncodable<TValue>` gains them, and `solution.Value`, as a result.
+
 ## [0.1.0-beta.2] - 2026-09-20
 
 ### Changed

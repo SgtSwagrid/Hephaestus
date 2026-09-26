@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Hephaestus;
 
 /// <summary>Reads expressions off a solution. Any expression can be read, not just variables.</summary>
@@ -40,9 +42,18 @@ public static class Evaluation {
         /// <summary>This solution with a binary variable set or not.</summary>
         public Solution With(BinaryVariable variable, bool value) => solution.With(variable, value ? 1 : 0);
 
-        /// <summary>This solution with a value for a typed variable.</summary>
-        /// <exception cref="ArgumentException">The variable is a compound expression rather than a variable, so no one value can be given to it.</exception>
-        public Solution With<TValue>(ILinearlyEncodable<TValue> variable, TValue value) => solution.With(variable.Expression, variable.Projection.Encode(value));
+        /// <summary>This solution with a value for a typed variable, or for each of the variables that a zipped or sequenced one is made of.</summary>
+        /// <exception cref="ArgumentException">One of its components is a compound expression rather than a variable, so no one value can be given to it.</exception>
+        public Solution With<TValue>(IEncodable<TValue> variable, TValue value) =>
+            Componentwise.Paired(variable.Components, variable.Projection.Encode(value)).Aggregate(solution, (current, entry) => current.With(entry.First, entry.Second));
+
+        private Solution With(IComponent component, double entry) =>
+            component switch {
+                LinearComponent linear => solution.With(linear.Expression, entry),
+                LogicalComponent { Expression: BinaryVariable variable } => solution.With(variable, entry > 0.5),
+                LogicalComponent logical => throw new ArgumentException($"A starting value can be given to a variable, but '{logical.Expression.Format()}' is a compound expression.", nameof(component)),
+                _ => throw new NotSupportedException($"Unknown kind of component: {component.GetType().Name}."),
+            };
 
         private Solution With(ILinearExpression expression, double value) =>
             expression is IVariable variable
@@ -54,6 +65,21 @@ public static class Evaluation {
                 ? value
                 : throw new KeyNotFoundException($"The solution has no value for '{variable.Name}': the variable does not occur in the problem that was solved.");
     }
+
+    /// <summary>
+    /// The raw form of <paramref name="components"/> under a solution: numbers rounded to
+    /// <see cref="DecimalPlaces"/>, so that solver noise does not reach a decoder, and truths as
+    /// <c>1</c> or <c>0</c>.
+    /// </summary>
+    internal static ImmutableArray<double> Raw(Solution solution, ImmutableArray<IComponent> components) =>
+        [.. components.Select(component => Raw(solution, component))];
+
+    private static double Raw(Solution solution, IComponent component) =>
+        component switch {
+            LinearComponent linear => Math.Round(Evaluate(solution, linear.Expression), DecimalPlaces),
+            LogicalComponent logical => Holds(solution, logical.Expression, Tolerance) ? 1 : 0,
+            _ => throw new NotSupportedException($"Unknown kind of component: {component.GetType().Name}."),
+        };
 
     internal static double Evaluate(Solution solution, ILinearExpression expression) => DeepRecursion.Guard(EvaluateUnguarded, solution, expression);
 

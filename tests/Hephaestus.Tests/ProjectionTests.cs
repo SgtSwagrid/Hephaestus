@@ -219,7 +219,7 @@ public sealed class ProjectionTests {
 
         IWritableExpression<int> fromMinutes = seconds.Preselect((int count) => TimeSpan.FromMinutes(count));
 
-        Assert.Equal(120, fromMinutes.Encoder.Encode(2));
+        Assert.Equal<double>([120], fromMinutes.Encoder.Encode(2));
         Assert.IsNotAssignableFrom<IReadableExpression<int>>(fromMinutes);
     }
 

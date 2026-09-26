@@ -163,6 +163,30 @@ public abstract class SolverContract {
     }
 
     [Fact]
+    public void AVectorConstraintHoldsInEveryEntry() {
+        var u = Vector.Of(Variable.Continuous<double>("u0"), Variable.Continuous<double>("u1"), Variable.Continuous<double>("u2"));
+        var v = Vector.Of(Variable.Continuous<double>("v0"), Variable.Continuous<double>("v1"), Variable.Continuous<double>("v2"));
+        var constraint = (u + v <= [4, 5, 6]) & (u >= 0) & (v >= 0) & (u - v <= 1) & (v - u <= 1);
+
+        var solution = Optimum(Problem.Maximise((u + v).Sum()).SubjectTo(constraint));
+
+        Assert.Equal(15, solution.ObjectiveValue, precision: Precision);
+        Assert.Equal(Vector.Of(4d, 5d, 6d), solution.Value(u + v));
+    }
+
+    [Fact]
+    public void ANumberZippedWithATruthIsComparedAndReadAsOne() {
+        var runtime = Variable.TimeSpan("runtime");
+        var job = runtime.Zip(Flag.AsEncodable());
+
+        var capped = Optimum(Problem.Maximise(runtime).SubjectTo((job <= (TimeSpan.FromMinutes(5), false)) & (runtime >= TimeSpan.Zero)));
+        var pinned = Optimum(Problem.Minimise(runtime).SubjectTo(job.EqualTo((TimeSpan.FromMinutes(2), true))));
+
+        Assert.Equal((TimeSpan.FromMinutes(5), false), capped.Value(job));
+        Assert.Equal((TimeSpan.FromMinutes(2), true), pinned.Value(job));
+    }
+
+    [Fact]
     public void TheLargestOfSeveralIsMadeAsSmallAsPossible() {
         var constraint = X.Between(0, 10) & Y.Between(0, 10) & (X + Y >= 7) & (X - Y <= 1);
 

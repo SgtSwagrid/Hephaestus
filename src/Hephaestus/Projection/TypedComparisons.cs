@@ -1,59 +1,72 @@
 namespace Hephaestus;
 
 /// <summary>
-/// What every projected expression can do, whether it is an amount or a position: be compared,
-/// with another of its kind or with a plain value, and be measured under another projection. Each
-/// reduces to the corresponding operator on the underlying linear expressions, after bringing the
-/// right-hand side into the left-hand side's projection.
+/// What every typed expression can do, whatever it is made of: be compared, with another of its
+/// type or with a plain value, after bringing the right-hand side into the left-hand side's
+/// projection. Comparison is entry by entry: numbers are compared as numbers and truths by
+/// implication, false being less than true, so <c>&lt;=</c> between two pairs is <c>&lt;=</c>
+/// between both halves, and two values differ where any of their entries do. A quantity, having
+/// one entry, compares as its underlying expression does.
 /// </summary>
 public static class TypedComparisons {
-    extension<TValue>(ILinearlyEncodable<TValue>) {
-        public static IBooleanExpression operator <=(ILinearlyEncodable<TValue> left, ILinearlyEncodable<TValue> right) => left.Expression <= right.In(left.Projection);
-        public static IBooleanExpression operator <=(ILinearlyEncodable<TValue> left, TValue right) => left.Expression <= left.Projection.Encode(right);
-        public static IBooleanExpression operator <=(TValue left, ILinearlyEncodable<TValue> right) => right.Projection.Encode(left) <= right.Expression;
+    extension<TValue>(IEncodable<TValue>) {
+        public static IBooleanExpression operator <=(IEncodable<TValue> left, IEncodable<TValue> right) => Relate(left, Relation.LessThanOrEqual, right);
+        public static IBooleanExpression operator <=(IEncodable<TValue> left, TValue right) => Relate(left, Relation.LessThanOrEqual, right);
+        public static IBooleanExpression operator <=(TValue left, IEncodable<TValue> right) => Relate(left, Relation.LessThanOrEqual, right);
 
-        public static IBooleanExpression operator >=(ILinearlyEncodable<TValue> left, ILinearlyEncodable<TValue> right) => left.Expression >= right.In(left.Projection);
-        public static IBooleanExpression operator >=(ILinearlyEncodable<TValue> left, TValue right) => left.Expression >= left.Projection.Encode(right);
-        public static IBooleanExpression operator >=(TValue left, ILinearlyEncodable<TValue> right) => right.Projection.Encode(left) >= right.Expression;
+        public static IBooleanExpression operator >=(IEncodable<TValue> left, IEncodable<TValue> right) => Relate(left, Relation.GreaterThanOrEqual, right);
+        public static IBooleanExpression operator >=(IEncodable<TValue> left, TValue right) => Relate(left, Relation.GreaterThanOrEqual, right);
+        public static IBooleanExpression operator >=(TValue left, IEncodable<TValue> right) => Relate(left, Relation.GreaterThanOrEqual, right);
 
-        public static IBooleanExpression operator <(ILinearlyEncodable<TValue> left, ILinearlyEncodable<TValue> right) => left.Expression < right.In(left.Projection);
-        public static IBooleanExpression operator <(ILinearlyEncodable<TValue> left, TValue right) => left.Expression < left.Projection.Encode(right);
-        public static IBooleanExpression operator <(TValue left, ILinearlyEncodable<TValue> right) => right.Projection.Encode(left) < right.Expression;
+        public static IBooleanExpression operator <(IEncodable<TValue> left, IEncodable<TValue> right) => Relate(left, Relation.LessThan, right);
+        public static IBooleanExpression operator <(IEncodable<TValue> left, TValue right) => Relate(left, Relation.LessThan, right);
+        public static IBooleanExpression operator <(TValue left, IEncodable<TValue> right) => Relate(left, Relation.LessThan, right);
 
-        public static IBooleanExpression operator >(ILinearlyEncodable<TValue> left, ILinearlyEncodable<TValue> right) => left.Expression > right.In(left.Projection);
-        public static IBooleanExpression operator >(ILinearlyEncodable<TValue> left, TValue right) => left.Expression > left.Projection.Encode(right);
-        public static IBooleanExpression operator >(TValue left, ILinearlyEncodable<TValue> right) => right.Projection.Encode(left) > right.Expression;
+        public static IBooleanExpression operator >(IEncodable<TValue> left, IEncodable<TValue> right) => Relate(left, Relation.GreaterThan, right);
+        public static IBooleanExpression operator >(IEncodable<TValue> left, TValue right) => Relate(left, Relation.GreaterThan, right);
+        public static IBooleanExpression operator >(TValue left, IEncodable<TValue> right) => Relate(left, Relation.GreaterThan, right);
     }
 
-    extension<TValue>(ILinearlyEncodable<TValue> expression) {
+    extension<TValue>(IEncodable<TValue> expression) {
         /// <summary>The constraint that this equals <paramref name="other"/>.</summary>
-        public IBooleanExpression EqualTo(ILinearlyEncodable<TValue> other) => expression.Expression.EqualTo(other.In(expression.Projection));
+        public IBooleanExpression EqualTo(IEncodable<TValue> other) => Relate(expression, Relation.Equal, other);
 
-        /// <inheritdoc cref="EqualTo{TValue}(ILinearlyEncodable{TValue}, ILinearlyEncodable{TValue})"/>
-        public IBooleanExpression EqualTo(TValue other) => expression.Expression.EqualTo(expression.Projection.Encode(other));
+        /// <inheritdoc cref="EqualTo{TValue}(IEncodable{TValue}, IEncodable{TValue})"/>
+        public IBooleanExpression EqualTo(TValue other) => Relate(expression, Relation.Equal, other);
 
         /// <summary>The constraint that this differs from <paramref name="other"/>.</summary>
-        public IBooleanExpression NotEqualTo(ILinearlyEncodable<TValue> other) => expression.Expression.NotEqualTo(other.In(expression.Projection));
+        public IBooleanExpression NotEqualTo(IEncodable<TValue> other) => Relate(expression, Relation.NotEqual, other);
 
-        /// <inheritdoc cref="NotEqualTo{TValue}(ILinearlyEncodable{TValue}, ILinearlyEncodable{TValue})"/>
-        public IBooleanExpression NotEqualTo(TValue other) => expression.Expression.NotEqualTo(expression.Projection.Encode(other));
+        /// <inheritdoc cref="NotEqualTo{TValue}(IEncodable{TValue}, IEncodable{TValue})"/>
+        public IBooleanExpression NotEqualTo(TValue other) => Relate(expression, Relation.NotEqual, other);
 
         /// <summary>The constraint <c>lower &lt;= this &lt;= upper</c>.</summary>
         public IBooleanExpression Between(TValue lower, TValue upper) => lower <= expression & expression <= upper;
 
-        /// <inheritdoc cref="Between{TValue}(ILinearlyEncodable{TValue}, TValue, TValue)"/>
-        public IBooleanExpression Between(ILinearlyEncodable<TValue> lower, ILinearlyEncodable<TValue> upper) => lower <= expression & expression <= upper;
+        /// <inheritdoc cref="Between{TValue}(IEncodable{TValue}, TValue, TValue)"/>
+        public IBooleanExpression Between(IEncodable<TValue> lower, IEncodable<TValue> upper) => lower <= expression & expression <= upper;
 
-        /// <inheritdoc cref="Between{TValue}(ILinearlyEncodable{TValue}, TValue, TValue)"/>
-        public IBooleanExpression Between(TValue lower, ILinearlyEncodable<TValue> upper) => lower <= expression & expression <= upper;
+        /// <inheritdoc cref="Between{TValue}(IEncodable{TValue}, TValue, TValue)"/>
+        public IBooleanExpression Between(TValue lower, IEncodable<TValue> upper) => lower <= expression & expression <= upper;
 
-        /// <inheritdoc cref="Between{TValue}(ILinearlyEncodable{TValue}, TValue, TValue)"/>
-        public IBooleanExpression Between(ILinearlyEncodable<TValue> lower, TValue upper) => lower <= expression & expression <= upper;
+        /// <inheritdoc cref="Between{TValue}(IEncodable{TValue}, TValue, TValue)"/>
+        public IBooleanExpression Between(IEncodable<TValue> lower, TValue upper) => lower <= expression & expression <= upper;
+    }
 
+    extension<TValue>(ILinearlyEncodable<TValue> expression) {
         /// <summary>
         /// The plain linear expression that measures this under another projection, for example a
         /// duration in minutes for use in a cost function.
         /// </summary>
         public ILinearExpression In(IProjection<TValue> projection) => Projecting.Convert(expression.Expression, expression.Projection, projection);
     }
+
+    private static IBooleanExpression Relate<TValue>(IEncodable<TValue> left, Relation relation, IEncodable<TValue> right) =>
+        Componentwise.Relate(left.Components, relation, Componentwise.Convert(right.Components, right.Projection, left.Projection, like: left.Components));
+
+    private static IBooleanExpression Relate<TValue>(IEncodable<TValue> left, Relation relation, TValue right) =>
+        Componentwise.Relate(left.Components, relation, Componentwise.Constants(left.Components, left.Projection.Encode(right)));
+
+    private static IBooleanExpression Relate<TValue>(TValue left, Relation relation, IEncodable<TValue> right) =>
+        Componentwise.Relate(Componentwise.Constants(right.Components, right.Projection.Encode(left)), relation, right.Components);
 }

@@ -222,7 +222,7 @@ var penalty   = If(finish >= deadline, 50 + 2 * lateness, 0);  // one expression
 
 ### Typed expressions
 
-A `Quantity<T>` is a linear expression read as an *amount* of type `T` (a duration); a `Point<T, TDelta>` is one read as a *position* (a date-time) whose differences are amounts of `TDelta`. Each pairs an ordinary `ILinearExpression` with an `IProjection<T>`, an affine map between `T` and the solver's number line ("seconds since 08:00"). Both are `ILinearlyEncodable<T>`, which is that pair and is where comparison, reading, naming and optimising are defined; only the arithmetic differs between them, and that is all each type carries. A record of your own that implements it is treated alike.
+A `Quantity<T>` is a linear expression read as an *amount* of type `T` (a duration); a `Point<T, TDelta>` is one read as a *position* (a date-time) whose differences are amounts of `TDelta`. Each pairs an ordinary `ILinearExpression` with an `IProjection<T>`, an affine map between `T` and the solver's number line ("seconds since 08:00"). Both are `ILinearlyEncodable<T>`, which is that pair and is where comparison, reading, naming and optimising are defined (comparison and reading once for everything typed, as `IEncodable<T>`, below); only the arithmetic differs between them, and that is all each type carries. A record of your own that implements it is treated alike.
 
 The two types carry the right algebra, once, generically:
 
@@ -249,7 +249,33 @@ var start   = Variable.LocalDateTime("start", origin: shiftStart);
 var runtime     = Variable.Duration("runtime", unit: Duration.FromSeconds(30), inWholeUnits: true);  // quantised
 ```
 
-Supporting another type means writing one small record that implements `IProjection<T>` (or `IPointProjection<T, TDelta>`), plus, for a point type, the three one-line `T ± Quantity<TDelta>` operators that C# will not let the core declare generically (they delegate to `quantity.Beyond(origin, projection)`). A projection can also be had from one you have: `seconds.Biselect(TimeSpan.FromSeconds, span => (long)span.TotalSeconds)` re-views it as another type, and `Select` gives a decoder alone — a reading no constraint can mention. Projections built that way hold functions, so they do not compare equal; write a record where that matters. A projection onto `bool` rather than onto the number line (`IProjection<T, bool>`, `ILogicallyEncodable<T>`) carries a two-state type on a single binary. Typed reads round the underlying number to `Evaluation.DecimalPlaces` of the unit, so that solver noise does not turn 08:04:00 into 08:03:59.99999999; read the underlying expression for the unrounded number. A constraint is read forgiving violations up to `Evaluation.Tolerance`, or whatever you pass instead.
+Supporting another type means writing one small record that implements `IProjection<T>` (or `IPointProjection<T, TDelta>`), plus, for a point type, the three one-line `T ± Quantity<TDelta>` operators that C# will not let the core declare generically (they delegate to `quantity.Beyond(origin, projection)`). A projection can also be had from one you have: `seconds.Biselect(TimeSpan.FromSeconds, span => (long)span.TotalSeconds)` re-views it as another type, and `Select` gives a decoder alone — a reading no constraint can mention. Projections built that way hold functions, so they do not compare equal; write a record where that matters. A projection onto `bool` rather than onto the number line (`IProjection<T, bool>`, `ILogicallyEncodable<T>`) carries a two-state type on a single binary, which is compared, read and zipped like any other. Typed reads round the underlying number to `Evaluation.DecimalPlaces` of the unit, so that solver noise does not turn 08:04:00 into 08:03:59.99999999; read the underlying expression for the unrounded number. A constraint is read forgiving violations up to `Evaluation.Tolerance`, or whatever you pass instead.
+
+### Zips, sequences and vectors
+
+Typed expressions combine. `a.Zip(b)` puts any two side by side as one value of a pair, whatever each is made of: a duration and a date-time, or a number and a truth.
+
+```csharp
+var job      = start.Zip(isRunning.AsEncodable());     // IEncodable<(LocalDateTime, bool)>
+var pinned   = job.EqualTo((shiftStart, true));        // (start == 0) & (isRunning <=> true)
+var location = x.Zip(y).Biselect((across, down) => new Location(across, down), place => (place.X, place.Y));
+var schedule = starts.Sequence();                      // IEncodable<ImmutableArray<LocalDateTime>>
+```
+
+What they have in common is `IEncodable<T>`: a list of components, each a `LinearComponent` read as a number or a `LogicalComponent` read as a truth, and a projection between `T` and the vector of their raw values (a truth counting as 1 or 0). A quantity and a point are an `IEncodable` of one number, a two-state type one of one truth, and a zip or a sequence one of as many as it is made of; `AsEncodable()` lets a plain linear or boolean expression join in. Comparison, `EqualTo`, `NotEqualTo`, `Between`, `solution.Value` and `solution.With` are written once against it, and work entry by entry: numbers compare as numbers, truths by implication (false before true), a relation holds when it holds in every entry, and two values differ where any entry does. Values under different projections are reconciled entry by entry, as quantities are, even when their entries come in another order. So `solution.Value(schedule)` is the whole array, and `schedule.EqualTo(plan)` pins it. There is no `pure` among them: writing a constant through a projection would forget which constant it was.
+
+A `Vector<T>` holds expressions rather than reading them as values, and is combined entry by entry: `Zip` pairs the entries of two vectors and `Select` maps each, so the function sees the quantities themselves and builds expressions out of them.
+
+```csharp
+var u = Vector.Of(Variable.Continuous<double>("u0"), Variable.Continuous<double>("u1"), Variable.Continuous<double>("u2"));
+
+var sums     = u.Zip(v).Select((a, b) => a + b);          // u0 + v0, u1 + v1, u2 + v2
+var fits     = u + v < [4, 5, 6];                         // (u0 + v0 < 4) & (u1 + v1 < 5) & (u2 + v2 < 6)
+var runtimes = finishes.Zip(starts).Select((f, s) => f - s);
+//             u.Zip(v).Select((a, b) => a * b)           // does not compile: not linear
+```
+
+Vectors of quantities add, subtract, scale, `Sum`, take a `Dot` product with plain weights, and compare with each other, with plain arrays and with plain values, which stand for themselves in every entry. A comparison holds when it holds in every entry, so `!(u <= w)` is that some entry exceeds, not `u > w`. `solution.Value(u)` is the vector of values; anything else, vectors of points included, goes through `Zip` and `Select`.
 
 ### Swapping the solver
 

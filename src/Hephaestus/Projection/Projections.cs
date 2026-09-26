@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Hephaestus;
 
 /// <summary>
@@ -40,35 +42,65 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 }
 
 /// <summary>
-/// A linear expression read as a value of type <typeparamref name="TValue"/>, through a projection.
-/// It is what a <see cref="Quantity{T}"/> and a <see cref="Point{T, TDelta}"/> have in common:
-/// comparison, reading off a solution, naming and optimising are the same for both and are written
-/// once against this. Only the arithmetic differs, and that stays with each.
+/// Components read and written as a value of type <typeparamref name="TValue"/>, through a
+/// projection onto their raw form: one number for each component, a truth counting as <c>1</c> or
+/// <c>0</c>. It is what every typed expression is, however many components it has and of whatever
+/// kinds: a <see cref="Quantity{T}"/> is one number, a two-state type one truth, and <c>Zip</c>
+/// puts any two side by side. Comparison, reading and <c>With</c> are written once against it,
+/// entry by entry.
+/// <para>
+/// A projection onto several entries must be affine and increasing in each of them, as one onto a
+/// single number is, and must read the entry of a truth as a truth. Those that <c>Zip</c> and
+/// <c>Sequence</c> build out of lawful projections are.
+/// </para>
+/// </summary>
+public interface IEncodable<TValue> : IDecodedExpression<TValue>, IWritableExpression<TValue> {
+    /// <summary>How the raw form and a <typeparamref name="TValue"/> stand for each other.</summary>
+    IProjection<TValue, ImmutableArray<double>> Projection { get; }
+
+    IDecoder<TValue, ImmutableArray<double>> IDecodedExpression<TValue>.Decoder => Projection;
+
+    IEncoder<TValue, ImmutableArray<double>> IWritableExpression<TValue>.Encoder => Projection;
+}
+
+/// <summary>
+/// A linear expression read as a value of type <typeparamref name="TValue"/>, through a projection:
+/// an <see cref="IEncodable{TValue}"/> of one number. It is what a <see cref="Quantity{T}"/> and a
+/// <see cref="Point{T, TDelta}"/> have in common, and adds to it what only one number can have:
+/// measuring in another unit (<c>In</c>), optimising, and the piecewise functions. Only the
+/// arithmetic differs between the two, and that stays with each.
 /// <para>
 /// Implement it to have a type of your own treated alike; supply the expression and the projection,
 /// and give it whatever algebra suits.
 /// </para>
 /// </summary>
-public interface ILinearlyEncodable<TValue> : IDecodedExpression<TValue>, IWritableExpression<TValue> {
+public interface ILinearlyEncodable<TValue> : IEncodable<TValue> {
+    /// <summary>The underlying linear expression, counted in the projection's own unit.</summary>
+    ILinearExpression Expression { get; }
+
     /// <summary>How the underlying number and a <typeparamref name="TValue"/> stand for each other.</summary>
-    IProjection<TValue> Projection { get; }
+    new IProjection<TValue> Projection { get; }
 
-    IDecoder<TValue, double> IDecodedExpression<TValue>.Decoder => Projection;
+    ImmutableArray<IComponent> IProjectedExpression.Components => [new LinearComponent(Expression)];
 
-    IEncoder<TValue, double> IWritableExpression<TValue>.Encoder => Projection;
+    IProjection<TValue, ImmutableArray<double>> IEncodable<TValue>.Projection => new SingleNumber<TValue>(Projection);
 }
 
 /// <summary>
 /// A boolean expression read as a value of type <typeparamref name="TValue"/>, through a projection
-/// onto truth rather than onto the number line: a two-state type over a single binary, where
-/// <see cref="ILinearlyEncodable{TValue}"/> is a type over a column.
+/// onto truth rather than onto the number line: an <see cref="IEncodable{TValue}"/> of one truth,
+/// carrying a two-state type on a single binary.
 /// </summary>
-public interface ILogicallyEncodable<TValue> {
+public interface ILogicallyEncodable<TValue> : IEncodable<TValue> {
     /// <summary>The underlying boolean expression.</summary>
     IBooleanExpression Expression { get; }
 
     /// <summary>How its truth is read as a <typeparamref name="TValue"/>.</summary>
-    IProjection<TValue, bool> Projection { get; }
+    new IProjection<TValue, bool> Projection { get; }
+
+    ImmutableArray<IComponent> IProjectedExpression.Components => [new LogicalComponent(Expression)];
+
+    IProjection<TValue, ImmutableArray<double>> IEncodable<TValue>.Projection => new SingleTruth<TValue>(Projection);
 }
 
 /// <summary>
@@ -105,11 +137,69 @@ internal static class Projecting {
             ? expression
             : Affine(expression, scale: to.Encode(from.Decode(1)) - to.Encode(from.Decode(0)), offset: to.Encode(from.Decode(0)));
 
-    private static ILinearExpression Affine(ILinearExpression expression, double scale, double offset) =>
+    internal static ILinearExpression Affine(ILinearExpression expression, double scale, double offset) =>
         (scale == 1, offset == 0) switch {
             (true, true) => expression,
             (true, false) => expression + offset,
             (false, true) => scale * expression,
             (false, false) => scale * expression + offset,
         };
+}
+
+/// <summary>A projection onto one number, seen as one onto a raw form of one entry.</summary>
+internal sealed record SingleNumber<TValue>(IProjection<TValue> Projection) : IProjection<TValue, ImmutableArray<double>> {
+    /// <inheritdoc/>
+    public TValue Decode(ImmutableArray<double> representation) => Projection.Decode(representation.Single());
+
+    /// <inheritdoc/>
+    public ImmutableArray<double> Encode(TValue value) => [Projection.Encode(value)];
+}
+
+/// <summary>A projection onto one truth, seen as one onto a raw form of one entry: <c>1</c> for a truth that holds, <c>0</c> for one that does not.</summary>
+internal sealed record SingleTruth<TValue>(IProjection<TValue, bool> Projection) : IProjection<TValue, ImmutableArray<double>> {
+    /// <inheritdoc/>
+    public TValue Decode(ImmutableArray<double> representation) => Projection.Decode(representation.Single() > 0.5);
+
+    /// <inheritdoc/>
+    public ImmutableArray<double> Encode(TValue value) => [Projection.Encode(value) ? 1 : 0];
+}
+
+/// <summary>Two projections side by side: the first reads the leading <see cref="Split"/> entries of the raw form, and the second the rest.</summary>
+internal sealed record PairedProjection<TFirst, TSecond>(
+    IProjection<TFirst, ImmutableArray<double>> First,
+    IProjection<TSecond, ImmutableArray<double>> Second,
+    int Split
+) : IProjection<(TFirst, TSecond), ImmutableArray<double>> {
+    /// <inheritdoc/>
+    public (TFirst, TSecond) Decode(ImmutableArray<double> representation) => (First.Decode(representation[..Split]), Second.Decode(representation[Split..]));
+
+    /// <inheritdoc/>
+    public ImmutableArray<double> Encode((TFirst, TSecond) value) => [.. First.Encode(value.Item1), .. Second.Encode(value.Item2)];
+}
+
+/// <summary>One of the projections in a <see cref="SequencedProjection{TValue}"/>, reading <see cref="Dimension"/> entries from <see cref="Start"/>.</summary>
+internal sealed record SequencedPart<TValue>(
+    IProjection<TValue, ImmutableArray<double>> Projection,
+    int Start,
+    int Dimension
+);
+
+/// <summary>Projections end to end, read and written as an array of their values, one for each.</summary>
+internal sealed record SequencedProjection<TValue>(ImmutableArray<SequencedPart<TValue>> Parts) : IProjection<ImmutableArray<TValue>, ImmutableArray<double>> {
+    /// <inheritdoc/>
+    public ImmutableArray<TValue> Decode(ImmutableArray<double> representation) =>
+        [.. Parts.Select(part => part.Projection.Decode(representation.Slice(part.Start, part.Dimension)))];
+
+    /// <inheritdoc/>
+    /// <exception cref="ArgumentException">The array does not have one value for each projection.</exception>
+    public ImmutableArray<double> Encode(ImmutableArray<TValue> value) =>
+        value.Length == Parts.Length
+            ? [.. Parts.Zip(value, (part, item) => part.Projection.Encode(item)).SelectMany(raw => raw)]
+            : throw new ArgumentException($"An array of {value.Length} values cannot be written where {Parts.Length} are expected.", nameof(value));
+
+    /// <inheritdoc/>
+    public bool Equals(SequencedProjection<TValue>? other) => other is not null && Parts.SequenceEqual(other.Parts);
+
+    /// <inheritdoc/>
+    public override int GetHashCode() => Parts.Aggregate(0, HashCode.Combine);
 }
