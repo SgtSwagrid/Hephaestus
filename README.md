@@ -275,7 +275,7 @@ var runtimes = finishes.Zip(starts).Select((f, s) => f - s);
 //             u.Zip(v).Select((a, b) => a * b)           // does not compile: not linear
 ```
 
-Vectors of quantities add, subtract, scale, `Sum`, take a `Dot` product with plain weights, and compare with each other, with plain arrays and with plain values, which stand for themselves in every entry. A comparison holds when it holds in every entry, so `!(u <= w)` is that some entry exceeds, not `u > w`. `solution.Value(u)` is the vector of values; anything else, vectors of points included, goes through `Zip` and `Select`.
+Vectors of quantities add, subtract, scale, `Sum`, take a `Dot` product with plain weights, and compare with each other, with plain arrays and with plain values, which stand for themselves in every entry. A comparison holds when it holds in every entry, so `!(u <= w)` is that some entry exceeds, not `u > w`. A vector is read as it is mapped: `u.Select(solution.Value)` is the vector of values, whatever its entries are. Vectors of anything else, points included, are combined through `Zip` and `Select`.
 
 ### Swapping the solver
 

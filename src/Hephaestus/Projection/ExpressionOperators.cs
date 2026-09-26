@@ -13,7 +13,7 @@ public static class ExpressionOperators {
     extension<TValue>(IDecodedExpression<TValue> readable) {
         /// <summary>This, read as something else afterwards: <c>runtime.Select(span =&gt; $"{span}")</c>.</summary>
         public IDecodedExpression<TOther> Select<TOther>(Func<TValue, TOther> selector) =>
-            new ReadableExpression<TOther>(readable.Components, readable.Decoder.Select(selector));
+            new DecodedExpression<TOther>(readable.Components, readable.Decoder.Select(selector));
     }
 
     extension<TFirst, TSecond>(IDecodedExpression<(TFirst, TSecond)> pair) {
@@ -102,7 +102,7 @@ public static class ExpressionOperators {
 }
 
 /// <summary>Components with a reading and nothing more.</summary>
-internal sealed record ReadableExpression<TValue>(
+internal sealed record DecodedExpression<TValue>(
     ImmutableArray<IComponent> Components,
     IDecoder<TValue, ImmutableArray<double>> Decoder
 ) : IDecodedExpression<TValue>;

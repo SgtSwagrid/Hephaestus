@@ -171,7 +171,7 @@ public abstract class SolverContract {
         var solution = Optimum(Problem.Maximise((u + v).Sum()).SubjectTo(constraint));
 
         Assert.Equal(15, solution.ObjectiveValue, precision: Precision);
-        Assert.Equal(Vector.Of(4d, 5d, 6d), solution.Value(u + v));
+        Assert.Equal(Vector.Of(4d, 5d, 6d), (u + v).Select(solution.Value));
     }
 
     [Fact]
