@@ -79,21 +79,20 @@ public static class Objective {
     /// <summary>The objective of making a typed expression as large as possible.</summary>
     public static Optimisation Maximise<TValue>(ILinearlyEncodable<TValue> quantity) => Maximise(quantity.Expression);
 
+    // The typed tolerance is never optional: were it, Minimise(quantity) would bind here, as the closer match, rather
+    // than to the overload above, and give a Prioritised where an Optimisation is wanted.
+
     /// <summary>The objective of making a typed quantity as small as possible, give or take <paramref name="tolerance"/>.</summary>
-    public static Prioritised Minimise<T>(Quantity<T> quantity, T? tolerance = default, double relativeTolerance = 0) => new(Minimise(quantity.Expression), Encoded(quantity.Projection, tolerance), relativeTolerance);
+    public static Prioritised Minimise<T>(Quantity<T> quantity, T tolerance, double relativeTolerance = 0) => new(Minimise(quantity), Math.Abs(quantity.Projection.Encode(tolerance)), relativeTolerance);
 
     /// <summary>The objective of making a typed quantity as large as possible, give or take <paramref name="tolerance"/>.</summary>
-    public static Prioritised Maximise<T>(Quantity<T> quantity, T? tolerance = default, double relativeTolerance = 0) => new(Maximise(quantity.Expression), Encoded(quantity.Projection, tolerance), relativeTolerance);
+    public static Prioritised Maximise<T>(Quantity<T> quantity, T tolerance, double relativeTolerance = 0) => new(Maximise(quantity), Math.Abs(quantity.Projection.Encode(tolerance)), relativeTolerance);
 
     /// <summary>The objective of making a typed point as early as possible, give or take <paramref name="tolerance"/>.</summary>
     public static Prioritised Minimise<T, TDelta>(Point<T, TDelta> point, TDelta tolerance) => new(Minimise(point), Math.Abs(point.Projection.Delta.Encode(tolerance)));
 
     /// <summary>The objective of making a typed point as late as possible, give or take <paramref name="tolerance"/>.</summary>
     public static Prioritised Maximise<T, TDelta>(Point<T, TDelta> point, TDelta tolerance) => new(Maximise(point), Math.Abs(point.Projection.Delta.Encode(tolerance)));
-
-    /// <summary>No tolerance at all is the default of every type, reference or value, and stands for none.</summary>
-    private static double Encoded<T>(IProjection<T> projection, T? tolerance) =>
-        tolerance is null || EqualityComparer<T>.Default.Equals(tolerance, default) ? 0 : Math.Abs(projection.Encode(tolerance));
 
     /// <summary>The objectives in order of priority.</summary>
     public static ILexicographicObjective InOrder(IEnumerable<Prioritised> priorities) => new LexicographicObjective([.. priorities]);
