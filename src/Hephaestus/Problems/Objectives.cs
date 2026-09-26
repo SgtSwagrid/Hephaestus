@@ -4,9 +4,9 @@ namespace Hephaestus;
 
 /// <summary>
 /// What a problem is to optimise. It is a value in its own right, which can be built once and set
-/// against one constraint after another. It is either an <see cref="ISingleObjective"/> or an
-/// <see cref="ILexicographicObjective"/>, and it is the objective that makes a problem an
-/// <see cref="IOneShotProblem"/> or an <see cref="IMultipleObjectiveProblem"/>.
+/// against one constraint after another. It is either an <see cref="ISingleObjective"/> or a
+/// <see cref="LexicographicObjective"/>, and it is the objective that makes a problem an
+/// <see cref="IOneShotProblem"/> or a <see cref="MultipleObjectiveProblem"/>.
 /// </summary>
 public interface IObjective;
 
@@ -25,16 +25,6 @@ public sealed record Optimisation(
     ILinearExpression Expression
 ) : ISingleObjective;
 
-/// <summary>
-/// Several objectives in order of priority: the first is optimised, then the second among the
-/// solutions that are best for the first, and so on. (Objectives that are to be traded off against
-/// each other need nothing special: weigh them into one expression.) The one case so far is
-/// <see cref="LexicographicObjective"/>.
-/// </summary>
-public interface ILexicographicObjective : IObjective {
-    /// <summary>The objectives, most important first.</summary>
-    ImmutableArray<Prioritised> Priorities { get; }
-}
 
 /// <summary>An objective in its place among several, and how much of its optimum it may give up for the sake of those after it.</summary>
 /// <param name="Objective">The objective.</param>
@@ -49,8 +39,13 @@ public sealed record Prioritised(
     public static implicit operator Prioritised(Optimisation objective) => new(objective);
 }
 
-/// <inheritdoc cref="ILexicographicObjective"/>
-public sealed record LexicographicObjective(ImmutableArray<Prioritised> Priorities) : ILexicographicObjective;
+/// <summary>
+/// Several objectives in order of priority: the first is optimised, then the second among the
+/// solutions that are best for the first, and so on. (Objectives that are to be traded off against
+/// each other need nothing special: weigh them into one expression.)
+/// </summary>
+/// <param name="Priorities">The objectives, most important first.</param>
+public sealed record LexicographicObjective(ImmutableArray<Prioritised> Priorities) : IObjective;
 
 /// <summary>
 /// Where objectives start: <c>Objective.Minimise(delay)</c>, or
@@ -95,7 +90,7 @@ public static class Objective {
     public static Prioritised Maximise<T, TDelta>(Point<T, TDelta> point, TDelta tolerance) => new(Maximise(point), Math.Abs(point.Projection.Delta.Encode(tolerance)));
 
     /// <summary>The objectives in order of priority.</summary>
-    public static ILexicographicObjective InOrder(IEnumerable<Prioritised> priorities) => new LexicographicObjective([.. priorities]);
+    public static LexicographicObjective InOrder(IEnumerable<Prioritised> priorities) => new([.. priorities]);
 }
 
 /// <summary>Functions over objectives.</summary>
@@ -106,27 +101,27 @@ public static class Objectives {
             objective switch {
                 NoObjective => [],
                 Optimisation optimisation => [new Prioritised(optimisation)],
-                ILexicographicObjective lexicographic => lexicographic.Priorities,
+                LexicographicObjective lexicographic => lexicographic.Priorities,
                 _ => throw new NotSupportedException($"Unknown kind of objective: {objective.GetType().Name}."),
             };
 
         /// <summary>This objective with another after it, which matters only among the solutions that are best for this one.</summary>
-        public ILexicographicObjective Then(Prioritised next) => new LexicographicObjective(objective.Priorities.Add(next));
+        public LexicographicObjective Then(Prioritised next) => new(objective.Priorities.Add(next));
 
         /// <summary>This objective with further ones after it, to be made small, in order.</summary>
-        public ILexicographicObjective ThenMinimise(params IEnumerable<ILinearExpression> expressions) =>
+        public LexicographicObjective ThenMinimise(params IEnumerable<ILinearExpression> expressions) =>
             expressions.Aggregate(Objective.InOrder(objective.Priorities), (chained, expression) => chained.Then(Objective.Minimise(expression)));
 
         /// <summary>This objective with further ones after it, to be made large, in order.</summary>
-        public ILexicographicObjective ThenMaximise(params IEnumerable<ILinearExpression> expressions) =>
+        public LexicographicObjective ThenMaximise(params IEnumerable<ILinearExpression> expressions) =>
             expressions.Aggregate(Objective.InOrder(objective.Priorities), (chained, expression) => chained.Then(Objective.Maximise(expression)));
 
         /// <summary>This objective with another after it, to be made small, which may give up so much of its optimum for the sake of those after it in turn.</summary>
-        public ILexicographicObjective ThenMinimise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
+        public LexicographicObjective ThenMinimise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
             objective.Then(Objective.Minimise(expression, absoluteTolerance, relativeTolerance));
 
         /// <summary>This objective with another after it, to be made large, which may give up so much of its optimum for the sake of those after it in turn.</summary>
-        public ILexicographicObjective ThenMaximise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
+        public LexicographicObjective ThenMaximise(ILinearExpression expression, double absoluteTolerance = 0, double relativeTolerance = 0) =>
             objective.Then(Objective.Maximise(expression, absoluteTolerance, relativeTolerance));
     }
 

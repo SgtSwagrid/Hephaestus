@@ -328,7 +328,7 @@ public sealed class SolvingTests {
         Assert.Equal([new Prioritised(Objective.Maximise(M))], single.Objective.Priorities);
         Assert.Empty(Problem.Satisfy(Linked).Objective.Priorities);
         Assert.Empty(Solver.FindConflict(several));
-        Assert.IsAssignableFrom<IMultipleObjectiveProblem>(several.SubjectTo(M >= 1, N >= 1));
+        Assert.IsType<MultipleObjectiveProblem>(several.SubjectTo(M >= 1, N >= 1));
     }
 
     [Fact]
@@ -363,7 +363,7 @@ public sealed class SolvingTests {
     public void TheKindOfObjectiveIsTheKindOfProblem() {
         Assert.Equal(new SatisfactionProblem(Linked), Problem.Satisfy(Linked));
         Assert.Equal(new SingleObjectiveProblem(new Optimisation(ObjectiveSense.Maximise, M), Linked), Problem.Maximise(M).SubjectTo(Linked));
-        Assert.IsAssignableFrom<ILexicographicObjective>(Problem.Maximise(M).ThenMinimise(N).Objective);
+        Assert.IsType<LexicographicObjective>(Problem.Maximise(M).ThenMinimise(N).Objective);
         Assert.IsAssignableFrom<ISingleObjective>(Problem.Maximise(M).SubjectTo(Linked).Objective);
         Assert.Empty(Objective.None.Priorities);
         Assert.Equal(new NoObjective(), Objective.None);
