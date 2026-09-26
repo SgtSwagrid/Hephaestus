@@ -13,6 +13,11 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 - Typed expressions are made of components, each a `LinearComponent` (a number) or a `LogicalComponent` (a truth), rather than of one linear expression: `IProjectedExpression.Expression` is now `Components`, and the decoders and encoders of typed expressions read and write an `ImmutableArray<double>` with one entry for each component. `IEncodable<TValue>` is the common type of everything typed; `ILinearlyEncodable<TValue>` and `ILogicallyEncodable<TValue>` are its cases of one number and of one truth, and keep their `Expression`.
 - Comparison, `EqualTo`, `NotEqualTo`, `Between` and `solution.With` are written against `IEncodable<TValue>` and work entry by entry, truths being ordered by implication. `ILogicallyEncodable<TValue>` gains them, and `solution.Value`, as a result.
+- The tolerance of `Objective.Minimise(quantity, tolerance)` and `Objective.Maximise(quantity, tolerance)` is no longer optional, as it already was not for a point. For a relative tolerance alone, pass a zero one: `Objective.Maximise(delay, TimeSpan.Zero, relativeTolerance: 0.1)`.
+
+### Fixed
+
+- `Objective.Minimise(quantity)` and `Objective.Maximise(quantity)` gave a `Prioritised` rather than an `Optimisation`, because the overload with an optional tolerance was the closer match. So neither could start a problem (`Problem.Optimise`) or a list of objectives (`.Then`).
 
 ## [0.1.0-beta.2] - 2026-09-20
 

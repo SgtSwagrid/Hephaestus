@@ -239,9 +239,20 @@ public sealed class SolvingTests {
         var start = Variable.DateTime("start", origin);
 
         Assert.Equal(new Prioritised(Objective.Minimise(delay.Expression), 1.5), Objective.Minimise(delay, tolerance: TimeSpan.FromSeconds(90)));
-        Assert.Equal(new Prioritised(Objective.Maximise(delay.Expression), 0, 0.1), Objective.Maximise(delay, relativeTolerance: 0.1));
+        Assert.Equal(new Prioritised(Objective.Maximise(delay.Expression), 0, 0.1), Objective.Maximise(delay, TimeSpan.Zero, relativeTolerance: 0.1));
         Assert.Equal(new Prioritised(Objective.Minimise(start.Expression), 30), Objective.Minimise(start, tolerance: TimeSpan.FromSeconds(30)));
-        Assert.Equal(new Prioritised(Objective.Maximise(start.Expression)), Objective.Maximise(start));
+    }
+
+    [Fact]
+    public void ATypedObjectiveWithoutATolerancePursuesItsExpressionAlone() {
+        var delay = Variable.TimeSpan("delay");
+        var start = Variable.DateTime("start", new DateTime(2026, 9, 19, 8, 0, 0));
+
+        // Each is an Optimisation, not a Prioritised, so it can start a problem or a list of objectives.
+        Assert.IsType<Optimisation>(Objective.Minimise(delay));
+        Assert.IsType<Optimisation>(Objective.Maximise(start));
+        Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(delay.Expression), BooleanConstant.True), Problem.Optimise(Objective.Minimise(delay)));
+        Assert.Equal([Objective.Maximise(start.Expression), Objective.Minimise(delay.Expression)], Objective.Maximise(start).Then(Objective.Minimise(delay)).Priorities.Select(priority => priority.Objective));
     }
 
     [Fact]
