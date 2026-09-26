@@ -25,12 +25,16 @@ public interface IProblem {
 public interface IOneShotProblem : IProblem {
     /// <inheritdoc cref="IProblem.Objective"/>
     new ISingleObjective Objective { get; }
+
+    IObjective IProblem.Objective => Objective;
 }
 
 /// <summary>A problem with several objectives, which comes down to a sequence of one-shot problems.</summary>
 public interface IMultipleObjectiveProblem : IProblem {
     /// <inheritdoc cref="IProblem.Objective"/>
     new ILexicographicObjective Objective { get; }
+
+    IObjective IProblem.Objective => Objective;
 }
 
 /// <summary>The problem of satisfying a constraint, with nothing to optimise. Written <see cref="Problem.Satisfy"/>.</summary>
@@ -41,8 +45,6 @@ public sealed record SatisfactionProblem(
     public NoObjective Objective => Hephaestus.Objective.None;
 
     ISingleObjective IOneShotProblem.Objective => Objective;
-
-    IObjective IProblem.Objective => Objective;
 }
 
 /// <summary>A problem with an objective to pursue. A problem with none is a <see cref="SatisfactionProblem"/>.</summary>
@@ -51,17 +53,13 @@ public sealed record SingleObjectiveProblem(
     IBooleanExpression Constraint
 ) : IOneShotProblem {
     ISingleObjective IOneShotProblem.Objective => Objective;
-
-    IObjective IProblem.Objective => Objective;
 }
 
 /// <inheritdoc cref="IMultipleObjectiveProblem"/>
 public sealed record MultipleObjectiveProblem(
     ILexicographicObjective Objective,
     IBooleanExpression Constraint
-) : IMultipleObjectiveProblem {
-    IObjective IProblem.Objective => Objective;
-}
+) : IMultipleObjectiveProblem;
 
 /// <summary>
 /// Where problems start: <c>Problem.Minimise(cost).SubjectTo(constraint)</c>. A problem is a value,

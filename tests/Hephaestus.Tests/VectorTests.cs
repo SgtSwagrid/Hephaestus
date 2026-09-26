@@ -49,9 +49,9 @@ public sealed class VectorTests {
 
     [Fact]
     public void VectorsOfQuantitiesFormAVectorSpace() {
-        Assert.Equal(Vector.Of(-1d, 1d, 3d), Solution.Value(2 * U - V));
-        Assert.Equal(Vector.Of(-0.5d, -1d, -1.5d), Solution.Value(-U / 2));
-        Assert.Equal(Vector.Of(2d, 2d, 2d), Solution.Value([3, 4, 5] - U));
+        Assert.Equal(Vector.Of(-1d, 1d, 3d), (2 * U - V).Select(Solution.Value));
+        Assert.Equal(Vector.Of(-0.5d, -1d, -1.5d), (-U / 2).Select(Solution.Value));
+        Assert.Equal(Vector.Of(2d, 2d, 2d), ([3, 4, 5] - U).Select(Solution.Value));
         Assert.Equal(6, Solution.Value(U.Sum()));
         Assert.Equal(14, Solution.Value(U.Dot([1, 2, 3])));
     }
@@ -69,15 +69,20 @@ public sealed class VectorTests {
     public void AVectorOfConstraintsCanBeConjoinedDisjoinedAndRead() {
         var close = U.Zip(V).Select((u, v) => v - u <= 1.0);
 
-        Assert.Equal(Vector.Of(false, true, true), Solution.Value(close));
+        Assert.Equal(Vector.Of(false, true, true), close.Select(Solution.Value));
         Assert.False(Solution.Value(close.AllOf()));
         Assert.True(Solution.Value(close.AnyOf()));
     }
 
     [Fact]
-    public void AVectorIsReadEntryByEntry() {
-        Assert.Equal(Vector.Of(1d, 2d, 3d), Solution.Value(U));
-        Assert.Equal(Vector.Of(4d, 5d, 6d), Solution.Value(U + V));
+    public void AVectorOfAnythingReadableIsReadEntryByEntry() {
+        var origin = new DateTime(2026, 9, 26, 8, 0, 0);
+        var starts = Vector.Of(Variable.DateTime("start0", origin), Variable.DateTime("start1", origin));
+        var solution = Solution.With(starts.Elements.Sequence(), [origin, origin.AddMinutes(5)]);
+
+        Assert.Equal(Vector.Of(1d, 2d, 3d), U.Select(solution.Value));
+        Assert.Equal(Vector.Of(4d, 5d, 6d), (U + V).Select(solution.Value));
+        Assert.Equal(Vector.Of(origin, origin.AddMinutes(5)), starts.Select(solution.Value));
     }
 
     [Fact]

@@ -100,12 +100,4 @@ public static class VectorOperators {
         /// <summary>The constraint that some entry holds.</summary>
         public IBooleanExpression AnyOf() => constraints.Elements.AnyOf();
     }
-
-    extension(Solution solution) {
-        /// <summary>The value of each entry under this solution.</summary>
-        public Vector<T> Value<T>(Vector<Quantity<T>> vector) => vector.Select(entry => solution.Value(entry));
-
-        /// <summary>Whether each entry holds under this solution.</summary>
-        public Vector<bool> Value(Vector<IBooleanExpression> constraints) => constraints.Select(constraint => solution.Value(constraint));
-    }
 }

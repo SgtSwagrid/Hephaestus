@@ -6,7 +6,8 @@ namespace Hephaestus;
 /// A fixed number of things of one kind, combined entry by entry: quantities while a model is
 /// built, and their values once it is solved. <c>Zip</c> pairs the entries of two vectors and
 /// <c>Select</c> maps each, so <c>u.Zip(v).Select((a, b) =&gt; a + b)</c> is the vector of sums;
-/// the arithmetic and comparison of vectors of quantities are written that way.
+/// the arithmetic and comparison of vectors of quantities are written that way, and a vector of
+/// anything readable is read as <c>u.Select(solution.Value)</c>.
 /// </summary>
 public sealed record Vector<TElement>(ImmutableArray<TElement> Elements) {
     /// <inheritdoc/>
