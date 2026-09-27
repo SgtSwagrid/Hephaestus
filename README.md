@@ -109,9 +109,9 @@ Swap `OrToolsSolver.Create()` for `OrToolsSolver.Create(OrToolsSolverId.Highs)` 
 There are two algebraic data types, each an interface with a handful of sealed records:
 
 - `ILinearExpression`: `Constant`, `Sum`, `Product`, `Indicator`, and the continuous and integer variables.
-- `IBooleanExpression<TAtom>`: `BooleanConstant`, `BinaryVariable`, the atoms, and the connectives `Negation`, `Conjunction`, `Disjunction`, `Implication` and `Equivalence`.
+- `IBooleanExpression<TTheory>`: `BooleanConstant`, `BinaryVariable`, the theory's atoms (`LinearRelation`), and the connectives `Negation`, `Conjunction`, `Disjunction`, `Implication` and `Equivalence`.
 
-A formula is generic in the atoms it is over, as in SMT, where the logic stays the same while the theory beneath it changes. The atoms of linear arithmetic are `ILinearRelation`s: `x <= y` is a `LinearRelation`, and a formula over them is an `IBooleanExpression<ILinearRelation>`. Pure logic, made of truths and binary variables alone, is over `IPropositional`, which lies beneath every kind of atom, so it mixes with any: `flag & (x <= 4)` is over `ILinearRelation`. The type is covariant, so a formula over fewer kinds of atom is a formula over more, and `IBooleanExpression<IAtom>` is any formula at all, which is what a problem's constraint is. Lowering (below) turns one into a formula over `IAffineRelation`s, relations of an affine form to zero with every piecewise-linear function gone; those are linear relations of a narrower kind, and only they can be normalised, so a backend cannot skip the lowering and still compile.
+A formula is generic in its theory, as in SMT, where the logic stays the same while the theory beneath it changes. Every theory extends `ILogic`, whose formulas are made of truths and binary variables alone; `ILinearArithmetic` adds relations between linear expressions, so `x <= y` is a `LinearRelation` and a formula of linear arithmetic is an `IBooleanExpression<ILinearArithmetic>`, which is what a problem's constraint is. The type is contravariant: a formula of a theory is a formula of every theory that extends it, so pure logic mixes with anything, and `flag & (x <= 4)` is a formula of linear arithmetic. Formulas compare equal whichever theory they are seen in.
 
 Keeping them apart makes illegal compositions unrepresentable: `x * y`, `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` is a truth, combined with `&`, `|` and `!`; where a number is wanted, its `Indicator` is one when it is true and zero when not, so `usesA & usesB` and `usesA.Indicator + usesB.Indicator <= 1` are both fine. Any constraint has an indicator, not only a variable: `jobs.Sum(job => (job.Finish > deadline).Indicator)` counts the late ones.
 
@@ -184,7 +184,7 @@ A variable is a name and a kind (`Continuous`, `Integer`, `Binary`). `0 <= x & x
 
 The MILP encoding runs in four pure steps:
 
-1. **Normalise** to negation normal form, with comparisons as `affine form <= 0` or `== 0`.
+1. **Lower and normalise** (`problem.Linearise()`): piecewise-linear functions become variables, and each constraint becomes negation normal form over exact affine relations, `affine form ~ 0`, facing the way it was written. This is what every backend is handed, Z3 included; the MILP steps below take it from here, turning each relation into a row that faces zero from below.
 2. **Encode the logic** as *guarded rows*, "if these literals all hold then `e <= 0`", introducing as few auxiliary binaries as possible. In a disjunction the existing literals become guards, and only the compound disjuncts *other than the last* need an auxiliary. `(a + h <= b) | (b + h <= a)` comes out as the textbook either-or with one binary; `flag.Iff(x >= 5)` needs none. Equal subformulas share one auxiliary.
 3. **Propagate bounds** (feasibility-based bound tightening) over the unconditional rows. `x <= 3600` bounds `x` directly; `finish == start + runtime` bounds `finish` once `start` and `runtime` are bounded; and so on down the line until nothing changes.
 4. **Relax each guard** with `e <= Σ Mᵢ · (1 if guard i is off, else 0)`. The row only has to give way once some guard is off, so `Mᵢ` need only be the largest value `e` can take *while guard i is off* — the tightest valid choice, derived separately for every guard of every row. A guard the row holds without costs nothing at all. Rows that can never bind are dropped; rows that can never hold forbid their guards outright.
@@ -231,7 +231,7 @@ The two types carry the right algebra, once, generically:
 ```csharp
 Quantity<Duration>               elapsed  = finish - start;          // point - point
 Point<LocalDateTime, Duration>   earliest = start + runtime + slack;     // point + quantity
-IBooleanExpression<ILinearRelation> onTime = finish <= deadline;      // compare with plain values
+IBooleanExpression<ILinearArithmetic> onTime = finish <= deadline;    // compare with plain values
 Point<LocalDateTime, Duration>   release  = shiftStart + runtime;           // plain value + quantity
 //                                          finish + start            // does not compile
 //                                          2 * finish                // does not compile

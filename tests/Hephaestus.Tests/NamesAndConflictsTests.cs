@@ -40,7 +40,7 @@ public sealed class NamesAndConflictsTests {
         Assert.Equal("separated", separated.Format());
         Assert.Equal("!a | separated", conflictFree.Format());
         Assert.Equal("2*turnaround + m <= 9", (2 * (N - M).WithName("turnaround") + M <= 9).Format());
-        Assert.Equal("(m + 2 <= n) | (n + 2 <= m)", ((INamedConstraint<ILinearRelation>)separated).Expression.Format());
+        Assert.Equal("(m + 2 <= n) | (n + 2 <= m)", ((INamedConstraint<ILinearArithmetic>)separated).Expression.Format());
     }
 
     [Fact]
@@ -158,14 +158,14 @@ public sealed class NamesAndConflictsTests {
     }
 
     /// <summary>Offers a fixed answer when asked to narrow a conflict down, and otherwise solves by trying everything.</summary>
-    private sealed record OfferingBackend(Func<IndicatorProblem, ImmutableArray<IBooleanExpression<IAtom>>> Offer, List<int> Sizes) : IMilpBackend, IConflictBackend {
+    private sealed record OfferingBackend(Func<IndicatorProblem, ImmutableArray<IBooleanExpression<ILinearArithmetic>>> Offer, List<int> Sizes) : IMilpBackend, IConflictBackend {
         public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>
             new CountingBackend(Sizes).Solve(problem, start, options, cancellationToken);
 
-        public ImmutableArray<IBooleanExpression<IAtom>> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) => Offer(problem);
+        public ImmutableArray<IBooleanExpression<ILinearArithmetic>> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) => Offer(problem);
     }
 
-    private static IBooleanExpression<ILinearRelation> Padded(IBooleanExpression<ILinearRelation> low, IBooleanExpression<ILinearRelation> high) =>
+    private static IBooleanExpression<ILinearArithmetic> Padded(IBooleanExpression<ILinearArithmetic> low, IBooleanExpression<ILinearArithmetic> high) =>
         Enumerable.Range(0, 100).Select(index => Variable.Binary($"flag{index}").Indicator + Variable.Binary($"flag{index + 1}").Indicator <= 2).AllOf() & low & M.Between(0, 1) & (N >= 0) & high;
 
     [Fact]

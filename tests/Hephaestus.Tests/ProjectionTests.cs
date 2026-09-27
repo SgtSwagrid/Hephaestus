@@ -12,8 +12,8 @@ public sealed class ProjectionTests {
     private static readonly ContinuousVariable FinishSeconds = Variable.Continuous("finish");
     private static readonly ContinuousVariable RuntimeSeconds = Variable.Continuous("runtime");
 
-    private static void AssertSameConstraint(IBooleanExpression<ILinearRelation> expected, IBooleanExpression<ILinearRelation> actual) =>
-        Assert.Equal(expected.Normalised(), actual.Normalised());
+    private static void AssertSameConstraint(IBooleanExpression<ILinearArithmetic> expected, IBooleanExpression<ILinearArithmetic> actual) =>
+        Assert.Equal(NormalForms.Canonical(expected.Normalise()), NormalForms.Canonical(actual.Normalise()));
 
     [Fact]
     public void TheDifferenceOfTwoPointsIsAQuantity() {
@@ -154,7 +154,7 @@ public sealed class ProjectionTests {
         public Direction Decode(bool representation) => representation ? Direction.Up : Direction.Down;
     }
 
-    private sealed record Switch(IBooleanExpression<ILinearRelation> Expression, IProjection<Direction, bool> Projection) : ILogicallyEncodable<Direction>;
+    private sealed record Switch(IBooleanExpression<ILinearArithmetic> Expression, IProjection<Direction, bool> Projection) : ILogicallyEncodable<Direction>;
 
     [Fact]
     public void AValueCanBeProjectedOntoATruthRatherThanANumber() {

@@ -9,7 +9,7 @@ public sealed class PiecewiseTests {
     private static readonly ContinuousVariable Z = Variable.Continuous("z");
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly IntegerVariable M = Variable.Integer("m");
-    private static readonly IBooleanExpression<ILinearRelation> Box = X.Between(0, 10) & Y.Between(0, 10);
+    private static readonly IBooleanExpression<ILinearArithmetic> Box = X.Between(0, 10) & Y.Between(0, 10);
 
     private static IEnumerable<string> Rows(IOneShotProblem problem) => problem.Encode().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal);
 
@@ -107,7 +107,7 @@ public sealed class PiecewiseTests {
     public void LoweredConstraintsKnowWhichOnesWereWritten() {
         var written = Box & (Max(X, Y) <= 8);
 
-        var constraints = Problem.Minimise(Max(X, Y)).SubjectTo(written).Linearise().Constraints(written);
+        var constraints = Problem.Minimise(Max(X, Y)).SubjectTo(written).Linearise().Constraints;
 
         // Those as written come first and in order, each beside what it was lowered to.
         Assert.Equal(written.Conjuncts, constraints.Take(written.Conjuncts.Length).Select(constraint => constraint.Written));
@@ -121,7 +121,7 @@ public sealed class PiecewiseTests {
     public void AProblemWithNothingToLowerIsAllAsWritten() {
         var written = Box & (X <= 8);
 
-        var constraints = Problem.Minimise(X).SubjectTo(written).Linearise().Constraints(written);
+        var constraints = Problem.Minimise(X).SubjectTo(written).Linearise().Constraints;
 
         Assert.Equal(written.Conjuncts, constraints.Select(constraint => constraint.Written));
     }
@@ -150,8 +150,8 @@ public sealed class PiecewiseTests {
 
         Assert.Equal(problem.Objective, linearised.Objective);
         Assert.Empty(linearised.Definitions);
-        Assert.Equal(problem.Constraint.Conjuncts.Select(conjunct => conjunct.Format()), linearised.Constraints(problem.Constraint).Select(constraint => constraint.Written!.Format()));
-        Assert.Equal(["-x <= 0", "x <= 10", "-y <= 0", "y <= 10"], linearised.Constraint.Conjuncts.Select(conjunct => conjunct.Format()));
+        Assert.Equal(problem.Constraint.Conjuncts, linearised.Constraints.Select(constraint => constraint.Written));
+        Assert.Equal(["-x <= 0", "x <= 10", "-y <= 0", "y <= 10"], linearised.Constraints.Select(constraint => constraint.Lowered.Format()));
     }
 
     [Fact]

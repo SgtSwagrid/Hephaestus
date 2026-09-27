@@ -3,78 +3,68 @@ namespace Hephaestus;
 /// <summary>
 /// Logical operators over formulas, whatever their atoms. As with the linear operators, these only
 /// build data; normal forms are computed later, when a model is encoded for a solver. Operands over
-/// different atoms meet over the larger: <c>flag &amp; (x &lt;= 4)</c> is over <see cref="ILinearRelation"/>.
+/// different atoms meet over the larger: <c>flag &amp; (x &lt;= 4)</c> is over <see cref="ILinearArithmetic"/>.
 /// </summary>
 public static class BooleanOperators {
-    extension<TAtom>(IBooleanExpression<TAtom>) {
-        public static IBooleanExpression<TAtom> operator !(IBooleanExpression<TAtom> operand) => new Negation<TAtom>(operand);
-        public static IBooleanExpression<TAtom> operator &(IBooleanExpression<TAtom> left, IBooleanExpression<TAtom> right) => new Conjunction<TAtom>(left, right);
-        public static IBooleanExpression<TAtom> operator |(IBooleanExpression<TAtom> left, IBooleanExpression<TAtom> right) => new Disjunction<TAtom>(left, right);
-        public static IBooleanExpression<TAtom> operator ^(IBooleanExpression<TAtom> left, IBooleanExpression<TAtom> right) => new Negation<TAtom>(new Equivalence<TAtom>(left, right));
+    extension<TTheory>(IBooleanExpression<TTheory>) where TTheory : class, ILogic {
+        public static IBooleanExpression<TTheory> operator !(IBooleanExpression<TTheory> operand) => new Negation<TTheory>(operand);
+        public static IBooleanExpression<TTheory> operator &(IBooleanExpression<TTheory> left, IBooleanExpression<TTheory> right) => new Conjunction<TTheory>(left, right);
+        public static IBooleanExpression<TTheory> operator |(IBooleanExpression<TTheory> left, IBooleanExpression<TTheory> right) => new Disjunction<TTheory>(left, right);
+        public static IBooleanExpression<TTheory> operator ^(IBooleanExpression<TTheory> left, IBooleanExpression<TTheory> right) => new Negation<TTheory>(new Equivalence<TTheory>(left, right));
 
         // Plain truth values mix in on either side, for constraints that depend on known data: isUrgent & (start <= cutoff).
-        public static IBooleanExpression<TAtom> operator &(IBooleanExpression<TAtom> left, bool right) => new Conjunction<TAtom>(left, Propositions.Over<TAtom>(right));
-        public static IBooleanExpression<TAtom> operator &(bool left, IBooleanExpression<TAtom> right) => new Conjunction<TAtom>(Propositions.Over<TAtom>(left), right);
-        public static IBooleanExpression<TAtom> operator |(IBooleanExpression<TAtom> left, bool right) => new Disjunction<TAtom>(left, Propositions.Over<TAtom>(right));
-        public static IBooleanExpression<TAtom> operator |(bool left, IBooleanExpression<TAtom> right) => new Disjunction<TAtom>(Propositions.Over<TAtom>(left), right);
-        public static IBooleanExpression<TAtom> operator ^(IBooleanExpression<TAtom> left, bool right) => new Negation<TAtom>(new Equivalence<TAtom>(left, Propositions.Over<TAtom>(right)));
-        public static IBooleanExpression<TAtom> operator ^(bool left, IBooleanExpression<TAtom> right) => new Negation<TAtom>(new Equivalence<TAtom>(Propositions.Over<TAtom>(left), right));
+        public static IBooleanExpression<TTheory> operator &(IBooleanExpression<TTheory> left, bool right) => new Conjunction<TTheory>(left, Truth(right));
+        public static IBooleanExpression<TTheory> operator &(bool left, IBooleanExpression<TTheory> right) => new Conjunction<TTheory>(Truth(left), right);
+        public static IBooleanExpression<TTheory> operator |(IBooleanExpression<TTheory> left, bool right) => new Disjunction<TTheory>(left, Truth(right));
+        public static IBooleanExpression<TTheory> operator |(bool left, IBooleanExpression<TTheory> right) => new Disjunction<TTheory>(Truth(left), right);
+        public static IBooleanExpression<TTheory> operator ^(IBooleanExpression<TTheory> left, bool right) => new Negation<TTheory>(new Equivalence<TTheory>(left, Truth(right)));
+        public static IBooleanExpression<TTheory> operator ^(bool left, IBooleanExpression<TTheory> right) => new Negation<TTheory>(new Equivalence<TTheory>(Truth(left), right));
     }
 
-    extension<TAtom>(IBooleanExpression<TAtom> expression) {
+    extension<TTheory>(IBooleanExpression<TTheory> expression) where TTheory : class, ILogic {
         /// <summary>The constraint that <paramref name="consequent"/> holds whenever this expression does.</summary>
-        public IBooleanExpression<TAtom> Implies(IBooleanExpression<TAtom> consequent) => new Implication<TAtom>(expression, consequent);
+        public IBooleanExpression<TTheory> Implies(IBooleanExpression<TTheory> consequent) => new Implication<TTheory>(expression, consequent);
 
         /// <summary>The constraint that this expression and <paramref name="other"/> hold or fail together.</summary>
-        public IBooleanExpression<TAtom> Iff(IBooleanExpression<TAtom> other) => new Equivalence<TAtom>(expression, other);
+        public IBooleanExpression<TTheory> Iff(IBooleanExpression<TTheory> other) => new Equivalence<TTheory>(expression, other);
 
-        /// <inheritdoc cref="Implies{TAtom}(IBooleanExpression{TAtom}, IBooleanExpression{TAtom})"/>
-        public IBooleanExpression<TAtom> Implies(bool consequent) => new Implication<TAtom>(expression, Propositions.Over<TAtom>(consequent));
+        /// <inheritdoc cref="Implies{TTheory}(IBooleanExpression{TTheory}, IBooleanExpression{TTheory})"/>
+        public IBooleanExpression<TTheory> Implies(bool consequent) => new Implication<TTheory>(expression, Truth(consequent));
 
-        /// <inheritdoc cref="Iff{TAtom}(IBooleanExpression{TAtom}, IBooleanExpression{TAtom})"/>
-        public IBooleanExpression<TAtom> Iff(bool other) => new Equivalence<TAtom>(expression, Propositions.Over<TAtom>(other));
+        /// <inheritdoc cref="Iff{TTheory}(IBooleanExpression{TTheory}, IBooleanExpression{TTheory})"/>
+        public IBooleanExpression<TTheory> Iff(bool other) => new Equivalence<TTheory>(expression, Truth(other));
     }
 
     extension(bool condition) {
         /// <summary>The constraint that <paramref name="consequent"/> holds if this known condition does: <c>job.IsUrgent.Implies(start &lt;= cutoff)</c>.</summary>
-        public IBooleanExpression<TAtom> Implies<TAtom>(IBooleanExpression<TAtom> consequent) => new Implication<TAtom>(Propositions.Over<TAtom>(condition), consequent);
+        public IBooleanExpression<TTheory> Implies<TTheory>(IBooleanExpression<TTheory> consequent) where TTheory : class, ILogic => new Implication<TTheory>(Truth(condition), consequent);
 
         /// <summary>The constraint that <paramref name="other"/> holds exactly when this known condition does.</summary>
-        public IBooleanExpression<TAtom> Iff<TAtom>(IBooleanExpression<TAtom> other) => new Equivalence<TAtom>(Propositions.Over<TAtom>(condition), other);
+        public IBooleanExpression<TTheory> Iff<TTheory>(IBooleanExpression<TTheory> other) where TTheory : class, ILogic => new Equivalence<TTheory>(Truth(condition), other);
     }
 
-    extension<TAtom>(IEnumerable<IBooleanExpression<TAtom>> expressions) {
+    extension<TTheory>(IEnumerable<IBooleanExpression<TTheory>> expressions) where TTheory : class, ILogic {
         /// <summary>
         /// The conjunction of all expressions, built as a balanced tree. An empty sequence is
         /// trivially true.
         /// </summary>
-        public IBooleanExpression<TAtom> AllOf() => Balanced.Fold([.. expressions], Propositions.Over<TAtom>(true), (left, right) => left & right);
+        public IBooleanExpression<TTheory> AllOf() => Balanced.Fold<IBooleanExpression<TTheory>>([.. expressions], Truth(true), (left, right) => left & right);
 
         /// <summary>
         /// The disjunction of all expressions, built as a balanced tree. An empty sequence is
         /// trivially false.
         /// </summary>
-        public IBooleanExpression<TAtom> AnyOf() => Balanced.Fold([.. expressions], Propositions.Over<TAtom>(false), (left, right) => left | right);
+        public IBooleanExpression<TTheory> AnyOf() => Balanced.Fold<IBooleanExpression<TTheory>>([.. expressions], Truth(false), (left, right) => left | right);
     }
 
     extension<T>(IEnumerable<T> items) {
         /// <summary>The conjunction of the expressions selected from each item.</summary>
-        public IBooleanExpression<TAtom> AllOf<TAtom>(Func<T, IBooleanExpression<TAtom>> selector) => items.Select(selector).AllOf();
+        public IBooleanExpression<TTheory> AllOf<TTheory>(Func<T, IBooleanExpression<TTheory>> selector) where TTheory : class, ILogic => items.Select(selector).AllOf();
 
         /// <summary>The disjunction of the expressions selected from each item.</summary>
-        public IBooleanExpression<TAtom> AnyOf<TAtom>(Func<T, IBooleanExpression<TAtom>> selector) => items.Select(selector).AnyOf();
+        public IBooleanExpression<TTheory> AnyOf<TTheory>(Func<T, IBooleanExpression<TTheory>> selector) where TTheory : class, ILogic => items.Select(selector).AnyOf();
     }
-}
 
-/// <summary>
-/// Formulas of pure logic, seen as formulas over atoms of some other kind. Every kind of atom lies
-/// above <see cref="IPropositional"/>, so the conversion always succeeds; but C# has no way to say
-/// that a type parameter lies above another, so generic code has to ask for it at run time.
-/// </summary>
-internal static class Propositions {
-    /// <summary>A truth, as a formula over atoms of type <typeparamref name="TAtom"/>.</summary>
-    public static IBooleanExpression<TAtom> Over<TAtom>(bool value) => Over<TAtom>(value ? BooleanConstant.True : BooleanConstant.False);
-
-    /// <summary>A formula of pure logic, as one over atoms of type <typeparamref name="TAtom"/>.</summary>
-    public static IBooleanExpression<TAtom> Over<TAtom>(IBooleanExpression<IPropositional> formula) => (IBooleanExpression<TAtom>)formula;
+    /// <summary>A plain truth value as a formula, which is one of pure logic and so of every theory.</summary>
+    private static BooleanConstant Truth(bool value) => value ? BooleanConstant.True : BooleanConstant.False;
 }

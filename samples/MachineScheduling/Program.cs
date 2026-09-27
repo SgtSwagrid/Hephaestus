@@ -53,10 +53,10 @@ foreach (var (name, solver) in new (string, ISolver)[] { ("SCIP", OrToolsSolver.
     });
 }
 
-IBooleanExpression<ILinearRelation> IsClashFree(Job first, Job second) =>
+IBooleanExpression<ILinearArithmetic> IsClashFree(Job first, Job second) =>
     !(first.UsesMachine & second.UsesMachine) | IsSeparated(first, second);
 
-IBooleanExpression<ILinearRelation> IsSeparated(Job first, Job second) =>
+IBooleanExpression<ILinearArithmetic> IsSeparated(Job first, Job second) =>
     (first.Start + changeover <= second.Start) | (second.Start + changeover <= first.Start);
 
 string Schedule(Solution solution) =>

@@ -22,15 +22,15 @@ public enum Relation {
 }
 
 /// <summary>
-/// The atoms of linear arithmetic, as written: relations between linear expressions. A formula over
-/// them is an <c>IBooleanExpression&lt;ILinearRelation&gt;</c>, which is what <c>x &lt;= y</c>,
-/// <c>(x &lt;= y) &amp; flag</c> and every typed comparison are. The one case is <see cref="LinearRelation"/>.
+/// Linear arithmetic: <see cref="ILogic"/> with relations between linear expressions for atoms.
+/// <c>x &lt;= y</c>, <c>(x &lt;= y) &amp; flag</c> and every typed comparison are formulas of it,
+/// and so is the constraint of every problem.
 /// </summary>
-public interface ILinearRelation : IAtom;
+public interface ILinearArithmetic : ILogic;
 
-/// <summary>A relation between two linear expressions: <c>Left &lt;= Right</c>, say.</summary>
+/// <summary>The atom of linear arithmetic: a relation between two linear expressions, <c>Left &lt;= Right</c> say.</summary>
 public sealed record LinearRelation(
     ILinearExpression Left,
     Relation Relation,
     ILinearExpression Right
-) : ILinearRelation, IBooleanExpression<ILinearRelation>;
+) : IBooleanExpression<ILinearArithmetic>;

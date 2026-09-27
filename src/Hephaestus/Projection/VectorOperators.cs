@@ -46,43 +46,43 @@ public static class VectorOperators {
         public static Vector<Quantity<T>> operator *(Vector<Quantity<T>> vector, double factor) => vector.Select(entry => entry * factor);
         public static Vector<Quantity<T>> operator /(Vector<Quantity<T>> vector, double divisor) => vector.Select(entry => entry / divisor);
 
-        public static IBooleanExpression<ILinearRelation> operator <=(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l <= r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <=(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l <= r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <=(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l <= r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <=(Vector<Quantity<T>> left, T right) => left.Select(l => l <= right).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <=(T left, Vector<Quantity<T>> right) => right.Select(r => left <= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <=(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l <= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <=(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l <= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <=(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l <= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <=(Vector<Quantity<T>> left, T right) => left.Select(l => l <= right).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <=(T left, Vector<Quantity<T>> right) => right.Select(r => left <= r).AllOf();
 
-        public static IBooleanExpression<ILinearRelation> operator >=(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l >= r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >=(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l >= r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >=(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l >= r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >=(Vector<Quantity<T>> left, T right) => left.Select(l => l >= right).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >=(T left, Vector<Quantity<T>> right) => right.Select(r => left >= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >=(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l >= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >=(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l >= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >=(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l >= r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >=(Vector<Quantity<T>> left, T right) => left.Select(l => l >= right).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >=(T left, Vector<Quantity<T>> right) => right.Select(r => left >= r).AllOf();
 
-        public static IBooleanExpression<ILinearRelation> operator <(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l < r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l < r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l < r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <(Vector<Quantity<T>> left, T right) => left.Select(l => l < right).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator <(T left, Vector<Quantity<T>> right) => right.Select(r => left < r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l < r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l < r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l < r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <(Vector<Quantity<T>> left, T right) => left.Select(l => l < right).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator <(T left, Vector<Quantity<T>> right) => right.Select(r => left < r).AllOf();
 
-        public static IBooleanExpression<ILinearRelation> operator >(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l > r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l > r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l > r).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >(Vector<Quantity<T>> left, T right) => left.Select(l => l > right).AllOf();
-        public static IBooleanExpression<ILinearRelation> operator >(T left, Vector<Quantity<T>> right) => right.Select(r => left > r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >(Vector<Quantity<T>> left, Vector<Quantity<T>> right) => left.Zip(right).Select((l, r) => l > r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >(Vector<Quantity<T>> left, ImmutableArray<T> right) => left.Zip(Vector.Of(right)).Select((l, r) => l > r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >(ImmutableArray<T> left, Vector<Quantity<T>> right) => Vector.Of(left).Zip(right).Select((l, r) => l > r).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >(Vector<Quantity<T>> left, T right) => left.Select(l => l > right).AllOf();
+        public static IBooleanExpression<ILinearArithmetic> operator >(T left, Vector<Quantity<T>> right) => right.Select(r => left > r).AllOf();
     }
 
     extension<T>(Vector<Quantity<T>> vector) {
         /// <summary>The constraint that this equals <paramref name="other"/> in every entry.</summary>
-        public IBooleanExpression<ILinearRelation> EqualTo(Vector<Quantity<T>> other) => vector.Zip(other).Select((l, r) => l.EqualTo(r)).AllOf();
+        public IBooleanExpression<ILinearArithmetic> EqualTo(Vector<Quantity<T>> other) => vector.Zip(other).Select((l, r) => l.EqualTo(r)).AllOf();
 
         /// <inheritdoc cref="EqualTo{T}(Vector{Quantity{T}}, Vector{Quantity{T}})"/>
-        public IBooleanExpression<ILinearRelation> EqualTo(ImmutableArray<T> other) => vector.Zip(Vector.Of(other)).Select((l, r) => l.EqualTo(r)).AllOf();
+        public IBooleanExpression<ILinearArithmetic> EqualTo(ImmutableArray<T> other) => vector.Zip(Vector.Of(other)).Select((l, r) => l.EqualTo(r)).AllOf();
 
         /// <summary>The constraint that this differs from <paramref name="other"/> in some entry.</summary>
-        public IBooleanExpression<ILinearRelation> NotEqualTo(Vector<Quantity<T>> other) => vector.Zip(other).Select((l, r) => l.NotEqualTo(r)).AnyOf();
+        public IBooleanExpression<ILinearArithmetic> NotEqualTo(Vector<Quantity<T>> other) => vector.Zip(other).Select((l, r) => l.NotEqualTo(r)).AnyOf();
 
         /// <inheritdoc cref="NotEqualTo{T}(Vector{Quantity{T}}, Vector{Quantity{T}})"/>
-        public IBooleanExpression<ILinearRelation> NotEqualTo(ImmutableArray<T> other) => vector.Zip(Vector.Of(other)).Select((l, r) => l.NotEqualTo(r)).AnyOf();
+        public IBooleanExpression<ILinearArithmetic> NotEqualTo(ImmutableArray<T> other) => vector.Zip(Vector.Of(other)).Select((l, r) => l.NotEqualTo(r)).AnyOf();
 
         /// <summary>The sum of the entries, under the projection of the first.</summary>
         /// <exception cref="InvalidOperationException">The vector is empty, so there is no projection to sum under.</exception>
@@ -93,11 +93,11 @@ public static class VectorOperators {
         public Quantity<T> Dot(ImmutableArray<double> weights) => vector.Zip(Vector.Of(weights)).Select((entry, weight) => weight * entry).Sum();
     }
 
-    extension(Vector<IBooleanExpression<ILinearRelation>> constraints) {
+    extension(Vector<IBooleanExpression<ILinearArithmetic>> constraints) {
         /// <summary>The constraint that every entry holds.</summary>
-        public IBooleanExpression<ILinearRelation> AllOf() => constraints.Elements.AllOf();
+        public IBooleanExpression<ILinearArithmetic> AllOf() => constraints.Elements.AllOf();
 
         /// <summary>The constraint that some entry holds.</summary>
-        public IBooleanExpression<ILinearRelation> AnyOf() => constraints.Elements.AnyOf();
+        public IBooleanExpression<ILinearArithmetic> AnyOf() => constraints.Elements.AnyOf();
     }
 }

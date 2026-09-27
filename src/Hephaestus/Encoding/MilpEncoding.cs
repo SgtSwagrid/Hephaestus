@@ -28,11 +28,11 @@ public static class MilpEncoding {
         var linearised = original.Linearise(options);
         var definitions = linearised.Definitions;
         var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet<IVariable>();
-        // A row is put down to the constraint as it was written; one that nobody wrote stands for itself.
-        var conjuncts = linearised.Constraints(original.Constraint).Select(constraint => (Origin: constraint.Written ?? constraint.Lowered, Formula: constraint.Lowered.Normalise(options.StrictnessEpsilon)));
+        // A row is put down to the constraint as it was written; one that nobody wrote is put down to nothing.
+        var conjuncts = linearised.Constraints.Select(constraint => (Origin: constraint.Written, Formula: constraint.Lowered));
         // A maximum that the problem turns out not to lean on is never tied down, and would take its operands with it.
         var variables = linearised.Variables.Union(original.Variables);
-        var program = IndicatorEncoding.Encode(conjuncts, new AuxiliaryNaming([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix));
+        var program = IndicatorEncoding.Encode(conjuncts, new EncodingContext([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix, options.StrictnessEpsilon));
         var stated = BoundPropagation.Sweep(program.Rows.Where(IsStatedBound), ImmutableDictionary<IVariable, Interval>.Empty);
         return WithOrigins(program.Rows.Where(IsStatedBound), stated, WithBounds(definitions, options.BoundPropagationRounds, new IndicatorProblem(
             [
@@ -49,7 +49,7 @@ public static class MilpEncoding {
         IVariable Variable,
         bool IsUpper,
         double Value,
-        IBooleanExpression<IAtom>? Origin
+        IBooleanExpression<ILinearArithmetic>? Origin
     );
 
     /// <summary>

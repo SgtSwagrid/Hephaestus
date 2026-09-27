@@ -150,7 +150,7 @@ public static class Objectives {
         /// value, for the rounding of large numbers), but never as much as half a unit, so that a
         /// whole-valued objective is still held to its value exactly.
         /// </summary>
-        public IBooleanExpression<ILinearRelation> NoWorseThan(double value) =>
+        public IBooleanExpression<ILinearArithmetic> NoWorseThan(double value) =>
             priority.Objective.Sense == ObjectiveSense.Minimise
                 ? priority.Objective.Expression <= value + priority.Slack(value)
                 : priority.Objective.Expression >= value - priority.Slack(value);

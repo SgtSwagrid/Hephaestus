@@ -55,7 +55,7 @@ internal static class GurobiLicence {
 public sealed class LinearProgrammingSolverTests {
     private static readonly ContinuousVariable X = Variable.Continuous("x");
     private static readonly ContinuousVariable Gap = Variable.Continuous("gap");
-    private static readonly IBooleanExpression<ILinearRelation> Domain = X.Between(0, 10) & Gap.Between(0, 10) & (Gap >= X - 5) & (Gap >= 5 - X);
+    private static readonly IBooleanExpression<ILinearArithmetic> Domain = X.Between(0, 10) & Gap.Between(0, 10) & (Gap >= X - 5) & (Gap >= 5 - X);
 
     [Theory]
     [InlineData(OrToolsSolverId.Glop)]

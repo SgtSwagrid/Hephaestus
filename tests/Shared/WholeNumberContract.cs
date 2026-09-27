@@ -20,7 +20,7 @@ public abstract class WholeNumberContract {
 
     private const double Changeover = 120;
 
-    private static IBooleanExpression<ILinearRelation> Separated(ILinearExpression first, ILinearExpression second) =>
+    private static IBooleanExpression<ILinearArithmetic> Separated(ILinearExpression first, ILinearExpression second) =>
         (first + Changeover <= second) | (second + Changeover <= first);
 
     private Solution Optimum(IOneShotProblem problem) => Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
@@ -154,7 +154,7 @@ public abstract class WholeNumberContract {
         Assert.Equal((120, 0, 3), (solution.Value(StartA), solution.Value(StartB), solution.Value(N)));
     }
 
-    private Solution Optimum(IMultipleObjectiveProblem problem, IBooleanExpression<ILinearRelation> also) =>
+    private Solution Optimum(IMultipleObjectiveProblem problem, IBooleanExpression<ILinearArithmetic> also) =>
         Assert.IsType<Optimal>(Solver.Solve(problem.SubjectTo(also))).Solution;
 
     [Fact]

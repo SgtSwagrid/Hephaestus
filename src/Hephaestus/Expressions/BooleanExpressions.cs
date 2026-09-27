@@ -1,42 +1,44 @@
 namespace Hephaestus;
 
 /// <summary>
-/// A predicate of some theory: what a formula is about, beneath its logic. The atoms of linear
-/// arithmetic are <see cref="ILinearRelation"/>s, and once a problem has been lowered,
-/// <see cref="IAffineRelation"/>s. A formula names in its type the atoms it may contain.
+/// Propositional logic: the theory of truths and binary variables, joined by <c>&amp;</c>,
+/// <c>|</c>, <c>!</c>, <c>=&gt;</c> and <c>&lt;=&gt;</c>. Every other theory extends it, adding atoms
+/// of its own, as <see cref="ILinearArithmetic"/> adds relations between linear expressions. A theory
+/// is only ever a type argument: <c>IBooleanExpression&lt;ILogic&gt;</c> is a formula of pure logic.
 /// </summary>
-public interface IAtom;
+public interface ILogic;
 
 /// <summary>
-/// The atoms of no theory: nothing is one. A formula of pure logic, made of truths and binary
-/// variables alone, is a formula over these; and since they lie beneath the atoms of every theory,
-/// it is a formula over any theory's too, and mixes with any: <c>flag &amp; (x &lt;= 4)</c> is a
-/// formula over <see cref="ILinearRelation"/>. The narrowest kind of atom of every theory is listed
-/// here as a base, which is what puts this beneath them all.
-/// </summary>
-public interface IPropositional : IAffineRelation;
-
-/// <summary>
-/// A formula: truths combined by logic, over atoms of type <typeparamref name="TAtom"/>. The cases
-/// are <see cref="BooleanConstant"/>, <see cref="BinaryVariable"/>, the atoms themselves, and the
-/// connectives <see cref="INegation{TAtom}"/>, <see cref="IConjunction{TAtom}"/>,
-/// <see cref="IDisjunction{TAtom}"/>, <see cref="IImplication{TAtom}"/>,
-/// <see cref="IEquivalence{TAtom}"/> and <see cref="INamedConstraint{TAtom}"/>. Like linear
+/// A formula of theory <typeparamref name="TTheory"/>: truths combined by logic, over whatever atoms
+/// the theory has. The cases are <see cref="BooleanConstant"/>, <see cref="BinaryVariable"/>, the
+/// atoms of the theory (<see cref="LinearRelation"/>, for linear arithmetic), and the connectives
+/// <see cref="INegation{TTheory}"/>, <see cref="IConjunction{TTheory}"/>,
+/// <see cref="IDisjunction{TTheory}"/>, <see cref="IImplication{TTheory}"/>,
+/// <see cref="IEquivalence{TTheory}"/> and <see cref="INamedConstraint{TTheory}"/>. Like linear
 /// expressions, formulas are plain data kept exactly as written.
 /// <para>
-/// A formula over fewer kinds of atom is a formula over more: the type is covariant. So a connective
-/// is recognised by its interface rather than its class, since a <c>Conjunction&lt;IPropositional&gt;</c>
-/// seen as a formula over <see cref="ILinearRelation"/> is not a <c>Conjunction&lt;ILinearRelation&gt;</c>.
-/// For the same reason the connectives are classes rather than records: a record is only ever equal
-/// to its own instantiation, where <c>a &amp; b</c> is the same formula whichever atoms it is seen over.
+/// A formula of a theory is a formula of every theory that extends it: the type is contravariant,
+/// so pure logic mixes with anything, and <c>flag &amp; (x &lt;= 4)</c> is a formula of linear
+/// arithmetic. So a connective is recognised by its interface rather than its class, since a
+/// <c>Conjunction&lt;ILogic&gt;</c> seen as a formula of linear arithmetic is not a
+/// <c>Conjunction&lt;ILinearArithmetic&gt;</c>. For the same reason the connectives are classes, not
+/// records: a record only ever equals its own instantiation, where <c>a &amp; b</c> is the same formula
+/// in whichever theory it is seen.
 /// </para>
 /// </summary>
-public interface IBooleanExpression<out TAtom> : IReadableExpression<bool> {
+public interface IBooleanExpression<in TTheory> : IReadableExpression<bool> {
     bool IReadableExpression<bool>.Read(Solution solution) => Evaluation.Holds(solution, this, Evaluation.Tolerance);
 }
 
+/// <summary>
+/// Every theory at once: what a formula of any theory can be seen as. Formulas are compared through
+/// it, so that equality does not depend on the theory each was built in. A new theory is added here
+/// as a base.
+/// </summary>
+internal interface IEveryTheory : ILinearArithmetic;
+
 /// <summary>A fixed truth value.</summary>
-public sealed record BooleanConstant(bool Value) : IBooleanExpression<IPropositional> {
+public sealed record BooleanConstant(bool Value) : IBooleanExpression<ILogic> {
     /// <summary>The expression that always holds.</summary>
     public static BooleanConstant True { get; } = new(true);
 
@@ -45,18 +47,18 @@ public sealed record BooleanConstant(bool Value) : IBooleanExpression<IPropositi
 }
 
 /// <summary>Holds exactly when the operand does not.</summary>
-public interface INegation<out TAtom> : IBooleanExpression<TAtom> {
+public interface INegation<in TTheory> : IBooleanExpression<TTheory> {
     /// <summary>The formula negated.</summary>
-    IBooleanExpression<TAtom> Operand { get; }
+    IBooleanExpression<TTheory> Operand { get; }
 }
 
-/// <inheritdoc cref="INegation{TAtom}"/>
-public sealed class Negation<TAtom>(IBooleanExpression<TAtom> operand) : INegation<TAtom> {
+/// <inheritdoc cref="INegation{TTheory}"/>
+public sealed class Negation<TTheory>(IBooleanExpression<TTheory> operand) : INegation<TTheory> {
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Operand => operand;
+    public IBooleanExpression<TTheory> Operand => operand;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is INegation<object> other && Operand.Equals(other.Operand);
+    public override bool Equals(object? obj) => obj is INegation<IEveryTheory> other && Operand.Equals(other.Operand);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(nameof(Negation<>), Operand);
@@ -66,24 +68,24 @@ public sealed class Negation<TAtom>(IBooleanExpression<TAtom> operand) : INegati
 }
 
 /// <summary>Holds exactly when both sides hold.</summary>
-public interface IConjunction<out TAtom> : IBooleanExpression<TAtom> {
+public interface IConjunction<in TTheory> : IBooleanExpression<TTheory> {
     /// <summary>The left-hand side.</summary>
-    IBooleanExpression<TAtom> Left { get; }
+    IBooleanExpression<TTheory> Left { get; }
 
     /// <summary>The right-hand side.</summary>
-    IBooleanExpression<TAtom> Right { get; }
+    IBooleanExpression<TTheory> Right { get; }
 }
 
-/// <inheritdoc cref="IConjunction{TAtom}"/>
-public sealed class Conjunction<TAtom>(IBooleanExpression<TAtom> left, IBooleanExpression<TAtom> right) : IConjunction<TAtom> {
+/// <inheritdoc cref="IConjunction{TTheory}"/>
+public sealed class Conjunction<TTheory>(IBooleanExpression<TTheory> left, IBooleanExpression<TTheory> right) : IConjunction<TTheory> {
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Left => left;
+    public IBooleanExpression<TTheory> Left => left;
 
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Right => right;
+    public IBooleanExpression<TTheory> Right => right;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is IConjunction<object> other && Left.Equals(other.Left) && Right.Equals(other.Right);
+    public override bool Equals(object? obj) => obj is IConjunction<IEveryTheory> other && Left.Equals(other.Left) && Right.Equals(other.Right);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(nameof(Conjunction<>), Left, Right);
@@ -93,24 +95,24 @@ public sealed class Conjunction<TAtom>(IBooleanExpression<TAtom> left, IBooleanE
 }
 
 /// <summary>Holds exactly when at least one side holds.</summary>
-public interface IDisjunction<out TAtom> : IBooleanExpression<TAtom> {
+public interface IDisjunction<in TTheory> : IBooleanExpression<TTheory> {
     /// <summary>The left-hand side.</summary>
-    IBooleanExpression<TAtom> Left { get; }
+    IBooleanExpression<TTheory> Left { get; }
 
     /// <summary>The right-hand side.</summary>
-    IBooleanExpression<TAtom> Right { get; }
+    IBooleanExpression<TTheory> Right { get; }
 }
 
-/// <inheritdoc cref="IDisjunction{TAtom}"/>
-public sealed class Disjunction<TAtom>(IBooleanExpression<TAtom> left, IBooleanExpression<TAtom> right) : IDisjunction<TAtom> {
+/// <inheritdoc cref="IDisjunction{TTheory}"/>
+public sealed class Disjunction<TTheory>(IBooleanExpression<TTheory> left, IBooleanExpression<TTheory> right) : IDisjunction<TTheory> {
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Left => left;
+    public IBooleanExpression<TTheory> Left => left;
 
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Right => right;
+    public IBooleanExpression<TTheory> Right => right;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is IDisjunction<object> other && Left.Equals(other.Left) && Right.Equals(other.Right);
+    public override bool Equals(object? obj) => obj is IDisjunction<IEveryTheory> other && Left.Equals(other.Left) && Right.Equals(other.Right);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(nameof(Disjunction<>), Left, Right);
@@ -120,24 +122,24 @@ public sealed class Disjunction<TAtom>(IBooleanExpression<TAtom> left, IBooleanE
 }
 
 /// <summary>Holds unless the antecedent holds and the consequent does not.</summary>
-public interface IImplication<out TAtom> : IBooleanExpression<TAtom> {
+public interface IImplication<in TTheory> : IBooleanExpression<TTheory> {
     /// <summary>What is supposed.</summary>
-    IBooleanExpression<TAtom> Antecedent { get; }
+    IBooleanExpression<TTheory> Antecedent { get; }
 
     /// <summary>What follows.</summary>
-    IBooleanExpression<TAtom> Consequent { get; }
+    IBooleanExpression<TTheory> Consequent { get; }
 }
 
-/// <inheritdoc cref="IImplication{TAtom}"/>
-public sealed class Implication<TAtom>(IBooleanExpression<TAtom> antecedent, IBooleanExpression<TAtom> consequent) : IImplication<TAtom> {
+/// <inheritdoc cref="IImplication{TTheory}"/>
+public sealed class Implication<TTheory>(IBooleanExpression<TTheory> antecedent, IBooleanExpression<TTheory> consequent) : IImplication<TTheory> {
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Antecedent => antecedent;
+    public IBooleanExpression<TTheory> Antecedent => antecedent;
 
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Consequent => consequent;
+    public IBooleanExpression<TTheory> Consequent => consequent;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is IImplication<object> other && Antecedent.Equals(other.Antecedent) && Consequent.Equals(other.Consequent);
+    public override bool Equals(object? obj) => obj is IImplication<IEveryTheory> other && Antecedent.Equals(other.Antecedent) && Consequent.Equals(other.Consequent);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(nameof(Implication<>), Antecedent, Consequent);
@@ -147,24 +149,24 @@ public sealed class Implication<TAtom>(IBooleanExpression<TAtom> antecedent, IBo
 }
 
 /// <summary>Holds exactly when both sides have the same truth value.</summary>
-public interface IEquivalence<out TAtom> : IBooleanExpression<TAtom> {
+public interface IEquivalence<in TTheory> : IBooleanExpression<TTheory> {
     /// <summary>The left-hand side.</summary>
-    IBooleanExpression<TAtom> Left { get; }
+    IBooleanExpression<TTheory> Left { get; }
 
     /// <summary>The right-hand side.</summary>
-    IBooleanExpression<TAtom> Right { get; }
+    IBooleanExpression<TTheory> Right { get; }
 }
 
-/// <inheritdoc cref="IEquivalence{TAtom}"/>
-public sealed class Equivalence<TAtom>(IBooleanExpression<TAtom> left, IBooleanExpression<TAtom> right) : IEquivalence<TAtom> {
+/// <inheritdoc cref="IEquivalence{TTheory}"/>
+public sealed class Equivalence<TTheory>(IBooleanExpression<TTheory> left, IBooleanExpression<TTheory> right) : IEquivalence<TTheory> {
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Left => left;
+    public IBooleanExpression<TTheory> Left => left;
 
     /// <inheritdoc/>
-    public IBooleanExpression<TAtom> Right => right;
+    public IBooleanExpression<TTheory> Right => right;
 
     /// <inheritdoc/>
-    public override bool Equals(object? obj) => obj is IEquivalence<object> other && Left.Equals(other.Left) && Right.Equals(other.Right);
+    public override bool Equals(object? obj) => obj is IEquivalence<IEveryTheory> other && Left.Equals(other.Left) && Right.Equals(other.Right);
 
     /// <inheritdoc/>
     public override int GetHashCode() => HashCode.Combine(nameof(Equivalence<>), Left, Right);

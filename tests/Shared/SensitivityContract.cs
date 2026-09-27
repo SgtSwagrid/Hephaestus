@@ -27,7 +27,7 @@ public abstract class SensitivityContract {
     private ShadowPrices Prices(IOneShotProblem problem) => problem.ShadowPrices(Assert.IsType<Optimal>(Solver.Solve(problem)).Solution, Backend);
 
     /// <summary>The rate at which the optimum moves as <paramref name="loosened"/> takes the place of <paramref name="constraint"/>.</summary>
-    private double Rate(IOneShotProblem problem, IBooleanExpression<ILinearRelation> constraint, IBooleanExpression<ILinearRelation> loosened) =>
+    private double Rate(IOneShotProblem problem, IBooleanExpression<ILinearArithmetic> constraint, IBooleanExpression<ILinearArithmetic> loosened) =>
         (Optimum(Problem.Optimise(problem.Objective).SubjectTo(problem.Constraint.Conjuncts.Replace(constraint, loosened))) - Optimum(problem)) / Step;
 
     [Fact]

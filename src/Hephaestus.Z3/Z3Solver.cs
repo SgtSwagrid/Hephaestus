@@ -27,7 +27,7 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
         var optimiser = context.MkOptimize();
         Configure(context, optimiser, Options ?? SolverOptions.Default);
         optimiser.Assert([.. symbols.Constants.Keys.OfType<BinaryVariable>().Select(variable => Domain(symbols, variable))]);
-        optimiser.Assert(Boolean(symbols, linearised.Constraint));
+        optimiser.Assert([.. linearised.Constraints.Select(constraint => Boolean(symbols, constraint.Lowered))]);
         var handle = linearised.Objective switch {
             Optimisation { Sense: ObjectiveSense.Minimise } => optimiser.MkMinimize(objective),
             Optimisation { Sense: ObjectiveSense.Maximise } => optimiser.MkMaximize(objective),
@@ -77,20 +77,15 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
         }
     }
 
-    private static BoolExpr Boolean(Symbols symbols, IBooleanExpression<IAffineRelation> expression) => DeepRecursion.Guard(BooleanUnguarded, symbols, expression);
+    private static BoolExpr Boolean(Symbols symbols, INormalForm formula) => DeepRecursion.Guard(BooleanUnguarded, symbols, formula);
 
-    private static BoolExpr BooleanUnguarded(Symbols symbols, IBooleanExpression<IAffineRelation> expression) =>
-        expression switch {
-            BooleanConstant constant => symbols.Context.MkBool(constant.Value),
-            BinaryVariable variable => symbols.Context.MkEq(symbols.Constants[variable], symbols.Context.MkInt(1)),
+    private static BoolExpr BooleanUnguarded(Symbols symbols, INormalForm formula) =>
+        formula switch {
+            Literal literal => symbols.Context.MkEq(symbols.Constants[literal.Variable], symbols.Context.MkInt(literal.IsPositive ? 1 : 0)),
             AffineRelation relation => Compare(symbols.Context, relation.Relation, Linear(symbols, relation.Difference)),
-            INegation<IAffineRelation> negation => symbols.Context.MkNot(Boolean(symbols, negation.Operand)),
-            INamedConstraint<IAffineRelation> named => Boolean(symbols, named.Expression),
-            IConjunction<IAffineRelation> conjunction => symbols.Context.MkAnd(Boolean(symbols, conjunction.Left), Boolean(symbols, conjunction.Right)),
-            IDisjunction<IAffineRelation> disjunction => symbols.Context.MkOr(Boolean(symbols, disjunction.Left), Boolean(symbols, disjunction.Right)),
-            IImplication<IAffineRelation> implication => symbols.Context.MkImplies(Boolean(symbols, implication.Antecedent), Boolean(symbols, implication.Consequent)),
-            IEquivalence<IAffineRelation> equivalence => symbols.Context.MkIff(Boolean(symbols, equivalence.Left), Boolean(symbols, equivalence.Right)),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
+            All all => symbols.Context.MkAnd([.. all.Operands.Select(operand => Boolean(symbols, operand))]),
+            Any any => symbols.Context.MkOr([.. any.Operands.Select(operand => Boolean(symbols, operand))]),
+            _ => throw new NotSupportedException($"Unknown kind of normal form: {formula.GetType().Name}."),
         };
 
     /// <summary><c>difference ~ 0</c>.</summary>

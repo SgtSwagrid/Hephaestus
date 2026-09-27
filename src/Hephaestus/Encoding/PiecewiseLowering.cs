@@ -18,31 +18,35 @@ public sealed record MaximumDefinition(
 /// <summary><c>Variable</c> stands for <c>Then</c> if <c>Condition</c> holds, and for <c>Otherwise</c> if not.</summary>
 public sealed record ConditionalDefinition(
     INumericVariable Variable,
-    IBooleanExpression<IAffineRelation> Condition,
+    IBooleanExpression<ILinearArithmetic> Condition,
     ILinearExpression Then,
     ILinearExpression Otherwise
 ) : IDefinition;
 
 /// <summary>
-/// A problem freed of piecewise-linear functions: an objective without any, a constraint over
-/// <see cref="IAffineRelation"/>s, and the variables that were introduced to free them, innermost
-/// first. A definition records what its variable stands for; the constraints that tie the two
-/// together are already part of the constraint. Its type is what tells a later pass that the
-/// lowering has been done: a formula as written cannot be normalised, and this one can.
+/// A problem lowered for a solver: an objective without piecewise-linear functions, its constraints
+/// in normal form, and the variables that were introduced to free them of those functions,
+/// innermost first. A definition records what its variable stands for; the constraints that tie
+/// the two together are among the constraints. Every backend starts from this, and the only way to
+/// have one is <c>problem.Linearise()</c>, so none can meet a function it does not know.
 /// </summary>
 public sealed record LinearisedProblem(
     ISingleObjective Objective,
-    IBooleanExpression<IAffineRelation> Constraint,
+    ImmutableArray<LoweredConstraint> Constraints,
     ImmutableArray<IDefinition> Definitions
 ) {
     /// <summary>The variables that were introduced.</summary>
     public ImmutableSortedSet<IVariable> Auxiliaries => Definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
 }
 
-/// <summary>A constraint of a lowered problem, beside the one it was written as, where anybody wrote it.</summary>
+/// <summary>
+/// A constraint of a lowered problem, in normal form, beside the one it was written as. Lowering
+/// keeps the constraints in the order they were written and adds its own after them: what ties a
+/// maximum to its operands, which nobody wrote and which nothing is put down to.
+/// </summary>
 public sealed record LoweredConstraint(
-    IBooleanExpression<IAffineRelation> Lowered,
-    IBooleanExpression<IAtom>? Written
+    INormalForm Lowered,
+    IBooleanExpression<ILinearArithmetic>? Written
 );
 
 /// <summary>
@@ -56,29 +60,18 @@ public sealed record LoweredConstraint(
 public static class PiecewiseLowering {
     extension(IOneShotProblem problem) {
         /// <summary>
-        /// An equivalent problem without piecewise-linear functions, its relations brought to affine
-        /// form. A problem that has none keeps its objective, and its constraint's shape.
+        /// The problem lowered for a solver: its piecewise-linear functions lifted out as variables,
+        /// and each of its constraints, in the order written, brought to normal form.
         /// </summary>
-        /// <exception cref="ModellingException">An expression is not finite, or an atom is of a kind that lowering does not know.</exception>
+        /// <exception cref="ModellingException">An expression is not finite.</exception>
         public LinearisedProblem Linearise(EncodingOptions? options = null) => Lower(problem, options ?? EncodingOptions.Default);
     }
 
     extension(LinearisedProblem linearised) {
-        /// <summary>
-        /// The constraints of the lowered problem, each beside the one it was written as. Lowering
-        /// keeps the constraints in the order they were written and adds its own after them: what
-        /// ties a maximum to its operands, which nobody wrote and which nothing is put down to.
-        /// </summary>
-        /// <param name="original">The constraint the problem was lowered from.</param>
-        public ImmutableArray<LoweredConstraint> Constraints(IBooleanExpression<IAtom> original) =>
-            Paired(linearised.Constraint.Conjuncts, original.Conjuncts);
-
         /// <summary>Every variable mentioned in the lowered problem, the introduced ones included, in the standard order.</summary>
-        public ImmutableSortedSet<IVariable> Variables => linearised.Constraint.Variables.Union(linearised.Objective.Expression.Variables);
+        public ImmutableSortedSet<IVariable> Variables =>
+            linearised.Constraints.Aggregate(linearised.Objective.Expression.Variables, (found, constraint) => found.Union(constraint.Lowered.Variables));
     }
-
-    private static ImmutableArray<LoweredConstraint> Paired(ImmutableArray<IBooleanExpression<IAffineRelation>> lowered, ImmutableArray<IBooleanExpression<IAtom>> written) =>
-        [.. lowered.Select((constraint, index) => new LoweredConstraint(constraint, index < written.Length ? written[index] : null))];
 
     /// <summary>
     /// Identifies a maximum by the affine forms of its operands, in a fixed order, so that
@@ -89,9 +82,9 @@ public static class PiecewiseLowering {
         AffineForm Right
     );
 
-    /// <summary>Identifies a conditional by its condition, lowered, and the affine forms of its branches.</summary>
+    /// <summary>Identifies a conditional by its condition, freed of piecewise-linear functions, and the affine forms of its branches.</summary>
     private sealed record Choice(
-        IBooleanExpression<IAffineRelation> Condition,
+        IBooleanExpression<ILinearArithmetic> Condition,
         AffineForm Then,
         AffineForm Otherwise
     );
@@ -122,29 +115,31 @@ public static class PiecewiseLowering {
         var start = new Lifting(ImmutableDictionary<object, INumericVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options, 0);
         var constraint = Lift(problem.Constraint, start);
         var objective = Lift(problem.Objective.Expression, constraint.State);
-        var lifted = new LinearisedProblem(problem.Objective.With(objective.Expression), constraint.Expression, []);
-        return objective.State.Definitions.IsEmpty ? lifted : Defined(lifted, objective.State.Definitions, options);
+        var definitions = objective.State.Definitions;
+        var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
+        var demands = DemandsOf(constraint.Expression, auxiliaries).Aggregate(DemandsOf(objective.Expression.Normalise(), problem.Objective.Sense, auxiliaries), Record);
+        // An inner maximum is only leant on by the problem and by maxima introduced after it, so going backwards meets every demand in time.
+        var tied = definitions.Reverse().Aggregate(new Tying(demands, []), (tying, definition) => Tie(tying, definition, auxiliaries));
+        return new LinearisedProblem(
+            problem.Objective.With(objective.Expression),
+            Paired([.. constraint.Expression.Conjuncts, .. tied.Constraints.AllOf().Conjuncts], problem.Constraint.Conjuncts),
+            [.. definitions]);
     }
 
-    private static LinearisedProblem Defined(LinearisedProblem lifted, ImmutableList<IDefinition> definitions, EncodingOptions options) {
-        var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableSortedSet(VariableOrder.Comparer);
-        var demands = DemandsOf(lifted.Constraint, auxiliaries, options).Aggregate(DemandsOf(lifted.Objective.Expression.Normalise(), lifted.Objective.Sense, auxiliaries), Record);
-        // An inner maximum is only leant on by the problem and by maxima introduced after it, so going backwards meets every demand in time.
-        var tied = definitions.Reverse().Aggregate(new Tying(demands, []), (tying, definition) => Tie(tying, definition, auxiliaries, options));
-        return lifted with { Constraint = lifted.Constraint & tied.Constraints.AllOf(), Definitions = [.. definitions] };
-    }
+    private static ImmutableArray<LoweredConstraint> Paired(ImmutableArray<IBooleanExpression<ILinearArithmetic>> lowered, ImmutableArray<IBooleanExpression<ILinearArithmetic>> written) =>
+        [.. lowered.Select((constraint, index) => new LoweredConstraint(constraint.Normalise(), index < written.Length ? written[index] : null))];
 
     private sealed record Tying(
         ImmutableDictionary<IVariable, Demand> Demands,
-        ImmutableList<IBooleanExpression<IAffineRelation>> Constraints
+        ImmutableList<IBooleanExpression<ILinearArithmetic>> Constraints
     );
 
-    private static Tying Tie(Tying tying, IDefinition definition, ImmutableSortedSet<IVariable> auxiliaries, EncodingOptions options) {
+    private static Tying Tie(Tying tying, IDefinition definition, ImmutableSortedSet<IVariable> auxiliaries) {
         var constraint = Tie(definition, tying.Demands.GetValueOrDefault(definition.Variable));
-        return new Tying(DemandsOf(constraint, auxiliaries, options).Aggregate(tying.Demands, Record), tying.Constraints.Add(constraint));
+        return new Tying(DemandsOf(constraint, auxiliaries).Aggregate(tying.Demands, Record), tying.Constraints.Add(constraint));
     }
 
-    private static IBooleanExpression<IAffineRelation> Tie(IDefinition definition, Demand demand) =>
+    private static IBooleanExpression<ILinearArithmetic> Tie(IDefinition definition, Demand demand) =>
         definition switch {
             MaximumDefinition maximum => Tie(maximum, demand),
             ConditionalDefinition conditional => Tie(conditional, demand),
@@ -156,33 +151,33 @@ public static class PiecewiseLowering {
     /// side on which the problem could otherwise cheat. With a binary variable for a condition, that is
     /// two conditional rows and nothing more.
     /// </summary>
-    private static IBooleanExpression<IAffineRelation> Tie(ConditionalDefinition definition, Demand demand) =>
+    private static IBooleanExpression<ILinearArithmetic> Tie(ConditionalDefinition definition, Demand demand) =>
         demand == Demand.None
             ? BooleanConstant.True
             : definition.Condition.Implies(Held(definition.Variable, demand, definition.Then)) & (!definition.Condition).Implies(Held(definition.Variable, demand, definition.Otherwise));
 
-    private static IBooleanExpression<IAffineRelation> Held(INumericVariable variable, Demand demand, ILinearExpression to) =>
+    private static IBooleanExpression<ILinearArithmetic> Held(INumericVariable variable, Demand demand, ILinearExpression to) =>
         demand switch {
-            Demand.AtLeast => Related(variable, Relation.GreaterThanOrEqual, to),
-            Demand.AtMost => Related(variable, Relation.LessThanOrEqual, to),
-            _ => Related(variable, Relation.Equal, to),
+            Demand.AtLeast => variable >= to,
+            Demand.AtMost => variable <= to,
+            _ => variable.EqualTo(to),
         };
 
-    private static IBooleanExpression<IAffineRelation> Tie(MaximumDefinition definition, Demand demand) =>
-        (demand.HasFlag(Demand.AtLeast) ? Related(definition.Variable, Relation.GreaterThanOrEqual, definition.Left) & Related(definition.Variable, Relation.GreaterThanOrEqual, definition.Right) : BooleanConstant.True)
-        & (demand.HasFlag(Demand.AtMost) ? Related(definition.Variable, Relation.LessThanOrEqual, definition.Left) | Related(definition.Variable, Relation.LessThanOrEqual, definition.Right) : BooleanConstant.True);
-
-    /// <summary>A relation between two expressions free of piecewise-linear functions, brought to affine form.</summary>
-    private static IBooleanExpression<IAffineRelation> Related(ILinearExpression left, Relation relation, ILinearExpression right) =>
-        new AffineRelation((left - right).Normalise(), relation);
+    private static IBooleanExpression<ILinearArithmetic> Tie(MaximumDefinition definition, Demand demand) =>
+        (demand.HasFlag(Demand.AtLeast) ? (definition.Variable >= definition.Left) & (definition.Variable >= definition.Right) : BooleanConstant.True)
+        & (demand.HasFlag(Demand.AtMost) ? (definition.Variable <= definition.Left) | (definition.Variable <= definition.Right) : BooleanConstant.True);
 
     private static ImmutableDictionary<IVariable, Demand> Record(ImmutableDictionary<IVariable, Demand> demands, KeyValuePair<IVariable, Demand> demand) =>
         demands.SetItem(demand.Key, demands.GetValueOrDefault(demand.Key) | demand.Value);
 
-    private static IEnumerable<KeyValuePair<IVariable, Demand>> DemandsOf(IBooleanExpression<IAffineRelation> constraint, ImmutableSortedSet<IVariable> auxiliaries, EncodingOptions options) =>
-        Atoms(constraint.Normalise(options.StrictnessEpsilon)).SelectMany(atom => DemandsOf(atom.Expression, atom.IsEquality, auxiliaries));
+    private static IEnumerable<KeyValuePair<IVariable, Demand>> DemandsOf(IBooleanExpression<ILinearArithmetic> constraint, ImmutableSortedSet<IVariable> auxiliaries) =>
+        Relations(NormalForms.Canonical(constraint.Normalise())).SelectMany(relation => DemandsOf(relation.Difference, isEquality: relation.Relation is Relation.Equal or Relation.NotEqual, auxiliaries));
 
-    /// <summary>In <c>&#8230; + c&#183;m &lt;= 0</c> a positive <c>c</c> rewards a small <c>m</c>, a negative one a large <c>m</c>, and an equation both.</summary>
+    /// <summary>
+    /// In <c>&#8230; + c&#183;m &lt;= 0</c> a positive <c>c</c> rewards a small <c>m</c> and a negative one
+    /// a large <c>m</c>. An equation rewards both, and so does a disequation, which is two strict
+    /// inequalities facing either way.
+    /// </summary>
     private static IEnumerable<KeyValuePair<IVariable, Demand>> DemandsOf(AffineForm form, bool isEquality, ImmutableSortedSet<IVariable> auxiliaries) =>
         form.Coefficients
             .Where(term => auxiliaries.Contains(term.Key))
@@ -191,11 +186,11 @@ public static class PiecewiseLowering {
     private static ImmutableDictionary<IVariable, Demand> DemandsOf(AffineForm objective, ObjectiveSense sense, ImmutableSortedSet<IVariable> auxiliaries) =>
         DemandsOf(sense == ObjectiveSense.Minimise ? objective : objective.Negated, isEquality: false, auxiliaries).ToImmutableDictionary();
 
-    private static IEnumerable<Atom> Atoms(INormalForm formula) =>
+    private static IEnumerable<AffineRelation> Relations(INormalForm formula) =>
         formula switch {
-            Atom atom => [atom],
-            All all => all.Operands.SelectMany(Atoms),
-            Any any => any.Operands.SelectMany(Atoms),
+            AffineRelation relation => [relation],
+            All all => all.Operands.SelectMany(Relations),
+            Any any => any.Operands.SelectMany(Relations),
             _ => [],
         };
 
@@ -211,7 +206,7 @@ public static class PiecewiseLowering {
             AbsoluteValue absolute => Named(Both(state, absolute.Operand, -absolute.Operand), isNegated: false),
             Conditional conditional => Chosen(Lift(conditional.Condition, state), conditional),
             // The indicator of a binary variable is its column; of anything else, a choice between one and zero.
-            Indicator { Condition: BinaryVariable or INegation<ILinearRelation> { Operand: BinaryVariable } or BooleanConstant } => new Lifted<ILinearExpression>(expression, state),
+            Indicator { Condition: BinaryVariable or INegation<ILinearArithmetic> { Operand: BinaryVariable } or BooleanConstant } => new Lifted<ILinearExpression>(expression, state),
             Indicator indicator => Chosen(Lift(indicator.Condition, state), new Conditional(indicator.Condition, new Constant(1), new Constant(0))),
             _ => new Lifted<ILinearExpression>(expression, state),
         };
@@ -251,7 +246,7 @@ public static class PiecewiseLowering {
         VariableOrder.Comparer.Compare(left.Key, right.Key) is var byVariable and not 0 ? byVariable : left.Value.CompareTo(right.Value);
 
     /// <summary>The variable that stands for whichever branch the condition selects.</summary>
-    private static Lifted<ILinearExpression> Chosen(Lifted<IBooleanExpression<IAffineRelation>> condition, Conditional conditional) {
+    private static Lifted<ILinearExpression> Chosen(Lifted<IBooleanExpression<ILinearArithmetic>> condition, Conditional conditional) {
         var branches = Both(condition.State, conditional.Then, conditional.Otherwise);
         var choice = new Choice(condition.Expression, branches.Expression.Left.Normalise(), branches.Expression.Right.Normalise());
         var state = Introduced(branches.State, choice, branches.State.Options.ConditionalPrefix, choice.Then.IsIntegral && choice.Otherwise.IsIntegral, variable => new ConditionalDefinition(variable, condition.Expression, branches.Expression.Left, branches.Expression.Right));
@@ -270,41 +265,45 @@ public static class PiecewiseLowering {
     }
 
     /// <summary>
-    /// The formula with its piecewise-linear functions lifted out and its relations brought to affine
-    /// form. Every node is rebuilt, since the lowered formula is over other atoms; its shape is kept,
-    /// which is what lets a lowered conjunct be paired with the one it was written as.
+    /// The formula with its piecewise-linear functions lifted out, and nothing else changed: a node
+    /// that had none is kept as it was, which keeps the shape of the constraint, and so lets each
+    /// lowered conjunct be paired with the one it was written as.
     /// </summary>
-    private static Lifted<IBooleanExpression<IAffineRelation>> Lift(IBooleanExpression<IAtom> expression, Lifting state) => DeepRecursion.Guard(LiftUnguarded, expression, state);
+    private static Lifted<IBooleanExpression<ILinearArithmetic>> Lift(IBooleanExpression<ILinearArithmetic> expression, Lifting state) => DeepRecursion.Guard(LiftUnguarded, expression, state);
 
-    private static Lifted<IBooleanExpression<IAffineRelation>> LiftUnguarded(IBooleanExpression<IAtom> expression, Lifting state) =>
+    private static Lifted<IBooleanExpression<ILinearArithmetic>> LiftUnguarded(IBooleanExpression<ILinearArithmetic> expression, Lifting state) =>
         expression switch {
-            BooleanConstant constant => new(constant, state),
-            BinaryVariable variable => new(variable, state),
-            LinearRelation relation => Related(relation.Relation, Both(state, relation.Left, relation.Right)),
-            AffineRelation relation => new(relation, state),
-            INegation<IAtom> negation => Rebuilt(Lift(negation.Operand, state), operand => new Negation<IAffineRelation>(operand)),
-            INamedConstraint<IAtom> named => Rebuilt(Lift(named.Expression, state), operand => new NamedConstraint<IAffineRelation>(named.Name, operand)),
-            IConjunction<IAtom> conjunction => Rebuilt(conjunction.Left, conjunction.Right, state, (left, right) => new Conjunction<IAffineRelation>(left, right)),
-            IDisjunction<IAtom> disjunction => Rebuilt(disjunction.Left, disjunction.Right, state, (left, right) => new Disjunction<IAffineRelation>(left, right)),
-            IImplication<IAtom> implication => Rebuilt(implication.Antecedent, implication.Consequent, state, (left, right) => new Implication<IAffineRelation>(left, right)),
-            IEquivalence<IAtom> equivalence => Rebuilt(equivalence.Left, equivalence.Right, state, (left, right) => new Equivalence<IAffineRelation>(left, right)),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
+            LinearRelation relation => Rebuilt(relation, Both(state, relation.Left, relation.Right)),
+            INegation<ILinearArithmetic> negation => Rebuilt(negation, negation.Operand, Lift(negation.Operand, state), operand => new Negation<ILinearArithmetic>(operand)),
+            INamedConstraint<ILinearArithmetic> named => Rebuilt(named, named.Expression, Lift(named.Expression, state), operand => new NamedConstraint<ILinearArithmetic>(named.Name, operand)),
+            IConjunction<ILinearArithmetic> conjunction => Rebuilt(conjunction, conjunction.Left, conjunction.Right, state, (left, right) => new Conjunction<ILinearArithmetic>(left, right)),
+            IDisjunction<ILinearArithmetic> disjunction => Rebuilt(disjunction, disjunction.Left, disjunction.Right, state, (left, right) => new Disjunction<ILinearArithmetic>(left, right)),
+            IImplication<ILinearArithmetic> implication => Rebuilt(implication, implication.Antecedent, implication.Consequent, state, (left, right) => new Implication<ILinearArithmetic>(left, right)),
+            IEquivalence<ILinearArithmetic> equivalence => Rebuilt(equivalence, equivalence.Left, equivalence.Right, state, (left, right) => new Equivalence<ILinearArithmetic>(left, right)),
+            _ => new(expression, state),
         };
 
-    private static Lifted<IBooleanExpression<IAffineRelation>> Related(Relation relation, Lifted<(ILinearExpression Left, ILinearExpression Right)> sides) =>
-        new(Related(sides.Expression.Left, relation, sides.Expression.Right), sides.State);
+    private static Lifted<IBooleanExpression<ILinearArithmetic>> Rebuilt(LinearRelation relation, Lifted<(ILinearExpression Left, ILinearExpression Right)> sides) =>
+        new(ReferenceEquals(sides.Expression.Left, relation.Left) && ReferenceEquals(sides.Expression.Right, relation.Right) ? relation : relation with { Left = sides.Expression.Left, Right = sides.Expression.Right }, sides.State);
 
-    private static Lifted<IBooleanExpression<IAffineRelation>> Rebuilt(Lifted<IBooleanExpression<IAffineRelation>> operand, Func<IBooleanExpression<IAffineRelation>, IBooleanExpression<IAffineRelation>> rebuild) =>
-        new(rebuild(operand.Expression), operand.State);
+    private static Lifted<IBooleanExpression<ILinearArithmetic>> Rebuilt(
+        IBooleanExpression<ILinearArithmetic> original,
+        IBooleanExpression<ILinearArithmetic> operand,
+        Lifted<IBooleanExpression<ILinearArithmetic>> lifted,
+        Func<IBooleanExpression<ILinearArithmetic>, IBooleanExpression<ILinearArithmetic>> rebuild
+    ) =>
+        new(ReferenceEquals(lifted.Expression, operand) ? original : rebuild(lifted.Expression), lifted.State);
 
-    private static Lifted<IBooleanExpression<IAffineRelation>> Rebuilt(
-        IBooleanExpression<IAtom> left,
-        IBooleanExpression<IAtom> right,
+    /// <summary>Lifts both operands of a connective, keeping the original node when neither changed.</summary>
+    private static Lifted<IBooleanExpression<ILinearArithmetic>> Rebuilt(
+        IBooleanExpression<ILinearArithmetic> original,
+        IBooleanExpression<ILinearArithmetic> left,
+        IBooleanExpression<ILinearArithmetic> right,
         Lifting state,
-        Func<IBooleanExpression<IAffineRelation>, IBooleanExpression<IAffineRelation>, IBooleanExpression<IAffineRelation>> rebuild
+        Func<IBooleanExpression<ILinearArithmetic>, IBooleanExpression<ILinearArithmetic>, IBooleanExpression<ILinearArithmetic>> rebuild
     ) {
         var first = Lift(left, state);
         var second = Lift(right, first.State);
-        return new(rebuild(first.Expression, second.Expression), second.State);
+        return new(ReferenceEquals(first.Expression, left) && ReferenceEquals(second.Expression, right) ? original : rebuild(first.Expression, second.Expression), second.State);
     }
 }

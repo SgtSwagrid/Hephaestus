@@ -80,7 +80,7 @@ public static class ExpressionOperators {
         public Quantity<double> AsEncodable() => new(expression, new RealNumberProjection<double>());
     }
 
-    extension(IBooleanExpression<ILinearRelation> expression) {
+    extension(IBooleanExpression<ILinearArithmetic> expression) {
         /// <summary>This expression as the truth it stands for, so that it can be zipped with typed ones.</summary>
         public ILogicallyEncodable<bool> AsEncodable() => new LogicallyEncodableExpression<bool>(expression, new TruthProjection());
     }
@@ -128,7 +128,7 @@ internal sealed record LinearlyEncodableExpression<TValue>(
 
 /// <summary>A boolean expression read and written as a type of its own.</summary>
 internal sealed record LogicallyEncodableExpression<TValue>(
-    IBooleanExpression<ILinearRelation> Expression,
+    IBooleanExpression<ILinearArithmetic> Expression,
     IProjection<TValue, bool> Projection
 ) : ILogicallyEncodable<TValue>;
 

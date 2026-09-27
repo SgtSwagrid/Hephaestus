@@ -25,9 +25,9 @@ public abstract class SolverContract {
     /// <summary>Decimal places to which continuous values are compared: solvers work to tolerances of about a millionth.</summary>
     private const int Precision = 4;
 
-    private static readonly IBooleanExpression<ILinearRelation> Separated = (StartA + Changeover <= StartB) | (StartB + Changeover <= StartA);
-    private static readonly IBooleanExpression<ILinearRelation> ConflictFree = !(UsesA & UsesB) | Separated;
-    private static readonly IBooleanExpression<ILinearRelation> Horizon = StartA.Between(0, 3600) & StartB.Between(0, 3600);
+    private static readonly IBooleanExpression<ILinearArithmetic> Separated = (StartA + Changeover <= StartB) | (StartB + Changeover <= StartA);
+    private static readonly IBooleanExpression<ILinearArithmetic> ConflictFree = !(UsesA & UsesB) | Separated;
+    private static readonly IBooleanExpression<ILinearArithmetic> Horizon = StartA.Between(0, 3600) & StartB.Between(0, 3600);
 
     private static readonly TimeSpan Moment = TimeSpan.FromMilliseconds(1);
 

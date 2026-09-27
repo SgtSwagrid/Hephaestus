@@ -23,7 +23,7 @@ public sealed class ExpressionTests {
     [Fact]
     public void NothingIsSimplifiedAtConstruction() {
         Assert.Equal(new Sum(new Sum(X, new Constant(0)), new Product(-1, X)), X + 0 - X);
-        Assert.Equal(new Negation<IPropositional>(new Negation<IPropositional>(A)), !!A);
+        Assert.Equal(new Negation<ILogic>(new Negation<ILogic>(A)), !!A);
     }
 
     [Fact]
@@ -38,32 +38,32 @@ public sealed class ExpressionTests {
 
     [Fact]
     public void LogicalOperatorsBuildTheTreeThatWasWritten() {
-        Assert.Equal(new Conjunction<IPropositional>(A, B), A & B);
-        Assert.Equal(new Disjunction<IPropositional>(A, B), A | B);
-        Assert.Equal(new Negation<IPropositional>(A), !A);
-        Assert.Equal(new Negation<IPropositional>(new Equivalence<IPropositional>(A, B)), A ^ B);
-        Assert.Equal(new Implication<ILinearRelation>(A, X <= 1), A.Implies(X <= 1));
-        Assert.Equal(new Equivalence<ILinearRelation>(A, X <= 1), A.Iff(X <= 1));
+        Assert.Equal(new Conjunction<ILogic>(A, B), A & B);
+        Assert.Equal(new Disjunction<ILogic>(A, B), A | B);
+        Assert.Equal(new Negation<ILogic>(A), !A);
+        Assert.Equal(new Negation<ILogic>(new Equivalence<ILogic>(A, B)), A ^ B);
+        Assert.Equal(new Implication<ILinearArithmetic>(A, X <= 1), A.Implies(X <= 1));
+        Assert.Equal(new Equivalence<ILinearArithmetic>(A, X <= 1), A.Iff(X <= 1));
     }
 
     [Fact]
     public void PlainTruthValuesMixInOnEitherSide() {
-        Assert.Equal(new Conjunction<IPropositional>(A, BooleanConstant.True), A & true);
-        Assert.Equal(new Conjunction<IPropositional>(BooleanConstant.False, A), false & A);
-        Assert.Equal(new Disjunction<IPropositional>(A, BooleanConstant.False), A | false);
-        Assert.Equal(new Disjunction<ILinearRelation>(BooleanConstant.True, X <= 1), true | (X <= 1));
-        Assert.Equal(new Negation<IPropositional>(new Equivalence<IPropositional>(A, BooleanConstant.True)), A ^ true);
-        Assert.Equal(new Negation<IPropositional>(new Equivalence<IPropositional>(BooleanConstant.False, A)), false ^ A);
-        Assert.Equal(new Implication<IPropositional>(A, BooleanConstant.False), A.Implies(false));
-        Assert.Equal(new Equivalence<IPropositional>(A, BooleanConstant.True), A.Iff(true));
-        Assert.Equal(new Implication<ILinearRelation>(BooleanConstant.True, X <= 1), true.Implies(X <= 1));
-        Assert.Equal(new Equivalence<IPropositional>(BooleanConstant.False, A), false.Iff(A));
+        Assert.Equal(new Conjunction<ILogic>(A, BooleanConstant.True), A & true);
+        Assert.Equal(new Conjunction<ILogic>(BooleanConstant.False, A), false & A);
+        Assert.Equal(new Disjunction<ILogic>(A, BooleanConstant.False), A | false);
+        Assert.Equal(new Disjunction<ILinearArithmetic>(BooleanConstant.True, X <= 1), true | (X <= 1));
+        Assert.Equal(new Negation<ILogic>(new Equivalence<ILogic>(A, BooleanConstant.True)), A ^ true);
+        Assert.Equal(new Negation<ILogic>(new Equivalence<ILogic>(BooleanConstant.False, A)), false ^ A);
+        Assert.Equal(new Implication<ILogic>(A, BooleanConstant.False), A.Implies(false));
+        Assert.Equal(new Equivalence<ILogic>(A, BooleanConstant.True), A.Iff(true));
+        Assert.Equal(new Implication<ILinearArithmetic>(BooleanConstant.True, X <= 1), true.Implies(X <= 1));
+        Assert.Equal(new Equivalence<ILogic>(BooleanConstant.False, A), false.Iff(A));
     }
 
     [Fact]
     public void ABinaryVariableIsATruthAndItsIndicatorANumber() {
         Assert.Equal(new LinearRelation(new Sum(new Indicator(A), new Indicator(B)), Relation.LessThanOrEqual, new Constant(1)), A.Indicator + B.Indicator <= 1);
-        Assert.Equal(new Disjunction<ILinearRelation>(new Negation<IPropositional>(new Conjunction<IPropositional>(A, B)), X <= Y), !(A & B) | (X <= Y));
+        Assert.Equal(new Disjunction<ILinearArithmetic>(new Negation<ILogic>(new Conjunction<ILogic>(A, B)), X <= Y), !(A & B) | (X <= Y));
     }
 
     [Fact]
@@ -107,18 +107,18 @@ public sealed class ExpressionTests {
     public void JunctionsOverCollectionsAreBalancedWithTheRightIdentities() {
         var flags = Enumerable.Range(0, 4).Select(index => Variable.Binary($"f{index}")).ToList();
 
-        Assert.Equal(new Conjunction<IPropositional>(new Conjunction<IPropositional>(flags[0], flags[1]), new Conjunction<IPropositional>(flags[2], flags[3])), flags.AllOf());
-        Assert.Equal(new Disjunction<IPropositional>(new Disjunction<IPropositional>(flags[0], flags[1]), new Disjunction<IPropositional>(flags[2], flags[3])), flags.AnyOf());
-        Assert.Equal(new Conjunction<IPropositional>(!flags[0], !flags[1]), flags.Take(2).AllOf(flag => !flag));
-        Assert.Equal(BooleanConstant.True, Array.Empty<IBooleanExpression<ILinearRelation>>().AllOf());
-        Assert.Equal(BooleanConstant.False, Array.Empty<IBooleanExpression<ILinearRelation>>().AnyOf());
+        Assert.Equal(new Conjunction<ILogic>(new Conjunction<ILogic>(flags[0], flags[1]), new Conjunction<ILogic>(flags[2], flags[3])), flags.AllOf());
+        Assert.Equal(new Disjunction<ILogic>(new Disjunction<ILogic>(flags[0], flags[1]), new Disjunction<ILogic>(flags[2], flags[3])), flags.AnyOf());
+        Assert.Equal(new Conjunction<ILogic>(!flags[0], !flags[1]), flags.Take(2).AllOf(flag => !flag));
+        Assert.Equal(BooleanConstant.True, Array.Empty<IBooleanExpression<ILinearArithmetic>>().AllOf());
+        Assert.Equal(BooleanConstant.False, Array.Empty<IBooleanExpression<ILinearArithmetic>>().AnyOf());
     }
 
     [Fact]
     public void BetweenIsAPairOfInequalitiesWhoseBoundsMayBeNumbersOrExpressions() {
-        Assert.Equal(new Conjunction<ILinearRelation>(0 <= X, X <= 10), X.Between(0, 10));
-        Assert.Equal(new Conjunction<ILinearRelation>(Y <= X, X <= 10), X.Between(Y, 10));
-        Assert.Equal(new Conjunction<ILinearRelation>(0 <= X, X <= Y), X.Between(0, Y));
-        Assert.Equal(new Conjunction<ILinearRelation>(Y <= X, X <= Y + 5), X.Between(Y, Y + 5));
+        Assert.Equal(new Conjunction<ILinearArithmetic>(0 <= X, X <= 10), X.Between(0, 10));
+        Assert.Equal(new Conjunction<ILinearArithmetic>(Y <= X, X <= 10), X.Between(Y, 10));
+        Assert.Equal(new Conjunction<ILinearArithmetic>(0 <= X, X <= Y), X.Between(0, Y));
+        Assert.Equal(new Conjunction<ILinearArithmetic>(Y <= X, X <= Y + 5), X.Between(Y, Y + 5));
     }
 }

@@ -15,7 +15,7 @@ public interface IProblem {
     IObjective Objective { get; }
 
     /// <summary>The constraint every solution must satisfy.</summary>
-    IBooleanExpression<IAtom> Constraint { get; }
+    IBooleanExpression<ILinearArithmetic> Constraint { get; }
 }
 
 /// <summary>
@@ -39,7 +39,7 @@ public interface IMultipleObjectiveProblem : IProblem {
 
 /// <summary>The problem of satisfying a constraint, with nothing to optimise. Written <see cref="Problem.Satisfy"/>.</summary>
 public sealed record SatisfactionProblem(
-    IBooleanExpression<IAtom> Constraint
+    IBooleanExpression<ILinearArithmetic> Constraint
 ) : IOneShotProblem {
     /// <summary>Nothing is to be optimised.</summary>
     public NoObjective Objective => Hephaestus.Objective.None;
@@ -50,7 +50,7 @@ public sealed record SatisfactionProblem(
 /// <summary>A problem with an objective to pursue. A problem with none is a <see cref="SatisfactionProblem"/>.</summary>
 public sealed record SingleObjectiveProblem(
     Optimisation Objective,
-    IBooleanExpression<IAtom> Constraint
+    IBooleanExpression<ILinearArithmetic> Constraint
 ) : IOneShotProblem {
     ISingleObjective IOneShotProblem.Objective => Objective;
 }
@@ -58,7 +58,7 @@ public sealed record SingleObjectiveProblem(
 /// <inheritdoc cref="IMultipleObjectiveProblem"/>
 public sealed record MultipleObjectiveProblem(
     ILexicographicObjective Objective,
-    IBooleanExpression<IAtom> Constraint
+    IBooleanExpression<ILinearArithmetic> Constraint
 ) : IMultipleObjectiveProblem;
 
 /// <summary>
@@ -67,7 +67,7 @@ public sealed record MultipleObjectiveProblem(
 /// </summary>
 public static class Problem {
     /// <summary>The problem of finding any assignment under which the constraint holds.</summary>
-    public static SatisfactionProblem Satisfy(IBooleanExpression<IAtom> constraint) => new(constraint);
+    public static SatisfactionProblem Satisfy(IBooleanExpression<ILinearArithmetic> constraint) => new(constraint);
 
     /// <summary>The problem of pursuing <paramref name="objective"/>, as yet unconstrained.</summary>
     public static IOneShotProblem Optimise(ISingleObjective objective) =>
@@ -116,7 +116,7 @@ public static class ProblemBuilding {
         /// subject to <c>a &amp; b</c>. (The first takes the place of the trivial constraint that a
         /// problem starts with, which nobody wrote and nobody wants to read.)
         /// </summary>
-        public IProblem SubjectTo(IBooleanExpression<IAtom> constraint) =>
+        public IProblem SubjectTo(IBooleanExpression<ILinearArithmetic> constraint) =>
             problem switch {
                 IOneShotProblem single => single.SubjectTo(constraint),
                 IMultipleObjectiveProblem multiple => multiple.SubjectTo(constraint),
@@ -124,7 +124,7 @@ public static class ProblemBuilding {
             };
 
         /// <summary>The same problem with several further constraints, all of which must hold: <c>SubjectTo(a, b, c)</c> is <c>SubjectTo(a &amp; b &amp; c)</c>.</summary>
-        public IProblem SubjectTo(params IEnumerable<IBooleanExpression<IAtom>> constraints) => problem.SubjectTo(constraints.AllOf());
+        public IProblem SubjectTo(params IEnumerable<IBooleanExpression<ILinearArithmetic>> constraints) => problem.SubjectTo(constraints.AllOf());
 
         // A problem is an objective and a constraint. As SubjectTo refines the one, these refine the other, and they are
         // defined by what they do to it: problem.ThenMinimise(x) is the problem of problem.Objective.ThenMinimise(x).
@@ -148,33 +148,33 @@ public static class ProblemBuilding {
     }
 
     extension(IOneShotProblem problem) {
-        /// <inheritdoc cref="SubjectTo(IProblem, IBooleanExpression{IAtom})"/>
-        public IOneShotProblem SubjectTo(IBooleanExpression<IAtom> constraint) => problem.With(problem.Objective.Expression, problem.Constraint.And(constraint));
+        /// <inheritdoc cref="SubjectTo(IProblem, IBooleanExpression{ILinearArithmetic})"/>
+        public IOneShotProblem SubjectTo(IBooleanExpression<ILinearArithmetic> constraint) => problem.With(problem.Objective.Expression, problem.Constraint.And(constraint));
 
-        /// <inheritdoc cref="SubjectTo(IProblem, IEnumerable{IBooleanExpression{IAtom}})"/>
-        public IOneShotProblem SubjectTo(params IEnumerable<IBooleanExpression<IAtom>> constraints) => problem.SubjectTo(constraints.AllOf());
+        /// <inheritdoc cref="SubjectTo(IProblem, IEnumerable{IBooleanExpression{ILinearArithmetic}})"/>
+        public IOneShotProblem SubjectTo(params IEnumerable<IBooleanExpression<ILinearArithmetic>> constraints) => problem.SubjectTo(constraints.AllOf());
 
         /// <summary>Whether the objective is to be made small or large.</summary>
         public ObjectiveSense Sense => problem.Objective.Sense;
 
         /// <summary>A problem of the same kind over another objective expression and constraint. A problem with nothing to optimise stays one.</summary>
-        public IOneShotProblem With(ILinearExpression objective, IBooleanExpression<IAtom> constraint) =>
+        public IOneShotProblem With(ILinearExpression objective, IBooleanExpression<ILinearArithmetic> constraint) =>
             problem.Objective is Optimisation optimisation
                 ? new SingleObjectiveProblem(optimisation with { Expression = objective }, constraint)
                 : new SatisfactionProblem(constraint);
     }
 
     extension(IMultipleObjectiveProblem problem) {
-        /// <inheritdoc cref="SubjectTo(IProblem, IBooleanExpression{IAtom})"/>
-        public IMultipleObjectiveProblem SubjectTo(IBooleanExpression<IAtom> constraint) => new MultipleObjectiveProblem(problem.Objective, problem.Constraint.And(constraint));
+        /// <inheritdoc cref="SubjectTo(IProblem, IBooleanExpression{ILinearArithmetic})"/>
+        public IMultipleObjectiveProblem SubjectTo(IBooleanExpression<ILinearArithmetic> constraint) => new MultipleObjectiveProblem(problem.Objective, problem.Constraint.And(constraint));
 
-        /// <inheritdoc cref="SubjectTo(IProblem, IEnumerable{IBooleanExpression{IAtom}})"/>
-        public IMultipleObjectiveProblem SubjectTo(params IEnumerable<IBooleanExpression<IAtom>> constraints) => problem.SubjectTo(constraints.AllOf());
+        /// <inheritdoc cref="SubjectTo(IProblem, IEnumerable{IBooleanExpression{ILinearArithmetic}})"/>
+        public IMultipleObjectiveProblem SubjectTo(params IEnumerable<IBooleanExpression<ILinearArithmetic>> constraints) => problem.SubjectTo(constraints.AllOf());
     }
 
-    extension(IBooleanExpression<IAtom> constraint) {
+    extension(IBooleanExpression<ILinearArithmetic> constraint) {
         /// <summary>The conjunction with <paramref name="further"/>, or whichever of the two is not the constant <c>true</c>, which says nothing.</summary>
-        internal IBooleanExpression<IAtom> And(IBooleanExpression<IAtom> further) =>
+        internal IBooleanExpression<ILinearArithmetic> And(IBooleanExpression<ILinearArithmetic> further) =>
             constraint is BooleanConstant { Value: true } ? further
             : further is BooleanConstant { Value: true } ? constraint
             : constraint & further;

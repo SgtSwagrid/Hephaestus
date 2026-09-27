@@ -93,7 +93,7 @@ public interface ILinearlyEncodable<TValue> : IEncodable<TValue> {
 /// </summary>
 public interface ILogicallyEncodable<TValue> : IEncodable<TValue> {
     /// <summary>The underlying boolean expression.</summary>
-    IBooleanExpression<ILinearRelation> Expression { get; }
+    IBooleanExpression<ILinearArithmetic> Expression { get; }
 
     /// <summary>How its truth is read as a <typeparamref name="TValue"/>.</summary>
     new IProjection<TValue, bool> Projection { get; }

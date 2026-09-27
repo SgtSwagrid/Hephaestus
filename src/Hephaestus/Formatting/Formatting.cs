@@ -13,7 +13,7 @@ public static class Formatting {
         public string Format() => string.Concat(WriteLinear(expression, []));
     }
 
-    extension<TAtom>(IBooleanExpression<TAtom> expression) {
+    extension<TTheory>(IBooleanExpression<TTheory> expression) {
         /// <summary>The expression in the same notation it is written in: <c>&amp;</c>, <c>|</c>, <c>!</c>, <c>=&gt;</c>, <c>&lt;=&gt;</c>.</summary>
         public string Format() => string.Concat(WriteBoolean(expression, 0, []));
     }
@@ -25,6 +25,11 @@ public static class Formatting {
                 ? Number(form.Constant)
                 : string.Concat(form.Coefficients.Select((term, index) => Term(term.Value, term.Key.Name, isFirst: index == 0)))
                     + (form.Constant == 0 ? "" : Signed(form.Constant, Number(Math.Abs(form.Constant)), isFirst: false));
+    }
+
+    extension(AffineRelation relation) {
+        /// <summary>The relation with its constant moved to the right: <c>x - y &lt;= 3</c>.</summary>
+        public string Format() => $"{new AffineForm(relation.Difference.Coefficients, 0).Format()} {Symbol(relation.Relation)} {Number(0 - relation.Difference.Constant)}";
     }
 
     extension(LinearRow row) {
@@ -94,41 +99,40 @@ public static class Formatting {
             ? WriteLinear(operand, tokens.Add("(")).Add(")")
             : WriteLinear(operand, tokens);
 
-    private static ImmutableList<string> WriteBoolean<TAtom>(IBooleanExpression<TAtom> expression, int context, ImmutableList<string> tokens) =>
+    private static ImmutableList<string> WriteBoolean<TTheory>(IBooleanExpression<TTheory> expression, int context, ImmutableList<string> tokens) =>
         DeepRecursion.Guard(WriteBooleanUnguarded, expression, context, tokens);
 
     /// <summary>Brackets go around anything that binds more loosely than its context; comparisons nested in logic always get them.</summary>
-    private static ImmutableList<string> WriteBooleanUnguarded<TAtom>(IBooleanExpression<TAtom> expression, int context, ImmutableList<string> tokens) =>
+    private static ImmutableList<string> WriteBooleanUnguarded<TTheory>(IBooleanExpression<TTheory> expression, int context, ImmutableList<string> tokens) =>
         Precedence(expression) < context
             ? WriteBare(expression, tokens.Add("(")).Add(")")
             : WriteBare(expression, tokens);
 
-    private static ImmutableList<string> WriteBare<TAtom>(IBooleanExpression<TAtom> expression, ImmutableList<string> tokens) =>
+    private static ImmutableList<string> WriteBare<TTheory>(IBooleanExpression<TTheory> expression, ImmutableList<string> tokens) =>
         expression switch {
             BooleanConstant constant => tokens.Add(constant.Value ? "true" : "false"),
             BinaryVariable variable => tokens.Add(variable.Name),
-            INamedConstraint<TAtom> named => tokens.Add(named.Name),
+            INamedConstraint<TTheory> named => tokens.Add(named.Name),
             LinearRelation relation => WriteLinear(relation.Right, WriteLinear(relation.Left, tokens).Add($" {Symbol(relation.Relation)} ")),
-            AffineRelation relation => tokens.Add($"{new AffineForm(relation.Difference.Coefficients, 0).Format()} {Symbol(relation.Relation)} {Number(0 - relation.Difference.Constant)}"),
-            INegation<TAtom> negation => WriteBoolean(negation.Operand, 5, tokens.Add("!")),
-            IConjunction<TAtom> conjunction => WriteBinary(conjunction.Left, 4, " & ", conjunction.Right, 4, tokens),
-            IDisjunction<TAtom> disjunction => WriteBinary(disjunction.Left, 3, " | ", disjunction.Right, 3, tokens),
-            IImplication<TAtom> implication => WriteBinary(implication.Antecedent, 3, " => ", implication.Consequent, 2, tokens),
-            IEquivalence<TAtom> equivalence => WriteBinary(equivalence.Left, 2, " <=> ", equivalence.Right, 2, tokens),
+            INegation<TTheory> negation => WriteBoolean(negation.Operand, 5, tokens.Add("!")),
+            IConjunction<TTheory> conjunction => WriteBinary(conjunction.Left, 4, " & ", conjunction.Right, 4, tokens),
+            IDisjunction<TTheory> disjunction => WriteBinary(disjunction.Left, 3, " | ", disjunction.Right, 3, tokens),
+            IImplication<TTheory> implication => WriteBinary(implication.Antecedent, 3, " => ", implication.Consequent, 2, tokens),
+            IEquivalence<TTheory> equivalence => WriteBinary(equivalence.Left, 2, " <=> ", equivalence.Right, 2, tokens),
             _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 
-    private static ImmutableList<string> WriteBinary<TAtom>(IBooleanExpression<TAtom> left, int leftContext, string symbol, IBooleanExpression<TAtom> right, int rightContext, ImmutableList<string> tokens) =>
+    private static ImmutableList<string> WriteBinary<TTheory>(IBooleanExpression<TTheory> left, int leftContext, string symbol, IBooleanExpression<TTheory> right, int rightContext, ImmutableList<string> tokens) =>
         WriteBoolean(right, rightContext, WriteBoolean(left, leftContext, tokens).Add(symbol));
 
-    private static int Precedence<TAtom>(IBooleanExpression<TAtom> expression) =>
+    private static int Precedence<TTheory>(IBooleanExpression<TTheory> expression) =>
         expression switch {
-            LinearRelation or AffineRelation => 0,
-            IEquivalence<TAtom> => 1,
-            IImplication<TAtom> => 2,
-            IDisjunction<TAtom> => 3,
-            IConjunction<TAtom> => 4,
-            INegation<TAtom> => 5,
+            LinearRelation => 0,
+            IEquivalence<TTheory> => 1,
+            IImplication<TTheory> => 2,
+            IDisjunction<TTheory> => 3,
+            IConjunction<TTheory> => 4,
+            INegation<TTheory> => 5,
             _ => 6,
         };
 

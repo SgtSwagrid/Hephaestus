@@ -9,7 +9,7 @@ public static class Occurrences {
         public ImmutableSortedSet<IVariable> Variables => CollectLinear(expression, Empty);
     }
 
-    extension<TAtom>(IBooleanExpression<TAtom> expression) {
+    extension<TTheory>(IBooleanExpression<TTheory> expression) {
         /// <summary>Every variable mentioned in this expression, in the standard order.</summary>
         public ImmutableSortedSet<IVariable> Variables => CollectBoolean(expression, Empty);
     }
@@ -40,25 +40,24 @@ public static class Occurrences {
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
-    private static ImmutableSortedSet<IVariable> CollectBoolean<TAtom>(IBooleanExpression<TAtom> expression, ImmutableSortedSet<IVariable> found) =>
+    private static ImmutableSortedSet<IVariable> CollectBoolean<TTheory>(IBooleanExpression<TTheory> expression, ImmutableSortedSet<IVariable> found) =>
         DeepRecursion.Guard(CollectBooleanUnguarded, expression, found);
 
-    private static ImmutableSortedSet<IVariable> CollectBooleanUnguarded<TAtom>(IBooleanExpression<TAtom> expression, ImmutableSortedSet<IVariable> found) =>
+    private static ImmutableSortedSet<IVariable> CollectBooleanUnguarded<TTheory>(IBooleanExpression<TTheory> expression, ImmutableSortedSet<IVariable> found) =>
         expression switch {
             BooleanConstant => found,
             BinaryVariable variable => found.Add(variable),
             LinearRelation relation => CollectLinear(relation.Right, CollectLinear(relation.Left, found)),
-            AffineRelation relation => found.Union(relation.Difference.Coefficients.Keys),
-            INegation<TAtom> negation => CollectBoolean(negation.Operand, found),
-            INamedConstraint<TAtom> named => CollectBoolean(named.Expression, found),
-            IConjunction<TAtom> conjunction => CollectBoth(conjunction.Left, conjunction.Right, found),
-            IDisjunction<TAtom> disjunction => CollectBoth(disjunction.Left, disjunction.Right, found),
-            IImplication<TAtom> implication => CollectBoth(implication.Antecedent, implication.Consequent, found),
-            IEquivalence<TAtom> equivalence => CollectBoth(equivalence.Left, equivalence.Right, found),
+            INegation<TTheory> negation => CollectBoolean(negation.Operand, found),
+            INamedConstraint<TTheory> named => CollectBoolean(named.Expression, found),
+            IConjunction<TTheory> conjunction => CollectBoth(conjunction.Left, conjunction.Right, found),
+            IDisjunction<TTheory> disjunction => CollectBoth(disjunction.Left, disjunction.Right, found),
+            IImplication<TTheory> implication => CollectBoth(implication.Antecedent, implication.Consequent, found),
+            IEquivalence<TTheory> equivalence => CollectBoth(equivalence.Left, equivalence.Right, found),
             _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 
-    private static ImmutableSortedSet<IVariable> CollectBoth<TAtom>(IBooleanExpression<TAtom> left, IBooleanExpression<TAtom> right, ImmutableSortedSet<IVariable> found) =>
+    private static ImmutableSortedSet<IVariable> CollectBoth<TTheory>(IBooleanExpression<TTheory> left, IBooleanExpression<TTheory> right, ImmutableSortedSet<IVariable> found) =>
         CollectBoolean(right, CollectBoolean(left, found));
 
     private static ImmutableSortedSet<IVariable> DistinctlyNamed(ImmutableSortedSet<IVariable> variables) =>

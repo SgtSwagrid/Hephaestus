@@ -38,16 +38,16 @@ public static partial class Piecewise {
     public static ILinearExpression Abs(ILinearExpression operand) => new AbsoluteValue(operand);
 
     /// <summary><paramref name="then"/> if the condition holds, and <paramref name="otherwise"/> if it does not.</summary>
-    public static ILinearExpression If(IBooleanExpression<ILinearRelation> condition, ILinearExpression then, ILinearExpression otherwise) => new Conditional(condition, then, otherwise);
+    public static ILinearExpression If(IBooleanExpression<ILinearArithmetic> condition, ILinearExpression then, ILinearExpression otherwise) => new Conditional(condition, then, otherwise);
 
-    /// <inheritdoc cref="If(IBooleanExpression{ILinearRelation}, ILinearExpression, ILinearExpression)"/>
-    public static ILinearExpression If(IBooleanExpression<ILinearRelation> condition, ILinearExpression then, double otherwise = 0) => new Conditional(condition, then, new Constant(otherwise));
+    /// <inheritdoc cref="If(IBooleanExpression{ILinearArithmetic}, ILinearExpression, ILinearExpression)"/>
+    public static ILinearExpression If(IBooleanExpression<ILinearArithmetic> condition, ILinearExpression then, double otherwise = 0) => new Conditional(condition, then, new Constant(otherwise));
 
-    /// <inheritdoc cref="If(IBooleanExpression{ILinearRelation}, ILinearExpression, ILinearExpression)"/>
-    public static ILinearExpression If(IBooleanExpression<ILinearRelation> condition, double then, ILinearExpression otherwise) => new Conditional(condition, new Constant(then), otherwise);
+    /// <inheritdoc cref="If(IBooleanExpression{ILinearArithmetic}, ILinearExpression, ILinearExpression)"/>
+    public static ILinearExpression If(IBooleanExpression<ILinearArithmetic> condition, double then, ILinearExpression otherwise) => new Conditional(condition, new Constant(then), otherwise);
 
-    /// <inheritdoc cref="If(IBooleanExpression{ILinearRelation}, ILinearExpression, ILinearExpression)"/>
-    public static ILinearExpression If(IBooleanExpression<ILinearRelation> condition, double then, double otherwise = 0) => new Conditional(condition, new Constant(then), new Constant(otherwise));
+    /// <inheritdoc cref="If(IBooleanExpression{ILinearArithmetic}, ILinearExpression, ILinearExpression)"/>
+    public static ILinearExpression If(IBooleanExpression<ILinearArithmetic> condition, double then, double otherwise = 0) => new Conditional(condition, new Constant(then), new Constant(otherwise));
 
     private static T Fold<T>(IReadOnlyList<T> operands, Func<T, T, T> combine) =>
         operands.Count == 0

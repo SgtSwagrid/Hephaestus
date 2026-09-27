@@ -31,7 +31,7 @@ public static class Evaluation {
         /// no more than <paramref name="tolerance"/>. Reading one without saying forgives
         /// <see cref="Tolerance"/>, which is nearly always what is wanted.
         /// </summary>
-        public bool Value<TAtom>(IBooleanExpression<TAtom> expression, double tolerance) => Holds(solution, expression, tolerance);
+        public bool Value<TTheory>(IBooleanExpression<TTheory> expression, double tolerance) => Holds(solution, expression, tolerance);
 
         /// <summary>This solution with a value for one more variable.</summary>
         public Solution With(IVariable variable, double value) => solution with { Values = solution.Values.SetItem(variable, value) };
@@ -95,21 +95,30 @@ public static class Evaluation {
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
-    internal static bool Holds<TAtom>(Solution solution, IBooleanExpression<TAtom> expression, double tolerance) =>
+    /// <summary>Whether a formula in normal form holds under a solution, forgiving relations violated by no more than <paramref name="tolerance"/>.</summary>
+    internal static bool Holds(Solution solution, INormalForm formula, double tolerance) =>
+        formula switch {
+            Literal literal => solution.ValueOf(literal.Variable) > 0.5 == literal.IsPositive,
+            AffineRelation relation => BooleanNormalisation.Holds(relation.Relation, relation.Difference.Evaluate(solution.ValueOf), tolerance),
+            All all => all.Operands.All(operand => Holds(solution, operand, tolerance)),
+            Any any => any.Operands.Any(operand => Holds(solution, operand, tolerance)),
+            _ => throw new NotSupportedException($"Unknown kind of normal form: {formula.GetType().Name}."),
+        };
+
+    internal static bool Holds<TTheory>(Solution solution, IBooleanExpression<TTheory> expression, double tolerance) =>
         DeepRecursion.Guard(HoldsUnguarded, solution, expression, tolerance);
 
-    private static bool HoldsUnguarded<TAtom>(Solution solution, IBooleanExpression<TAtom> expression, double tolerance) =>
+    private static bool HoldsUnguarded<TTheory>(Solution solution, IBooleanExpression<TTheory> expression, double tolerance) =>
         expression switch {
             BooleanConstant constant => constant.Value,
             BinaryVariable variable => solution.ValueOf(variable) > 0.5,
             LinearRelation relation => BooleanNormalisation.Holds(relation.Relation, solution.Value(relation.Left - relation.Right), tolerance),
-            AffineRelation relation => BooleanNormalisation.Holds(relation.Relation, relation.Difference.Evaluate(solution.ValueOf), tolerance),
-            INegation<TAtom> negation => !Holds(solution, negation.Operand, tolerance),
-            INamedConstraint<TAtom> named => Holds(solution, named.Expression, tolerance),
-            IConjunction<TAtom> conjunction => Holds(solution, conjunction.Left, tolerance) && Holds(solution, conjunction.Right, tolerance),
-            IDisjunction<TAtom> disjunction => Holds(solution, disjunction.Left, tolerance) || Holds(solution, disjunction.Right, tolerance),
-            IImplication<TAtom> implication => !Holds(solution, implication.Antecedent, tolerance) || Holds(solution, implication.Consequent, tolerance),
-            IEquivalence<TAtom> equivalence => Holds(solution, equivalence.Left, tolerance) == Holds(solution, equivalence.Right, tolerance),
+            INegation<TTheory> negation => !Holds(solution, negation.Operand, tolerance),
+            INamedConstraint<TTheory> named => Holds(solution, named.Expression, tolerance),
+            IConjunction<TTheory> conjunction => Holds(solution, conjunction.Left, tolerance) && Holds(solution, conjunction.Right, tolerance),
+            IDisjunction<TTheory> disjunction => Holds(solution, disjunction.Left, tolerance) || Holds(solution, disjunction.Right, tolerance),
+            IImplication<TTheory> implication => !Holds(solution, implication.Antecedent, tolerance) || Holds(solution, implication.Consequent, tolerance),
+            IEquivalence<TTheory> equivalence => Holds(solution, equivalence.Left, tolerance) == Holds(solution, equivalence.Right, tolerance),
             _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 }

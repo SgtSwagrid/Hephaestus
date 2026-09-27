@@ -47,11 +47,11 @@ public sealed record AbsoluteValue(ILinearExpression Operand) : ILinearExpressio
 
 /// <summary>
 /// One expression or another, according to whether a condition holds. Build it with
-/// <see cref="Piecewise.If(IBooleanExpression{ILinearRelation}, ILinearExpression, ILinearExpression)"/>, or as the product
+/// <see cref="Piecewise.If(IBooleanExpression{ILinearArithmetic}, ILinearExpression, ILinearExpression)"/>, or as the product
 /// of an <see cref="Indicator"/> and an expression, which is the expression if the condition holds and zero if not.
 /// </summary>
 public sealed record Conditional(
-    IBooleanExpression<ILinearRelation> Condition,
+    IBooleanExpression<ILinearArithmetic> Condition,
     ILinearExpression Then,
     ILinearExpression Otherwise
 ) : ILinearExpression;
@@ -63,4 +63,4 @@ public sealed record Conditional(
 /// expression by one is the one product of two expressions that stays linear:
 /// <c>needsSetup.Indicator * setupTime</c> is <c>If(needsSetup, setupTime, 0)</c>.
 /// </summary>
-public sealed record Indicator(IBooleanExpression<ILinearRelation> Condition) : ILinearExpression;
+public sealed record Indicator(IBooleanExpression<ILinearArithmetic> Condition) : ILinearExpression;

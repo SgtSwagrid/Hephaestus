@@ -29,7 +29,7 @@ public sealed record LinearRow(
     double UpperBound
 ) {
     /// <inheritdoc cref="GuardedRow.Origin"/>
-    public IBooleanExpression<IAtom>? Origin { get; init; }
+    public IBooleanExpression<ILinearArithmetic>? Origin { get; init; }
 
     /// <summary>The row in mathematical notation, since the default rendering of a dictionary says nothing.</summary>
     public override string ToString() => this.Format();
