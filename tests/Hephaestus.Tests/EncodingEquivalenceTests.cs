@@ -15,7 +15,7 @@ public sealed class EncodingEquivalenceTests {
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly ContinuousVariable X = Variable.Continuous("x");
 
-    private static readonly IBooleanExpression Domain = M.Between(0, 3) & N.Between(0, 3) & X.Between(0, 3);
+    private static readonly IBooleanExpression<ILinearArithmetic> Domain = M.Between(0, 3) & N.Between(0, 3) & X.Between(0, 3);
 
     /// <summary>Whole numbers beyond the stated domain are included so that the bounds themselves are put to the test.</summary>
     private static readonly ImmutableArray<Solution> Grid = [
@@ -29,7 +29,7 @@ public sealed class EncodingEquivalenceTests {
 
     public static TheoryData<string> HandWrittenCases => [.. HandWritten.Keys];
 
-    private static readonly ImmutableDictionary<string, IBooleanExpression> HandWritten = new Dictionary<string, IBooleanExpression> {
+    private static readonly ImmutableDictionary<string, IBooleanExpression<ILinearArithmetic>> HandWritten = new Dictionary<string, IBooleanExpression<ILinearArithmetic>> {
         ["disjunction of comparisons"] = (X + 1 <= M) | (M + 1 <= X),
         ["guarded disjunction"] = !(A & B) | (X + 1 <= M) | (M + 1 <= X),
         ["implication"] = A.Implies(X >= 2),
@@ -49,7 +49,7 @@ public sealed class EncodingEquivalenceTests {
         ["unsatisfiable"] = (M >= 2) & (M <= 1),
         ["always-true comparison in a disjunction"] = B | (X <= 5),
         ["never-true comparison in a disjunction"] = B | (X >= 5),
-        ["binaries as numbers"] = (A + B).EqualTo(1) | (M >= 3),
+        ["binaries as numbers"] = (A.Indicator + B.Indicator).EqualTo(1) | (M >= 3),
         ["iff of iffs"] = A.Iff(B.Iff(M >= 2)),
     }.ToImmutableDictionary();
 
@@ -90,7 +90,7 @@ public sealed class EncodingEquivalenceTests {
     /// unguarded indicator problem), the indicator problem as encoded, with single guards (as Gurobi
     /// takes it), and with propagated bounds (as CP-SAT takes it).
     /// </summary>
-    private static Verdict Check(IBooleanExpression formula) {
+    private static Verdict Check(IBooleanExpression<ILinearArithmetic> formula) {
         var logic = Problem.Satisfy(formula).EncodeLogic();
         var forms = new[] { logic.RelaxGuards().AsIndicatorProblem(), logic, logic.WithSingleGuards(), logic.WithPropagatedBounds() };
         return forms.All(form => form.Columns.Count(column => column.IsAuxiliary) <= 10)
@@ -98,7 +98,7 @@ public sealed class EncodingEquivalenceTests {
             : new Verdict(false, null);
     }
 
-    private static string? Disagreement(IBooleanExpression formula, IndicatorProblem encoded) {
+    private static string? Disagreement(IBooleanExpression<ILinearArithmetic> formula, IndicatorProblem encoded) {
         var auxiliaries = encoded.Columns.Where(column => column.IsAuxiliary).ToImmutableArray();
         var masks = Enumerable.Range(0, 1 << auxiliaries.Length)
             .Where(mask => auxiliaries.Select((column, index) => Within((mask >> index) & 1, column.LowerBound, column.UpperBound)).All(within => within))
@@ -131,7 +131,7 @@ public sealed class EncodingEquivalenceTests {
     private static Solution Assignment(params (IVariable Variable, double Value)[] values) =>
         new(values.ToImmutableSortedDictionary(entry => entry.Variable, entry => entry.Value, VariableOrder.Comparer), 0);
 
-    private static IBooleanExpression RandomFormula(Random random, int depth) =>
+    private static IBooleanExpression<ILinearArithmetic> RandomFormula(Random random, int depth) =>
         depth == 0 || random.Next(4) == 0
             ? RandomLeaf(random)
             : random.Next(6) switch {
@@ -143,18 +143,18 @@ public sealed class EncodingEquivalenceTests {
                 _ => RandomFormula(random, depth - 1) ^ RandomFormula(random, depth - 1),
             };
 
-    private static IBooleanExpression RandomLeaf(Random random) =>
+    private static IBooleanExpression<ILinearArithmetic> RandomLeaf(Random random) =>
         random.Next(5) switch {
             0 => A,
             1 => B,
-            _ => new Comparison(RandomLinear(random), (Relation)random.Next(6), RandomLinear(random)),
+            _ => new LinearRelation(RandomLinear(random), (Relation)random.Next(6), RandomLinear(random)),
         };
 
     // Coefficients and constants are multiples of a half, as is the grid, so comparisons never come within epsilon of a tie.
     private static ILinearExpression RandomLinear(Random random) =>
-        new IVariable[] { A, M, N, X }
+        new ILinearExpression[] { A.Indicator, M, N, X }
             .Where(_ => random.Next(2) == 0)
-            .Select(variable => random.Next(-2, 3) * variable)
+            .Select(term => random.Next(-2, 3) * term)
             .Append(new Constant(random.Next(-4, 5) / 2.0))
             .Sum();
 }

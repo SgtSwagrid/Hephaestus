@@ -26,15 +26,12 @@ public static class Evaluation {
         /// <exception cref="KeyNotFoundException">The expression mentions a variable the solved problem did not.</exception>
         public TValue Value<TValue>(IReadableExpression<TValue> expression) => expression.Read(solution);
 
-        /// <summary>Whether a binary variable is set. (Read it as a number with <c>Value((ILinearExpression)variable)</c>, since it is both.)</summary>
-        public bool Value(BinaryVariable variable) => solution.ValueOf(variable) > 0.5;
-
         /// <summary>
         /// Whether a boolean expression holds under this solution, forgiving comparisons violated by
         /// no more than <paramref name="tolerance"/>. Reading one without saying forgives
         /// <see cref="Tolerance"/>, which is nearly always what is wanted.
         /// </summary>
-        public bool Value(IBooleanExpression expression, double tolerance) => Holds(solution, expression, tolerance);
+        public bool Value<TTheory>(IBooleanExpression<TTheory> expression, double tolerance) => Holds(solution, expression, tolerance);
 
         /// <summary>This solution with a value for one more variable.</summary>
         public Solution With(IVariable variable, double value) => solution with { Values = solution.Values.SetItem(variable, value) };
@@ -45,48 +42,37 @@ public static class Evaluation {
         /// <summary>This solution with a value for a typed variable, or for each of the variables that a zipped or sequenced one is made of.</summary>
         /// <exception cref="ArgumentException">One of its components is a compound expression rather than a variable, so no one value can be given to it.</exception>
         public Solution With<TValue>(IEncodable<TValue> variable, TValue value) =>
-            Componentwise.Paired(variable.Components, variable.Projection.Encode(value)).Aggregate(solution, (current, entry) => current.With(entry.First, entry.Second));
+            Componentwise.Paired(variable.Components, variable.Projection.Encode(value)).Aggregate(solution, (current, entry) => current.WithEntry(entry.First, entry.Second));
 
-        private Solution With(IComponent component, double entry) =>
+        /// <summary>A variable given the value of a component: a number's column, or the binary variable whose indicator it is.</summary>
+        private Solution WithEntry(ILinearExpression component, double value) =>
             component switch {
-                LinearComponent linear => solution.With(linear.Expression, entry),
-                LogicalComponent { Expression: BinaryVariable variable } => solution.With(variable, entry > 0.5),
-                LogicalComponent logical => throw new ArgumentException($"A starting value can be given to a variable, but '{logical.Expression.Format()}' is a compound expression.", nameof(component)),
-                _ => throw new NotSupportedException($"Unknown kind of component: {component.GetType().Name}."),
+                INumericVariable variable => solution.With(variable, value),
+                Indicator { Condition: BinaryVariable variable } => solution.With(variable, value > 0.5),
+                Indicator { Condition: INegation<ILinearArithmetic> { Operand: BinaryVariable variable } } => solution.With(variable, value <= 0.5),
+                _ => throw new ArgumentException($"A starting value can be given to a variable, but '{component.Format()}' is a compound expression.", nameof(component)),
             };
 
-        private Solution With(ILinearExpression expression, double value) =>
-            expression is IVariable variable
-                ? solution.With(variable, value)
-                : throw new ArgumentException($"A starting value can be given to a variable, but '{expression.Format()}' is a compound expression.", nameof(expression));
-
-        private double ValueOf(IVariable variable) =>
+        internal double ValueOf(IVariable variable) =>
             solution.Values.TryGetValue(variable, out var value)
                 ? value
                 : throw new KeyNotFoundException($"The solution has no value for '{variable.Name}': the variable does not occur in the problem that was solved.");
     }
 
     /// <summary>
-    /// The raw form of <paramref name="components"/> under a solution: numbers rounded to
-    /// <see cref="DecimalPlaces"/>, so that solver noise does not reach a decoder, and truths as
-    /// <c>1</c> or <c>0</c>.
+    /// The raw form of <paramref name="components"/> under a solution: their numbers, rounded to
+    /// <see cref="DecimalPlaces"/> so that solver noise does not reach a decoder.
     /// </summary>
-    internal static ImmutableArray<double> Raw(Solution solution, ImmutableArray<IComponent> components) =>
-        [.. components.Select(component => Raw(solution, component))];
-
-    private static double Raw(Solution solution, IComponent component) =>
-        component switch {
-            LinearComponent linear => Math.Round(Evaluate(solution, linear.Expression), DecimalPlaces),
-            LogicalComponent logical => Holds(solution, logical.Expression, Tolerance) ? 1 : 0,
-            _ => throw new NotSupportedException($"Unknown kind of component: {component.GetType().Name}."),
-        };
+    internal static ImmutableArray<double> Raw(Solution solution, ImmutableArray<ILinearExpression> components) =>
+        [.. components.Select(component => Math.Round(Evaluate(solution, component), DecimalPlaces))];
 
     internal static double Evaluate(Solution solution, ILinearExpression expression) => DeepRecursion.Guard(EvaluateUnguarded, solution, expression);
 
     private static double EvaluateUnguarded(Solution solution, ILinearExpression expression) =>
         expression switch {
             Constant constant => constant.Value,
-            IVariable variable => solution.ValueOf(variable),
+            INumericVariable variable => solution.ValueOf(variable),
+            Indicator indicator => Holds(solution, indicator.Condition, Tolerance) ? 1 : 0,
             Product product => product.Coefficient * Evaluate(solution, product.Expression),
             NamedTerm named => Evaluate(solution, named.Expression),
             Sum sum => Evaluate(solution, sum.Left) + Evaluate(solution, sum.Right),
@@ -97,20 +83,30 @@ public static class Evaluation {
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
-    internal static bool Holds(Solution solution, IBooleanExpression expression, double tolerance) =>
+    /// <summary>Whether a formula in normal form holds under a solution, forgiving relations violated by no more than <paramref name="tolerance"/>.</summary>
+    internal static bool Holds(Solution solution, INormalForm formula, double tolerance) =>
+        formula switch {
+            Literal literal => solution.ValueOf(literal.Variable) > 0.5 == literal.IsPositive,
+            AffineRelation relation => BooleanNormalisation.Holds(relation.Relation, relation.Difference.Evaluate(solution.ValueOf), tolerance),
+            All all => all.Operands.All(operand => Holds(solution, operand, tolerance)),
+            Any any => any.Operands.Any(operand => Holds(solution, operand, tolerance)),
+            _ => throw new NotSupportedException($"Unknown kind of normal form: {formula.GetType().Name}."),
+        };
+
+    internal static bool Holds<TTheory>(Solution solution, IBooleanExpression<TTheory> expression, double tolerance) =>
         DeepRecursion.Guard(HoldsUnguarded, solution, expression, tolerance);
 
-    private static bool HoldsUnguarded(Solution solution, IBooleanExpression expression, double tolerance) =>
+    private static bool HoldsUnguarded<TTheory>(Solution solution, IBooleanExpression<TTheory> expression, double tolerance) =>
         expression switch {
             BooleanConstant constant => constant.Value,
-            BinaryVariable variable => solution.Value(variable),
-            Comparison comparison => BooleanNormalisation.Holds(comparison.Relation, solution.Value(comparison.Left - comparison.Right), tolerance),
-            Negation negation => !Holds(solution, negation.Operand, tolerance),
-            NamedConstraint named => Holds(solution, named.Expression, tolerance),
-            Conjunction conjunction => Holds(solution, conjunction.Left, tolerance) && Holds(solution, conjunction.Right, tolerance),
-            Disjunction disjunction => Holds(solution, disjunction.Left, tolerance) || Holds(solution, disjunction.Right, tolerance),
-            Implication implication => !Holds(solution, implication.Antecedent, tolerance) || Holds(solution, implication.Consequent, tolerance),
-            Equivalence equivalence => Holds(solution, equivalence.Left, tolerance) == Holds(solution, equivalence.Right, tolerance),
+            BinaryVariable variable => solution.ValueOf(variable) > 0.5,
+            LinearRelation relation => BooleanNormalisation.Holds(relation.Relation, solution.Value(relation.Left - relation.Right), tolerance),
+            INegation<TTheory> negation => !Holds(solution, negation.Operand, tolerance),
+            INamedConstraint<TTheory> named => Holds(solution, named.Expression, tolerance),
+            IConjunction<TTheory> conjunction => Holds(solution, conjunction.Left, tolerance) && Holds(solution, conjunction.Right, tolerance),
+            IDisjunction<TTheory> disjunction => Holds(solution, disjunction.Left, tolerance) || Holds(solution, disjunction.Right, tolerance),
+            IImplication<TTheory> implication => !Holds(solution, implication.Antecedent, tolerance) || Holds(solution, implication.Consequent, tolerance),
+            IEquivalence<TTheory> equivalence => Holds(solution, equivalence.Left, tolerance) == Holds(solution, equivalence.Right, tolerance),
             _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 }

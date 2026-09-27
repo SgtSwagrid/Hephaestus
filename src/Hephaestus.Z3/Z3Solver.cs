@@ -19,17 +19,16 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
             : throw new InvalidOperationException();
 
     private ISolveResult Solve(IOneShotProblem original, LinearisedProblem linearised, CancellationToken cancellationToken) {
-        var problem = linearised.Problem;
         using var context = new Context();
         using var interruption = cancellationToken.Register(context.Interrupt);
 
-        var symbols = new Symbols(context, problem.Variables.ToImmutableDictionary(variable => variable, variable => Declare(context, variable)));
-        var objective = Linear(symbols, problem.Objective.Expression.Normalise());
+        var symbols = new Symbols(context, linearised.Variables.ToImmutableDictionary(variable => variable, variable => Declare(context, variable)));
+        var objective = Linear(symbols, linearised.Objective.Expression.Normalise());
         var optimiser = context.MkOptimize();
         Configure(context, optimiser, Options ?? SolverOptions.Default);
         optimiser.Assert([.. symbols.Constants.Keys.OfType<BinaryVariable>().Select(variable => Domain(symbols, variable))]);
-        optimiser.Assert(Boolean(symbols, problem.Constraint));
-        var handle = problem.Objective switch {
+        optimiser.Assert([.. linearised.Constraints.Select(constraint => Boolean(symbols, constraint.Lowered))]);
+        var handle = linearised.Objective switch {
             Optimisation { Sense: ObjectiveSense.Minimise } => optimiser.MkMinimize(objective),
             Optimisation { Sense: ObjectiveSense.Maximise } => optimiser.MkMaximize(objective),
             _ => null,
@@ -78,20 +77,15 @@ public sealed record Z3Solver(SolverOptions? Options = null) : ISolver {
         }
     }
 
-    private static BoolExpr Boolean(Symbols symbols, IBooleanExpression expression) => DeepRecursion.Guard(BooleanUnguarded, symbols, expression);
+    private static BoolExpr Boolean(Symbols symbols, INormalForm formula) => DeepRecursion.Guard(BooleanUnguarded, symbols, formula);
 
-    private static BoolExpr BooleanUnguarded(Symbols symbols, IBooleanExpression expression) =>
-        expression switch {
-            BooleanConstant constant => symbols.Context.MkBool(constant.Value),
-            BinaryVariable variable => symbols.Context.MkEq(symbols.Constants[variable], symbols.Context.MkInt(1)),
-            Comparison comparison => Compare(symbols.Context, comparison.Relation, Linear(symbols, (comparison.Left - comparison.Right).Normalise())),
-            Negation negation => symbols.Context.MkNot(Boolean(symbols, negation.Operand)),
-            NamedConstraint named => Boolean(symbols, named.Expression),
-            Conjunction conjunction => symbols.Context.MkAnd(Boolean(symbols, conjunction.Left), Boolean(symbols, conjunction.Right)),
-            Disjunction disjunction => symbols.Context.MkOr(Boolean(symbols, disjunction.Left), Boolean(symbols, disjunction.Right)),
-            Implication implication => symbols.Context.MkImplies(Boolean(symbols, implication.Antecedent), Boolean(symbols, implication.Consequent)),
-            Equivalence equivalence => symbols.Context.MkIff(Boolean(symbols, equivalence.Left), Boolean(symbols, equivalence.Right)),
-            _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
+    private static BoolExpr BooleanUnguarded(Symbols symbols, INormalForm formula) =>
+        formula switch {
+            Literal literal => symbols.Context.MkEq(symbols.Constants[literal.Variable], symbols.Context.MkInt(literal.IsPositive ? 1 : 0)),
+            AffineRelation relation => Compare(symbols.Context, relation.Relation, Linear(symbols, relation.Difference)),
+            All all => symbols.Context.MkAnd([.. all.Operands.Select(operand => Boolean(symbols, operand))]),
+            Any any => symbols.Context.MkOr([.. any.Operands.Select(operand => Boolean(symbols, operand))]),
+            _ => throw new NotSupportedException($"Unknown kind of normal form: {formula.GetType().Name}."),
         };
 
     /// <summary><c>difference ~ 0</c>.</summary>

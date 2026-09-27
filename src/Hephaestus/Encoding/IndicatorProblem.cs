@@ -16,7 +16,7 @@ public sealed record GuardedRow(
     /// from, if it is known. A row is named after it when a model is written to a file. It is kept by
     /// reference and costs nothing until it is asked for its name.
     /// </summary>
-    public IBooleanExpression? Origin { get; init; }
+    public IBooleanExpression<ILinearArithmetic>? Origin { get; init; }
 }
 
 /// <summary>
@@ -45,8 +45,8 @@ public sealed record IndicatorProblem(
 
 /// <summary>The constraints that state a column's lower and upper bounds. A side that nothing states, or that was derived rather than stated, has none.</summary>
 public sealed record BoundOrigin(
-    IBooleanExpression? Lower,
-    IBooleanExpression? Upper
+    IBooleanExpression<ILinearArithmetic>? Lower,
+    IBooleanExpression<ILinearArithmetic>? Upper
 );
 
 /// <summary>Functions over <see cref="IndicatorProblem"/>.</summary>

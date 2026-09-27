@@ -27,7 +27,7 @@ public abstract class SensitivityContract {
     private ShadowPrices Prices(IOneShotProblem problem) => problem.ShadowPrices(Assert.IsType<Optimal>(Solver.Solve(problem)).Solution, Backend);
 
     /// <summary>The rate at which the optimum moves as <paramref name="loosened"/> takes the place of <paramref name="constraint"/>.</summary>
-    private double Rate(IOneShotProblem problem, IBooleanExpression constraint, IBooleanExpression loosened) =>
+    private double Rate(IOneShotProblem problem, IBooleanExpression<ILinearArithmetic> constraint, IBooleanExpression<ILinearArithmetic> loosened) =>
         (Optimum(Problem.Optimise(problem.Objective).SubjectTo(problem.Constraint.Conjuncts.Replace(constraint, loosened))) - Optimum(problem)) / Step;
 
     [Fact]
@@ -62,9 +62,9 @@ public abstract class SensitivityContract {
     [Fact]
     public void WithLogicAndWholeNumbersThePricesAreThoseOfTheChoicesMade() {
         var release = (StartA >= 100).WithName("release");
-        var changeover = ((StartA + 120 + 60 * Express <= StartB) | (StartB + 120 <= StartA)).WithName("changeover");
+        var changeover = ((StartA + 120 + 60 * Express.Indicator <= StartB) | (StartB + 120 <= StartA)).WithName("changeover");
         var horizon = StartA.Between(0, 3600) & StartB.Between(0, 3600);
-        var problem = Problem.Minimise(StartB + 2 * StartA - 50 * Express).SubjectTo(horizon & release & (StartB >= 200) & changeover & Express.Implies(StartB >= 300));
+        var problem = Problem.Minimise(StartB + 2 * StartA - 50 * Express.Indicator).SubjectTo(horizon & release & (StartB >= 200) & changeover & Express.Implies(StartB >= 300));
 
         var prices = Prices(problem);
 

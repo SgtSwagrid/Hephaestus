@@ -108,10 +108,12 @@ Swap `OrToolsSolver.Create()` for `OrToolsSolver.Create(OrToolsSolverId.Highs)` 
 
 There are two algebraic data types, each an interface with a handful of sealed records:
 
-- `ILinearExpression`: `Constant`, `Sum`, `Product`, and the variables.
-- `IBooleanExpression`: `BooleanConstant`, `Comparison`, `Negation`, `Conjunction`, `Disjunction`, `Implication`, `Equivalence`, and `BinaryVariable`.
+- `ILinearExpression`: `Constant`, `Sum`, `Product`, `Indicator`, and the continuous and integer variables.
+- `IBooleanExpression<TTheory>`: `BooleanConstant`, `BinaryVariable`, the theory's atoms (`LinearRelation`), and the connectives `Negation`, `Conjunction`, `Disjunction`, `Implication` and `Equivalence`.
 
-Keeping them apart makes illegal compositions unrepresentable: `x * y` (unless one of them is a binary variable), `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` belongs to both types, so `usesA + usesB <= 1` and `usesA & usesB` are both fine.
+A formula is generic in its theory, as in SMT, where the logic stays the same while the theory beneath it changes. Every theory extends `ILogic`, whose formulas are made of truths and binary variables alone; `ILinearArithmetic` adds relations between linear expressions, so `x <= y` is a `LinearRelation` and a formula of linear arithmetic is an `IBooleanExpression<ILinearArithmetic>`, which is what a problem's constraint is. The type is contravariant: a formula of a theory is a formula of every theory that extends it, so pure logic mixes with anything, and `flag & (x <= 4)` is a formula of linear arithmetic. Formulas compare equal whichever theory they are seen in.
+
+Keeping them apart makes illegal compositions unrepresentable: `x * y`, `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` is a truth, combined with `&`, `|` and `!`; where a number is wanted, its `Indicator` is one when it is true and zero when not, so `usesA & usesB` and `usesA.Indicator + usesB.Indicator <= 1` are both fine. Any constraint has an indicator, not only a variable: `jobs.Sum(job => (job.Finish > deadline).Indicator)` counts the late ones.
 
 Operators (`+ - * /`, `<= >= < >`, `& | ! ^`, plus `EqualTo`, `NotEqualTo`, `Between`, `Implies`, `Iff`) are extension members that do nothing but construct records: `a + b` *is* `new Sum(a, b)`. Plain values mix in on either side: `x + 5`, `5 + x`, `0 <= x`, and, for constraints that depend on known data, `job.IsUrgent.Implies(start <= cutoff)` or `isRush & (changeover >= 180)`. Nothing is flattened or simplified at construction time. All interpretation happens later, in separate passes over the data:
 
@@ -182,7 +184,7 @@ A variable is a name and a kind (`Continuous`, `Integer`, `Binary`). `0 <= x & x
 
 The MILP encoding runs in four pure steps:
 
-1. **Normalise** to negation normal form, with comparisons as `affine form <= 0` or `== 0`.
+1. **Lower and normalise** (`problem.Linearise()`): piecewise-linear functions become variables, and each constraint becomes negation normal form over exact affine relations, `affine form ~ 0`, facing the way it was written. This is what every backend is handed, Z3 included; the MILP steps below take it from here, turning each relation into a row that faces zero from below.
 2. **Encode the logic** as *guarded rows*, "if these literals all hold then `e <= 0`", introducing as few auxiliary binaries as possible. In a disjunction the existing literals become guards, and only the compound disjuncts *other than the last* need an auxiliary. `(a + h <= b) | (b + h <= a)` comes out as the textbook either-or with one binary; `flag.Iff(x >= 5)` needs none. Equal subformulas share one auxiliary.
 3. **Propagate bounds** (feasibility-based bound tightening) over the unconditional rows. `x <= 3600` bounds `x` directly; `finish == start + runtime` bounds `finish` once `start` and `runtime` are bounded; and so on down the line until nothing changes.
 4. **Relax each guard** with `e <= Σ Mᵢ · (1 if guard i is off, else 0)`. The row only has to give way once some guard is off, so `Mᵢ` need only be the largest value `e` can take *while guard i is off* — the tightest valid choice, derived separately for every guard of every row. A guard the row holds without costs nothing at all. Rows that can never bind are dropped; rows that can never hold forbid their guards outright.
@@ -214,11 +216,11 @@ var problem    = Problem.Minimise(makespan + 10 * Abs(finish - promised)).Subjec
 `Max`, `Min` and `Abs` are records like everything else, and work on plain and typed expressions alike. When a problem is encoded, each becomes an auxiliary variable tied to its operands (all three are maxima: `min(a, b) = -max(-a, -b)` and `|e| = max(e, -e)`), and equal ones share a variable. How it is tied depends on how the problem leans on it. Minimising a maximum, or bounding an absolute value from above, only tempts the solver to make the variable too small, so `m >= a & m >= b` is enough and no binary variable is spent; that is the usual linear-programming idiom, found for you. Only a use that rewards a larger value (`Abs(x - y) >= 5`, or maximising a maximum) adds `m <= a | m <= b`, which costs one binary. The variable is bounded by the bounds of its operands, so its big-M is derived like any other.
 
 ```csharp
-var setupCost = needsSetup * setupTime;                        // the setup time if it is needed, else nothing
+var setupCost = needsSetup.Indicator * setupTime;              // the setup time if it is needed, else nothing
 var penalty   = If(finish >= deadline, 50 + 2 * lateness, 0);  // one expression or another
 ```
 
-`If(condition, then, otherwise)` is lowered by the same pass, and the product of a binary variable and an expression is `If(binary, expression, 0)`: the one product of two expressions that stays linear, and the only one that compiles. With a binary variable for a condition it costs two conditional rows and no further binary, which Gurobi and CP-SAT take as they stand and the others get as the textbook big-M rows, with M derived from the bounds of the expression. Like a maximum, it is only held from the side on which the problem could otherwise cheat.
+`If(condition, then, otherwise)` is lowered by the same pass, and the product of an indicator and an expression is `If(condition, expression, 0)`: the one product of two expressions that stays linear, and the only one that compiles. An indicator on its own is `If(condition, 1, 0)`, except that the indicator of a binary variable is simply its column (and of its negation, one minus that). With a binary variable for a condition it costs two conditional rows and no further binary, which Gurobi and CP-SAT take as they stand and the others get as the textbook big-M rows, with M derived from the bounds of the expression. Like a maximum, it is only held from the side on which the problem could otherwise cheat.
 
 ### Typed expressions
 
@@ -229,7 +231,7 @@ The two types carry the right algebra, once, generically:
 ```csharp
 Quantity<Duration>               elapsed  = finish - start;          // point - point
 Point<LocalDateTime, Duration>   earliest = start + runtime + slack;     // point + quantity
-IBooleanExpression               onTime   = finish <= deadline;         // compare with plain values
+IBooleanExpression<ILinearArithmetic> onTime = finish <= deadline;    // compare with plain values
 Point<LocalDateTime, Duration>   release  = shiftStart + runtime;           // plain value + quantity
 //                                          finish + start            // does not compile
 //                                          2 * finish                // does not compile
@@ -249,7 +251,7 @@ var start   = Variable.LocalDateTime("start", origin: shiftStart);
 var runtime     = Variable.Duration("runtime", unit: Duration.FromSeconds(30), inWholeUnits: true);  // quantised
 ```
 
-Supporting another type means writing one small record that implements `IProjection<T>` (or `IPointProjection<T, TDelta>`), plus, for a point type, the three one-line `T ± Quantity<TDelta>` operators that C# will not let the core declare generically (they delegate to `quantity.Beyond(origin, projection)`). A projection can also be had from one you have: `seconds.Biselect(TimeSpan.FromSeconds, span => (long)span.TotalSeconds)` re-views it as another type, and `Select` gives a decoder alone — a reading no constraint can mention. Projections built that way hold functions, so they do not compare equal; write a record where that matters. A projection onto `bool` rather than onto the number line (`IProjection<T, bool>`, `ILogicallyEncodable<T>`) carries a two-state type on a single binary, which is compared, read and zipped like any other. Typed reads round the underlying number to `Evaluation.DecimalPlaces` of the unit, so that solver noise does not turn 08:04:00 into 08:03:59.99999999; read the underlying expression for the unrounded number. A constraint is read forgiving violations up to `Evaluation.Tolerance`, or whatever you pass instead.
+Supporting another type means writing one small record that implements `IProjection<T>` (or `IPointProjection<T, TDelta>`), plus, for a point type, the three one-line `T ± Quantity<TDelta>` operators that C# will not let the core declare generically (they delegate to `quantity.Beyond(origin, projection)`). A projection can also be had from one you have: `seconds.Biselect(TimeSpan.FromSeconds, span => (long)span.TotalSeconds)` re-views it as another type, and `Select` gives a decoder alone — a reading no constraint can mention. Projections built that way hold functions, so they do not compare equal; write a record where that matters. A two-state type is carried by an indicator, projected onto zero and one: a record `Lift(goesUp.Indicator, directions)` that implements `ILinearlyEncodable<Direction>` is compared, read and zipped like any other, and `constraint.AsEncodable()` is the same thing for a plain `bool`. Typed reads round the underlying number to `Evaluation.DecimalPlaces` of the unit, so that solver noise does not turn 08:04:00 into 08:03:59.99999999; read the underlying expression for the unrounded number. A constraint is read forgiving violations up to `Evaluation.Tolerance`, or whatever you pass instead.
 
 ### Zips, sequences and vectors
 
@@ -262,7 +264,7 @@ var location = x.Zip(y).Biselect((across, down) => new Location(across, down), p
 var schedule = starts.Sequence();                      // IEncodable<ImmutableArray<LocalDateTime>>
 ```
 
-What they have in common is `IEncodable<T>`: a list of components, each a `LinearComponent` read as a number or a `LogicalComponent` read as a truth, and a projection between `T` and the vector of their raw values (a truth counting as 1 or 0). A quantity and a point are an `IEncodable` of one number, a two-state type one of one truth, and a zip or a sequence one of as many as it is made of; `AsEncodable()` lets a plain linear or boolean expression join in. Comparison, `EqualTo`, `NotEqualTo`, `Between`, `solution.Value` and `solution.With` are written once against it, and work entry by entry: numbers compare as numbers, truths by implication (false before true), a relation holds when it holds in every entry, and two values differ where any entry does. Values under different projections are reconciled entry by entry, as quantities are, even when their entries come in another order. So `solution.Value(schedule)` is the whole array, and `schedule.EqualTo(plan)` pins it. There is no `pure` among them: writing a constant through a projection would forget which constant it was.
+What they have in common is `IEncodable<T>`: a list of components, each a linear expression, and a projection between `T` and the vector of their numbers. A quantity and a point are an `IEncodable` of one number, a two-state type one of one indicator, and a zip or a sequence one of as many as it is made of; `AsEncodable()` lets a plain linear or boolean expression join in, a truth by its indicator. Comparison, `EqualTo`, `NotEqualTo`, `Between`, `solution.Value` and `solution.With` are written once against it, and work entry by entry: a relation holds when it holds in every entry, and two values differ where any entry does. Between truths that is logic, since they are ones and zeroes: `[a] <= [b]` is `a => b`, and `[a] == [b]` is `a <=> b`. Values under different projections are reconciled entry by entry, as quantities are, even when their entries come in another order. So `solution.Value(schedule)` is the whole array, and `schedule.EqualTo(plan)` pins it. There is no `pure` among them: writing a constant through a projection would forget which constant it was.
 
 A `Vector<T>` holds expressions rather than reading them as values, and is combined entry by entry: `Zip` pairs the entries of two vectors and `Select` maps each, so the function sees the quantities themselves and builds expressions out of them.
 

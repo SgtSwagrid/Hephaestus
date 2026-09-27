@@ -40,14 +40,14 @@ public sealed class NamesAndConflictsTests {
         Assert.Equal("separated", separated.Format());
         Assert.Equal("!a | separated", conflictFree.Format());
         Assert.Equal("2*turnaround + m <= 9", (2 * (N - M).WithName("turnaround") + M <= 9).Format());
-        Assert.Equal("(m + 2 <= n) | (n + 2 <= m)", ((NamedConstraint)separated).Expression.Format());
+        Assert.Equal("(m + 2 <= n) | (n + 2 <= m)", ((INamedConstraint<ILinearArithmetic>)separated).Expression.Format());
     }
 
     [Fact]
     public void AnExpressionGoesByItsNameOrElseByTheWayItIsWritten() {
         Assert.Equal("m <= n + 1", (M <= N + 1).Name);
         Assert.Equal("precedence", (M <= N + 1).WithName("precedence").Name);
-        Assert.Equal("a", ((IBooleanExpression)A).Name);
+        Assert.Equal("a", A.Name);
         Assert.Equal("busy", A.WithName("busy").Name);
     }
 
@@ -113,7 +113,7 @@ public sealed class NamesAndConflictsTests {
     [Fact]
     public void AConflictAmongManyConstraintsIsFoundInFewSolves() {
         var sizes = new List<int>();
-        var padding = Enumerable.Range(0, 200).Select(index => Variable.Binary($"flag{index}") + Variable.Binary($"flag{index + 1}") <= 2);
+        var padding = Enumerable.Range(0, 200).Select(index => Variable.Binary($"flag{index}").Indicator + Variable.Binary($"flag{index + 1}").Indicator <= 2);
         var constraint = padding.Take(120).AllOf() & (M >= 1).WithName("low") & M.Between(0, 1) & padding.Skip(120).AllOf() & (M <= 0).WithName("high");
 
         var conflict = new MilpSolver(new CountingBackend(sizes)).FindConflict(constraint);
@@ -158,15 +158,15 @@ public sealed class NamesAndConflictsTests {
     }
 
     /// <summary>Offers a fixed answer when asked to narrow a conflict down, and otherwise solves by trying everything.</summary>
-    private sealed record OfferingBackend(Func<IndicatorProblem, ImmutableArray<IBooleanExpression>> Offer, List<int> Sizes) : IMilpBackend, IConflictBackend {
+    private sealed record OfferingBackend(Func<IndicatorProblem, ImmutableArray<IBooleanExpression<ILinearArithmetic>>> Offer, List<int> Sizes) : IMilpBackend, IConflictBackend {
         public ISolveResult Solve(MilpProblem problem, IReadOnlyDictionary<IVariable, double> start, SolverOptions options, CancellationToken cancellationToken) =>
             new CountingBackend(Sizes).Solve(problem, start, options, cancellationToken);
 
-        public ImmutableArray<IBooleanExpression> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) => Offer(problem);
+        public ImmutableArray<IBooleanExpression<ILinearArithmetic>> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) => Offer(problem);
     }
 
-    private static IBooleanExpression Padded(IBooleanExpression low, IBooleanExpression high) =>
-        Enumerable.Range(0, 100).Select(index => Variable.Binary($"flag{index}") + Variable.Binary($"flag{index + 1}") <= 2).AllOf() & low & M.Between(0, 1) & (N >= 0) & high;
+    private static IBooleanExpression<ILinearArithmetic> Padded(IBooleanExpression<ILinearArithmetic> low, IBooleanExpression<ILinearArithmetic> high) =>
+        Enumerable.Range(0, 100).Select(index => Variable.Binary($"flag{index}").Indicator + Variable.Binary($"flag{index + 1}").Indicator <= 2).AllOf() & low & M.Between(0, 1) & (N >= 0) & high;
 
     [Fact]
     public void ASolverThatCanNarrowTheSearchDownIsOnlyAskedAboutWhatItOffers() {

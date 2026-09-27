@@ -26,13 +26,13 @@ public static class MilpEncoding {
 
     private static IndicatorProblem Lower(IOneShotProblem original, EncodingOptions options) {
         var linearised = original.Linearise(options);
-        var (problem, definitions) = linearised;
-        var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet();
-        // A row is put down to the constraint as it was written; one that nobody wrote stands for itself.
-        var conjuncts = linearised.Constraints(original.Constraint).Select(constraint => (Origin: constraint.Written ?? constraint.Lowered, Formula: constraint.Lowered.Normalise(options.StrictnessEpsilon)));
+        var definitions = linearised.Definitions;
+        var auxiliaries = definitions.Select(definition => definition.Variable).ToImmutableHashSet<IVariable>();
+        // A row is put down to the constraint as it was written; one that nobody wrote is put down to nothing.
+        var conjuncts = linearised.Constraints.Select(constraint => (Origin: constraint.Written, Formula: constraint.Lowered));
         // A maximum that the problem turns out not to lean on is never tied down, and would take its operands with it.
-        var variables = problem.Variables.Union(original.Variables);
-        var program = IndicatorEncoding.Encode(conjuncts, new AuxiliaryNaming([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix));
+        var variables = linearised.Variables.Union(original.Variables);
+        var program = IndicatorEncoding.Encode(conjuncts, new EncodingContext([.. variables.Select(variable => variable.Name)], options.AuxiliaryPrefix, options.StrictnessEpsilon));
         var stated = BoundPropagation.Sweep(program.Rows.Where(IsStatedBound), ImmutableDictionary<IVariable, Interval>.Empty);
         return WithOrigins(program.Rows.Where(IsStatedBound), stated, WithBounds(definitions, options.BoundPropagationRounds, new IndicatorProblem(
             [
@@ -40,8 +40,8 @@ public static class MilpEncoding {
                 .. program.Auxiliaries.Select(variable => AsColumn(variable, stated, isAuxiliary: true)),
             ],
             [.. program.Rows.Where(row => !IsStatedBound(row)).SelectMany(Tidied)],
-            problem.Sense,
-            problem.Objective.Expression.Normalise())));
+            linearised.Objective.Sense,
+            linearised.Objective.Expression.Normalise())));
     }
 
     /// <summary>One side of a variable's bounds, as one constraint states it.</summary>
@@ -49,7 +49,7 @@ public static class MilpEncoding {
         IVariable Variable,
         bool IsUpper,
         double Value,
-        IBooleanExpression? Origin
+        IBooleanExpression<ILinearArithmetic>? Origin
     );
 
     /// <summary>

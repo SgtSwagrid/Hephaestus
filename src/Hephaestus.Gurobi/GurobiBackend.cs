@@ -88,7 +88,7 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend, IConflictB
     /// Gurobi computes an irreducible infeasible subsystem: rows and bounds that cannot all hold, none
     /// of which can be spared. Each is put down to the constraint it was encoded from.
     /// </remarks>
-    public ImmutableArray<IBooleanExpression> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) {
+    public ImmutableArray<IBooleanExpression<ILinearArithmetic>> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken) {
         using var environment = Quietly();
         using var model = new GRBModel(environment);
         using var interruption = cancellationToken.Register(model.Terminate);
@@ -112,8 +112,8 @@ public sealed record GurobiBackend : IIndicatorBackend, IMilpBackend, IConflictB
     }
 
     /// <summary>The constraints that any of the subsystem's rows or bounds came from, each once. What has no origin (the domain of a binary variable, say) is nobody's constraint.</summary>
-    private static IEnumerable<IBooleanExpression> InConflict(params IEnumerable<IBooleanExpression?>[] origins) =>
-        origins.SelectMany(some => some).OfType<IBooleanExpression>().Distinct<IBooleanExpression>(ReferenceEqualityComparer.Instance);
+    private static IEnumerable<IBooleanExpression<ILinearArithmetic>> InConflict(params IEnumerable<IBooleanExpression<ILinearArithmetic>?>[] origins) =>
+        origins.SelectMany(some => some).OfType<IBooleanExpression<ILinearArithmetic>>().Distinct<IBooleanExpression<ILinearArithmetic>>(ReferenceEqualityComparer.Instance);
 
     private static GRBLinExpr Linear(AffineForm form, ImmutableDictionary<IVariable, GRBVar> variables) {
         var expression = new GRBLinExpr(form.Constant);

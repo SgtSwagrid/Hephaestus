@@ -19,30 +19,35 @@ public static class LinearOperators {
         public static ILinearExpression operator *(ILinearExpression expression, double coefficient) => new Product(coefficient, expression);
         public static ILinearExpression operator /(ILinearExpression expression, double divisor) => new Product(1 / divisor, expression);
 
-        // The one product of two expressions that stays linear: by a binary variable, it is the expression or nothing.
-        public static ILinearExpression operator *(BinaryVariable gate, ILinearExpression expression) => new Conditional(gate, expression, new Constant(0));
-        public static ILinearExpression operator *(ILinearExpression expression, BinaryVariable gate) => new Conditional(gate, expression, new Constant(0));
+        // The one product of two expressions that stays linear: by an indicator, it is the expression or nothing.
+        public static ILinearExpression operator *(Indicator gate, ILinearExpression expression) => new Conditional(gate.Condition, expression, new Constant(0));
+        public static ILinearExpression operator *(ILinearExpression expression, Indicator gate) => new Conditional(gate.Condition, expression, new Constant(0));
 
-        public static IBooleanExpression operator <=(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.LessThanOrEqual, right);
-        public static IBooleanExpression operator <=(ILinearExpression left, double right) => new Comparison(left, Relation.LessThanOrEqual, new Constant(right));
-        public static IBooleanExpression operator <=(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.LessThanOrEqual, right);
+        public static IBooleanExpression<ILinearArithmetic> operator <=(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.LessThanOrEqual, right);
+        public static IBooleanExpression<ILinearArithmetic> operator <=(ILinearExpression left, double right) => new LinearRelation(left, Relation.LessThanOrEqual, new Constant(right));
+        public static IBooleanExpression<ILinearArithmetic> operator <=(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.LessThanOrEqual, right);
 
-        public static IBooleanExpression operator >=(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.GreaterThanOrEqual, right);
-        public static IBooleanExpression operator >=(ILinearExpression left, double right) => new Comparison(left, Relation.GreaterThanOrEqual, new Constant(right));
-        public static IBooleanExpression operator >=(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.GreaterThanOrEqual, right);
+        public static IBooleanExpression<ILinearArithmetic> operator >=(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.GreaterThanOrEqual, right);
+        public static IBooleanExpression<ILinearArithmetic> operator >=(ILinearExpression left, double right) => new LinearRelation(left, Relation.GreaterThanOrEqual, new Constant(right));
+        public static IBooleanExpression<ILinearArithmetic> operator >=(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.GreaterThanOrEqual, right);
 
-        public static IBooleanExpression operator <(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.LessThan, right);
-        public static IBooleanExpression operator <(ILinearExpression left, double right) => new Comparison(left, Relation.LessThan, new Constant(right));
-        public static IBooleanExpression operator <(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.LessThan, right);
+        public static IBooleanExpression<ILinearArithmetic> operator <(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.LessThan, right);
+        public static IBooleanExpression<ILinearArithmetic> operator <(ILinearExpression left, double right) => new LinearRelation(left, Relation.LessThan, new Constant(right));
+        public static IBooleanExpression<ILinearArithmetic> operator <(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.LessThan, right);
 
-        public static IBooleanExpression operator >(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.GreaterThan, right);
-        public static IBooleanExpression operator >(ILinearExpression left, double right) => new Comparison(left, Relation.GreaterThan, new Constant(right));
-        public static IBooleanExpression operator >(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.GreaterThan, right);
+        public static IBooleanExpression<ILinearArithmetic> operator >(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.GreaterThan, right);
+        public static IBooleanExpression<ILinearArithmetic> operator >(ILinearExpression left, double right) => new LinearRelation(left, Relation.GreaterThan, new Constant(right));
+        public static IBooleanExpression<ILinearArithmetic> operator >(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.GreaterThan, right);
     }
 
-    extension(BinaryVariable) {
-        /// <summary>The product of two binary variables, which is one exactly when both are. (It settles which of them is the gate.)</summary>
-        public static ILinearExpression operator *(BinaryVariable gate, BinaryVariable expression) => new Conditional(gate, expression, new Constant(0));
+    extension(Indicator) {
+        /// <summary>The product of two indicators, which is one exactly when both conditions hold. (It settles which of them is the gate.)</summary>
+        public static ILinearExpression operator *(Indicator gate, Indicator expression) => new Conditional(gate.Condition, expression, new Constant(0));
+    }
+
+    extension(IBooleanExpression<ILinearArithmetic> condition) {
+        /// <summary>One when this holds, and zero when it does not: <c>needsSetup.Indicator * setupTime</c>, <c>flags.Sum(flag =&gt; flag.Indicator)</c>.</summary>
+        public Indicator Indicator => new(condition);
     }
 
     extension(ILinearExpression expression) {
@@ -50,28 +55,28 @@ public static class LinearOperators {
         /// The constraint that this expression equals <paramref name="other"/>. (C# reserves
         /// <c>==</c> on records and interfaces for structural and reference equality.)
         /// </summary>
-        public IBooleanExpression EqualTo(ILinearExpression other) => new Comparison(expression, Relation.Equal, other);
+        public IBooleanExpression<ILinearArithmetic> EqualTo(ILinearExpression other) => new LinearRelation(expression, Relation.Equal, other);
 
         /// <inheritdoc cref="EqualTo(ILinearExpression, ILinearExpression)"/>
-        public IBooleanExpression EqualTo(double other) => new Comparison(expression, Relation.Equal, new Constant(other));
+        public IBooleanExpression<ILinearArithmetic> EqualTo(double other) => new LinearRelation(expression, Relation.Equal, new Constant(other));
 
         /// <summary>The constraint that this expression differs from <paramref name="other"/>.</summary>
-        public IBooleanExpression NotEqualTo(ILinearExpression other) => new Comparison(expression, Relation.NotEqual, other);
+        public IBooleanExpression<ILinearArithmetic> NotEqualTo(ILinearExpression other) => new LinearRelation(expression, Relation.NotEqual, other);
 
         /// <inheritdoc cref="NotEqualTo(ILinearExpression, ILinearExpression)"/>
-        public IBooleanExpression NotEqualTo(double other) => new Comparison(expression, Relation.NotEqual, new Constant(other));
+        public IBooleanExpression<ILinearArithmetic> NotEqualTo(double other) => new LinearRelation(expression, Relation.NotEqual, new Constant(other));
 
         /// <summary>The constraint <c>lower &lt;= expression &lt;= upper</c>.</summary>
-        public IBooleanExpression Between(double lower, double upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearArithmetic> Between(double lower, double upper) => lower <= expression & expression <= upper;
 
         /// <inheritdoc cref="Between(ILinearExpression, double, double)"/>
-        public IBooleanExpression Between(ILinearExpression lower, ILinearExpression upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearArithmetic> Between(ILinearExpression lower, ILinearExpression upper) => lower <= expression & expression <= upper;
 
         /// <inheritdoc cref="Between(ILinearExpression, double, double)"/>
-        public IBooleanExpression Between(double lower, ILinearExpression upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearArithmetic> Between(double lower, ILinearExpression upper) => lower <= expression & expression <= upper;
 
         /// <inheritdoc cref="Between(ILinearExpression, double, double)"/>
-        public IBooleanExpression Between(ILinearExpression lower, double upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearArithmetic> Between(ILinearExpression lower, double upper) => lower <= expression & expression <= upper;
     }
 
     extension(IEnumerable<ILinearExpression> terms) {

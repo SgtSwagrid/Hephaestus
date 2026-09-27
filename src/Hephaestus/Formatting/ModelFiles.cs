@@ -47,8 +47,8 @@ public static partial class ModelFiles {
     /// </summary>
     private const string One = "constant_one";
 
-    private static IEnumerable<string> RowOrigins(IEnumerable<IBooleanExpression?> origins) =>
-        origins.Select((origin, index) => origin is NamedConstraint named ? named.Name : $"c{index}");
+    private static IEnumerable<string> RowOrigins(IEnumerable<IBooleanExpression<ILinearArithmetic>?> origins) =>
+        origins.Select((origin, index) => origin is INamedConstraint<ILinearArithmetic> named ? named.Name : $"c{index}");
 
     /// <summary>Only a name that was given is used for a row; one that is merely the constraint as written would be all punctuation.</summary>
     private static string Plain(string name, string prefix) =>

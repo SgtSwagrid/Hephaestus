@@ -3,27 +3,15 @@ using System.Collections.Immutable;
 namespace Hephaestus;
 
 /// <summary>
-/// One of the things a solver holds towards a projected value: a linear expression read as a
-/// number, or a boolean expression read as a truth. The cases are <see cref="LinearComponent"/> and
-/// <see cref="LogicalComponent"/>. The kind is recorded rather than read off the expression, because
-/// a <see cref="BinaryVariable"/> is both kinds of expression and only its projection knows which it is.
-/// </summary>
-public interface IComponent;
-
-/// <summary>A linear expression, standing for a number in the raw form.</summary>
-public sealed record LinearComponent(ILinearExpression Expression) : IComponent;
-
-/// <summary>A boolean expression, standing for a truth in the raw form: <c>1</c> if it holds and <c>0</c> if not.</summary>
-public sealed record LogicalComponent(IBooleanExpression Expression) : IComponent;
-
-/// <summary>
-/// Expressions read together as something else, through one or both halves of a projection. The
-/// raw form is a vector with one entry per component, in order: a quantity has one component, and
-/// a pair of quantities has two.
+/// Linear expressions read together as something else, through one or both halves of a projection.
+/// The raw form is a vector with one number per component, in order: a quantity has one component,
+/// and a pair of quantities has two. A truth is a component through its indicator, one when it
+/// holds and zero when not, so that comparing two of them entry by entry is logic: <c>[a] &lt;= [b]</c>
+/// is <c>a =&gt; b</c>.
 /// </summary>
 public interface IProjectedExpression {
     /// <summary>The components, one for each entry of the raw form.</summary>
-    ImmutableArray<IComponent> Components { get; }
+    ImmutableArray<ILinearExpression> Components { get; }
 }
 
 /// <summary>

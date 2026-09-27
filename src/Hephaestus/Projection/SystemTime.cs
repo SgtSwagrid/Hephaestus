@@ -77,6 +77,6 @@ public static class SystemTimeVariables {
 
     private static TimeSpan Second { get; } = System.TimeSpan.FromSeconds(1);
 
-    private static IVariable Underlying(string name, bool inWholeUnits) =>
+    private static INumericVariable Underlying(string name, bool inWholeUnits) =>
         inWholeUnits ? Variable.Integer(name) : Variable.Continuous(name);
 }

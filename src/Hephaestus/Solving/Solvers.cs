@@ -62,7 +62,7 @@ public sealed record MilpSolver(
 
     /// <inheritdoc/>
     /// <remarks>The logic is encoded without big-M for this, whatever the solver is otherwise given: a conflict is a fact about the problem, not about a formulation of it.</remarks>
-    public ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default) =>
+    public ImmutableArray<IBooleanExpression<ILinearArithmetic>> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default) =>
         BackendSolving.NarrowConflict(problem, Backend as IConflictBackend, Encoding, Options, cancellationToken);
 }
 
@@ -85,7 +85,7 @@ public sealed record IndicatorSolver(
 
     /// <inheritdoc/>
     /// <inheritdoc cref="MilpSolver.NarrowConflict" path="/remarks"/>
-    public ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default) =>
+    public ImmutableArray<IBooleanExpression<ILinearArithmetic>> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default) =>
         BackendSolving.NarrowConflict(problem, Backend as IConflictBackend, Encoding, Options, cancellationToken);
 }
 
@@ -115,7 +115,7 @@ internal static class BackendSolving {
                 .Presentable(encoding.Encoded.Columns, problem.Objective.Expression, encoding.Elapsed);
 
     /// <summary>A conflict as the backend narrows it, where the backend can; empty where it cannot.</summary>
-    public static ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, IConflictBackend? backend, EncodingOptions? encoding, SolverOptions? options, CancellationToken cancellationToken) =>
+    public static ImmutableArray<IBooleanExpression<ILinearArithmetic>> NarrowConflict(IOneShotProblem problem, IConflictBackend? backend, EncodingOptions? encoding, SolverOptions? options, CancellationToken cancellationToken) =>
         backend is null ? [] : Conflicts.Narrow(problem.EncodeLogic(encoding), backend, options ?? SolverOptions.Default, cancellationToken);
 }
 

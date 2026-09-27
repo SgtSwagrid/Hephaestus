@@ -9,7 +9,7 @@ public sealed class PiecewiseTests {
     private static readonly ContinuousVariable Z = Variable.Continuous("z");
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly IntegerVariable M = Variable.Integer("m");
-    private static readonly IBooleanExpression Box = X.Between(0, 10) & Y.Between(0, 10);
+    private static readonly IBooleanExpression<ILinearArithmetic> Box = X.Between(0, 10) & Y.Between(0, 10);
 
     private static IEnumerable<string> Rows(IOneShotProblem problem) => problem.Encode().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal);
 
@@ -107,7 +107,7 @@ public sealed class PiecewiseTests {
     public void LoweredConstraintsKnowWhichOnesWereWritten() {
         var written = Box & (Max(X, Y) <= 8);
 
-        var constraints = Problem.Minimise(Max(X, Y)).SubjectTo(written).Linearise().Constraints(written);
+        var constraints = Problem.Minimise(Max(X, Y)).SubjectTo(written).Linearise().Constraints;
 
         // Those as written come first and in order, each beside what it was lowered to.
         Assert.Equal(written.Conjuncts, constraints.Take(written.Conjuncts.Length).Select(constraint => constraint.Written));
@@ -121,7 +121,7 @@ public sealed class PiecewiseTests {
     public void AProblemWithNothingToLowerIsAllAsWritten() {
         var written = Box & (X <= 8);
 
-        var constraints = Problem.Minimise(X).SubjectTo(written).Linearise().Constraints(written);
+        var constraints = Problem.Minimise(X).SubjectTo(written).Linearise().Constraints;
 
         Assert.Equal(written.Conjuncts, constraints.Select(constraint => constraint.Written));
     }
@@ -144,11 +144,14 @@ public sealed class PiecewiseTests {
         Assert.Equal(["_max1"], Auxiliaries(Problem.Minimise(Max(X, Variable.Continuous("_max0"))).SubjectTo(Box & Variable.Continuous("_max0").Between(0, 1))));
 
     [Fact]
-    public void AProblemWithoutThemIsLeftAlone() {
+    public void AProblemWithoutThemKeepsItsObjectiveAndItsShape() {
         var problem = Problem.Minimise(X).SubjectTo(Box);
+        var linearised = problem.Linearise();
 
-        Assert.Same(problem, problem.Linearise().Problem);
-        Assert.Empty(problem.Linearise().Definitions);
+        Assert.Equal(problem.Objective, linearised.Objective);
+        Assert.Empty(linearised.Definitions);
+        Assert.Equal(problem.Constraint.Conjuncts, linearised.Constraints.Select(constraint => constraint.Written));
+        Assert.Equal(["-x <= 0", "x <= 10", "-y <= 0", "y <= 10"], linearised.Constraints.Select(constraint => constraint.Lowered.Format()));
     }
 
     [Fact]
@@ -174,10 +177,10 @@ public sealed class PiecewiseTests {
         Assert.Equal(new Conditional(X >= 5, Y, Z), If(X >= 5, Y, Z));
         Assert.Equal(new Conditional(Runs, X, new Constant(0)), If(Runs, X));
         Assert.Equal(new Conditional(Runs, new Constant(3), new Constant(1)), If(Runs, 3, 1));
-        Assert.Equal(new Conditional(Runs, X + 1, new Constant(0)), Runs * (X + 1));
-        Assert.Equal(new Conditional(Runs, X, new Constant(0)), X * Runs);
-        Assert.Equal(new Conditional(Runs, Stops, new Constant(0)), Runs * Stops);
-        Assert.Equal(new Product(2, Runs), 2 * Runs);
+        Assert.Equal(new Conditional(Runs, X + 1, new Constant(0)), Runs.Indicator * (X + 1));
+        Assert.Equal(new Conditional(Runs, X, new Constant(0)), X * Runs.Indicator);
+        Assert.Equal(new Conditional(Runs, new Indicator(Stops), new Constant(0)), Runs.Indicator * Stops.Indicator);
+        Assert.Equal(new Product(2, new Indicator(Runs)), 2 * Runs.Indicator);
     }
 
     [Fact]
@@ -188,13 +191,13 @@ public sealed class PiecewiseTests {
         Assert.Equal<IVariable>([Runs, X, Y], [.. If(Runs, X, Y).Variables]);
         Assert.Equal(-7, solution.Value(If(Runs & (X >= 2), Y, 2 * X)));
         Assert.Equal(6, solution.Value(If(Stops | (X >= 4), Y, 2 * X)));
-        Assert.Equal(0, solution.Value(Stops * Y));
-        Assert.Equal(-7, solution.Value(Runs * Y));
+        Assert.Equal(0, solution.Value(Stops.Indicator * Y));
+        Assert.Equal(-7, solution.Value(Runs.Indicator * Y));
     }
 
     [Fact]
     public void TheProductWithABinaryVariableIsTwoConditionalRowsAndNoFurtherBinary() {
-        var problem = Problem.Satisfy(Box & (Runs * X).EqualTo(Y));
+        var problem = Problem.Satisfy(Box & (Runs.Indicator * X).EqualTo(Y));
 
         Assert.Equal(["_if0"], Auxiliaries(problem));
         Assert.Equal(["!runs => _if0 == 0", "_if0 - y == 0", "runs => _if0 - x == 0"], problem.EncodeLogic().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal));
