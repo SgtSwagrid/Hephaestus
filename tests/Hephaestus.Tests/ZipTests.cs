@@ -14,23 +14,12 @@ public sealed class ZipTests {
     private static readonly BinaryVariable Down = Variable.Binary("down");
     private static readonly Switch Lift = new(Up.Indicator, new DirectionProjection());
 
-    private enum Direction { Down, Up }
-
-    /// <summary>A two-state type over the indicator of one binary, which is one when the lift goes up.</summary>
-    private sealed record DirectionProjection : IProjection<Direction> {
-        public double Encode(Direction value) => value == Direction.Up ? 1 : 0;
-
-        public Direction Decode(double representation) => representation > 0.5 ? Direction.Up : Direction.Down;
-    }
-
-    /// <summary>The same type the other way round: its indicator is one when the lift goes down.</summary>
+    /// <summary>The <see cref="DirectionProjection"/> the other way round: its indicator is one when the lift goes down.</summary>
     private sealed record FlippedProjection : IProjection<Direction> {
         public double Encode(Direction value) => value == Direction.Down ? 1 : 0;
 
         public Direction Decode(double representation) => representation > 0.5 ? Direction.Down : Direction.Up;
     }
-
-    private sealed record Switch(ILinearExpression Expression, IProjection<Direction> Projection) : ILinearlyEncodable<Direction>;
 
     private sealed record Location(double X, double Y);
 

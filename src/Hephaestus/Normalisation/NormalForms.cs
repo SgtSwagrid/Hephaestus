@@ -56,6 +56,14 @@ public static class NormalForms {
         public string Format() => Formatted(formula, isOperand: false);
     }
 
+    extension(Literal literal) {
+        /// <summary>One when the literal holds and zero when not, as an affine form: its variable's column, or one minus it.</summary>
+        internal AffineForm Indicator =>
+            literal.IsPositive
+                ? AffineForm.Zero.PlusTerm(literal.Variable, 1)
+                : AffineForm.Zero.PlusTerm(literal.Variable, -1).Plus(1);
+    }
+
     private static ImmutableSortedSet<IVariable> Collect(INormalForm formula, ImmutableSortedSet<IVariable> found) =>
         formula switch {
             Literal literal => found.Add(literal.Variable),

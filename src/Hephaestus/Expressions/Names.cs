@@ -15,7 +15,7 @@ public interface INamedConstraint<in TTheory> : IBooleanExpression<TTheory> {
 }
 
 /// <inheritdoc cref="INamedConstraint{TTheory}"/>
-/// <remarks>A class rather than a record, as the connectives are, so that it is equal to itself whichever atoms it is seen over.</remarks>
+/// <remarks>A class rather than a record, as the connectives are, so that it is equal to itself in whichever theory it is seen.</remarks>
 public sealed class NamedConstraint<TTheory>(string name, IBooleanExpression<TTheory> expression) : INamedConstraint<TTheory> {
     /// <inheritdoc/>
     public string Name => name;

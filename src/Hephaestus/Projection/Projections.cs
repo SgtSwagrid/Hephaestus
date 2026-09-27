@@ -26,8 +26,8 @@ public interface IEncoder<in TValue, out TRaw> {
 
 /// <summary>
 /// Both halves: what lets a value be written into a model and read back out of a solution. The raw
-/// form is a number for anything that becomes a column, and could be a truth for anything that
-/// becomes a binary.
+/// form is a number, for a value carried by one linear expression, or one number for each of the
+/// components of a typed expression.
 /// </summary>
 public interface IProjection<TValue, TRaw> : IDecoder<TValue, TRaw>, IEncoder<TValue, TRaw>;
 
@@ -105,27 +105,6 @@ public sealed record Point<T, TDelta>(
     IPointProjection<T, TDelta> Projection
 ) : ILinearlyEncodable<T> {
     IProjection<T> ILinearlyEncodable<T>.Projection => Projection;
-}
-
-/// <summary>Conversion between projections of the same type.</summary>
-internal static class Projecting {
-    /// <summary>
-    /// Re-expresses <paramref name="expression"/>, a number under <paramref name="from"/>, as the
-    /// number that stands for the same value under <paramref name="to"/>. Both being affine, the
-    /// conversion is <c>scale &#183; expression + offset</c>, pinned down by the images of zero and one.
-    /// </summary>
-    public static ILinearExpression Convert<T>(ILinearExpression expression, IProjection<T> from, IProjection<T> to) =>
-        from.Equals(to)
-            ? expression
-            : Affine(expression, scale: to.Encode(from.Decode(1)) - to.Encode(from.Decode(0)), offset: to.Encode(from.Decode(0)));
-
-    internal static ILinearExpression Affine(ILinearExpression expression, double scale, double offset) =>
-        (scale == 1, offset == 0) switch {
-            (true, true) => expression,
-            (true, false) => expression + offset,
-            (false, true) => scale * expression,
-            (false, false) => scale * expression + offset,
-        };
 }
 
 /// <summary>A projection onto one number, seen as one onto a raw form of one entry.</summary>

@@ -66,11 +66,19 @@ internal static class Componentwise {
         [.. Paired(left, right).Select(pair => pair.First - pair.Second)];
 
     private static ImmutableArray<ILinearExpression> Converted(ImmutableArray<ILinearExpression> components, AffineMap map) =>
-        [.. map.Origin.Select((offset, entry) => Projecting.Affine(Terms(components, map, entry).Sum(), scale: 1, offset))];
+        [.. map.Origin.Select((offset, entry) => Affine(Terms(components, map, entry).Sum(), scale: 1, offset))];
 
     private static IEnumerable<ILinearExpression> Terms(ImmutableArray<ILinearExpression> components, AffineMap map, int entry) =>
         components
             .Select((component, index) => (Component: component, Coefficient: map.Steps[index][entry]))
             .Where(term => term.Coefficient != 0)
-            .Select(term => Projecting.Affine(term.Component, term.Coefficient, offset: 0));
+            .Select(term => Affine(term.Component, term.Coefficient, offset: 0));
+
+    private static ILinearExpression Affine(ILinearExpression expression, double scale, double offset) =>
+        (scale == 1, offset == 0) switch {
+            (true, true) => expression,
+            (true, false) => expression + offset,
+            (false, true) => scale * expression,
+            (false, false) => scale * expression + offset,
+        };
 }

@@ -48,8 +48,7 @@ public static class Evaluation {
         private Solution WithEntry(ILinearExpression component, double value) =>
             component switch {
                 INumericVariable variable => solution.With(variable, value),
-                Indicator { Condition: BinaryVariable variable } => solution.With(variable, value > 0.5),
-                Indicator { Condition: INegation<ILinearArithmetic> { Operand: BinaryVariable variable } } => solution.With(variable, value <= 0.5),
+                Indicator indicator when indicator.Column is { } column => solution.With(column.Variable, value > 0.5 == column.IsPositive),
                 _ => throw new ArgumentException($"A starting value can be given to a variable, but '{component.Format()}' is a compound expression.", nameof(component)),
             };
 
