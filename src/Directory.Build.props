@@ -7,6 +7,7 @@
     <IsPackable>true</IsPackable>
     <!-- Both spellings of "optimisation" are tags on purpose: tags exist to be searched for. -->
     <PackageTags>optimisation;optimization;milp;mip;linear-programming;smt;solver;functional;gurobi;highs;cp-sat;or-tools;z3</PackageTags>
+    <PackageProjectUrl>https://alecdorrington.com/Hephaestus/</PackageProjectUrl>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- Operator overloads speak for themselves; everything else is documented. -->
     <NoWarn>$(NoWarn);CS1591</NoWarn>
