@@ -18,11 +18,6 @@ public static class Formatting {
         public string Format() => string.Concat(WriteBoolean(expression, 0, []));
     }
 
-    extension(BinaryVariable variable) {
-        /// <summary>The variable's name. (A binary variable is both kinds of expression; this settles which rendering applies.)</summary>
-        public string Format() => variable.Name;
-    }
-
     extension(AffineForm form) {
         /// <summary>The form as a sum of terms, constant last.</summary>
         public string Format() =>
@@ -74,7 +69,8 @@ public static class Formatting {
     private static ImmutableList<string> WriteLinearUnguarded(ILinearExpression expression, ImmutableList<string> tokens) =>
         expression switch {
             Constant constant => tokens.Add(Number(constant.Value)),
-            IVariable variable => tokens.Add(variable.Name),
+            INumericVariable variable => tokens.Add(variable.Name),
+            Indicator indicator => WriteBoolean(indicator.Condition, 0, tokens.Add("[")).Add("]"),
             NamedTerm named => tokens.Add(named.Name),
             Product { Coefficient: -1 } product => WriteOperand(product.Expression, tokens.Add("-")),
             Product product => WriteOperand(product.Expression, tokens.Add(Number(product.Coefficient)).Add("*")),

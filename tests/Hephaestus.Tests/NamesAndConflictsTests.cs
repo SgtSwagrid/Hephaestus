@@ -113,7 +113,7 @@ public sealed class NamesAndConflictsTests {
     [Fact]
     public void AConflictAmongManyConstraintsIsFoundInFewSolves() {
         var sizes = new List<int>();
-        var padding = Enumerable.Range(0, 200).Select(index => Variable.Binary($"flag{index}") + Variable.Binary($"flag{index + 1}") <= 2);
+        var padding = Enumerable.Range(0, 200).Select(index => Variable.Binary($"flag{index}").Indicator + Variable.Binary($"flag{index + 1}").Indicator <= 2);
         var constraint = padding.Take(120).AllOf() & (M >= 1).WithName("low") & M.Between(0, 1) & padding.Skip(120).AllOf() & (M <= 0).WithName("high");
 
         var conflict = new MilpSolver(new CountingBackend(sizes)).FindConflict(constraint);
@@ -166,7 +166,7 @@ public sealed class NamesAndConflictsTests {
     }
 
     private static IBooleanExpression Padded(IBooleanExpression low, IBooleanExpression high) =>
-        Enumerable.Range(0, 100).Select(index => Variable.Binary($"flag{index}") + Variable.Binary($"flag{index + 1}") <= 2).AllOf() & low & M.Between(0, 1) & (N >= 0) & high;
+        Enumerable.Range(0, 100).Select(index => Variable.Binary($"flag{index}").Indicator + Variable.Binary($"flag{index + 1}").Indicator <= 2).AllOf() & low & M.Between(0, 1) & (N >= 0) & high;
 
     [Fact]
     public void ASolverThatCanNarrowTheSearchDownIsOnlyAskedAboutWhatItOffers() {

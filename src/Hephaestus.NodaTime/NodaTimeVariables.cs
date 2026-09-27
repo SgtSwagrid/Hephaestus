@@ -40,6 +40,6 @@ public static class NodaTimeVariables {
 
     private static Duration Second { get; } = global::NodaTime.Duration.FromSeconds(1);
 
-    private static IVariable Underlying(string name, bool inWholeUnits) =>
+    private static INumericVariable Underlying(string name, bool inWholeUnits) =>
         inWholeUnits ? Variable.Integer(name) : Variable.Continuous(name);
 }

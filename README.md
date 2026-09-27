@@ -108,10 +108,10 @@ Swap `OrToolsSolver.Create()` for `OrToolsSolver.Create(OrToolsSolverId.Highs)` 
 
 There are two algebraic data types, each an interface with a handful of sealed records:
 
-- `ILinearExpression`: `Constant`, `Sum`, `Product`, and the variables.
+- `ILinearExpression`: `Constant`, `Sum`, `Product`, `Indicator`, and the continuous and integer variables.
 - `IBooleanExpression`: `BooleanConstant`, `Comparison`, `Negation`, `Conjunction`, `Disjunction`, `Implication`, `Equivalence`, and `BinaryVariable`.
 
-Keeping them apart makes illegal compositions unrepresentable: `x * y` (unless one of them is a binary variable), `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` belongs to both types, so `usesA + usesB <= 1` and `usesA & usesB` are both fine.
+Keeping them apart makes illegal compositions unrepresentable: `x * y`, `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` is a truth, combined with `&`, `|` and `!`; where a number is wanted, its `Indicator` is one when it is true and zero when not, so `usesA & usesB` and `usesA.Indicator + usesB.Indicator <= 1` are both fine. Any constraint has an indicator, not only a variable: `jobs.Sum(job => (job.Finish > deadline).Indicator)` counts the late ones.
 
 Operators (`+ - * /`, `<= >= < >`, `& | ! ^`, plus `EqualTo`, `NotEqualTo`, `Between`, `Implies`, `Iff`) are extension members that do nothing but construct records: `a + b` *is* `new Sum(a, b)`. Plain values mix in on either side: `x + 5`, `5 + x`, `0 <= x`, and, for constraints that depend on known data, `job.IsUrgent.Implies(start <= cutoff)` or `isRush & (changeover >= 180)`. Nothing is flattened or simplified at construction time. All interpretation happens later, in separate passes over the data:
 
@@ -214,11 +214,11 @@ var problem    = Problem.Minimise(makespan + 10 * Abs(finish - promised)).Subjec
 `Max`, `Min` and `Abs` are records like everything else, and work on plain and typed expressions alike. When a problem is encoded, each becomes an auxiliary variable tied to its operands (all three are maxima: `min(a, b) = -max(-a, -b)` and `|e| = max(e, -e)`), and equal ones share a variable. How it is tied depends on how the problem leans on it. Minimising a maximum, or bounding an absolute value from above, only tempts the solver to make the variable too small, so `m >= a & m >= b` is enough and no binary variable is spent; that is the usual linear-programming idiom, found for you. Only a use that rewards a larger value (`Abs(x - y) >= 5`, or maximising a maximum) adds `m <= a | m <= b`, which costs one binary. The variable is bounded by the bounds of its operands, so its big-M is derived like any other.
 
 ```csharp
-var setupCost = needsSetup * setupTime;                        // the setup time if it is needed, else nothing
+var setupCost = needsSetup.Indicator * setupTime;              // the setup time if it is needed, else nothing
 var penalty   = If(finish >= deadline, 50 + 2 * lateness, 0);  // one expression or another
 ```
 
-`If(condition, then, otherwise)` is lowered by the same pass, and the product of a binary variable and an expression is `If(binary, expression, 0)`: the one product of two expressions that stays linear, and the only one that compiles. With a binary variable for a condition it costs two conditional rows and no further binary, which Gurobi and CP-SAT take as they stand and the others get as the textbook big-M rows, with M derived from the bounds of the expression. Like a maximum, it is only held from the side on which the problem could otherwise cheat.
+`If(condition, then, otherwise)` is lowered by the same pass, and the product of an indicator and an expression is `If(condition, expression, 0)`: the one product of two expressions that stays linear, and the only one that compiles. An indicator on its own is `If(condition, 1, 0)`, except that the indicator of a binary variable is simply its column (and of its negation, one minus that). With a binary variable for a condition it costs two conditional rows and no further binary, which Gurobi and CP-SAT take as they stand and the others get as the textbook big-M rows, with M derived from the bounds of the expression. Like a maximum, it is only held from the side on which the problem could otherwise cheat.
 
 ### Typed expressions
 

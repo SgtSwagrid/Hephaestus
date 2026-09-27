@@ -43,11 +43,6 @@ public static class Names {
         public ILinearExpression WithName(string name) => new NamedTerm(name, expression);
     }
 
-    extension(BinaryVariable variable) {
-        /// <summary>The same truth value, going by <paramref name="name"/>. (A binary variable is both kinds of expression; a name for it is a name for what it asserts.)</summary>
-        public IBooleanExpression WithName(string name) => new NamedConstraint(name, variable);
-    }
-
     extension<T>(Quantity<T> quantity) {
         /// <summary>The same quantity, going by <paramref name="name"/>.</summary>
         public Quantity<T> WithName(string name) => quantity with { Expression = new NamedTerm(name, quantity.Expression) };

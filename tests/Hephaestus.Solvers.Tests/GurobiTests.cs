@@ -20,7 +20,7 @@ public sealed class GurobiTests {
         Assert.Equal(7, Optimum(GurobiSolver.Create(), Problem.Minimise(X).SubjectTo(constraint & A & B & C)), precision: 6);
         Assert.Equal(0, Optimum(GurobiSolver.Create(), Problem.Minimise(X).SubjectTo(constraint & A & B & !C)), precision: 6);
         // Worth switching the third guard on, even though the row then binds: 3 - 0.7 beats 2 - 0.
-        Assert.Equal(2.3, Optimum(GurobiSolver.Create(), Problem.Maximise(A + B + C - 0.1 * X).SubjectTo(constraint)), precision: 6);
+        Assert.Equal(2.3, Optimum(GurobiSolver.Create(), Problem.Maximise(A.Indicator + B.Indicator + C.Indicator - 0.1 * X).SubjectTo(constraint)), precision: 6);
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class GurobiTests {
     public void GurobiReadsBackModelFilesIndicatorsIncluded() {
         var slots = Enumerable.Range(0, 5).Select(index => Variable.Continuous($"slot {index}")).ToList();
         var separated = slots.SelectMany((first, index) => slots.Skip(index + 1).Select(second => ((first + 90 <= second) | (second + 90 <= first)).WithName($"changeover {first.Name}/{second.Name}")));
-        var problem = Problem.Minimise(slots.Sum() + A * slots[0] + 3).SubjectTo(slots.AllOf(slot => slot.Between(0, 3600)) & separated.AllOf() & (!(A & B & C) | (slots[0] >= 50)) & A & B & C);
+        var problem = Problem.Minimise(slots.Sum() + A.Indicator * slots[0] + 3).SubjectTo(slots.AllOf(slot => slot.Between(0, 3600)) & separated.AllOf() & (!(A & B & C) | (slots[0] >= 50)) & A & B & C);
         var expected = Optimum(GurobiSolver.Create(), problem);
 
         Assert.Equal(expected, SolveFile(problem.EncodeLogic().ToLp(), "lp"), precision: 4);
@@ -103,7 +103,7 @@ public sealed class GurobiTests {
     public void AnInfeasibilityIsNarrowedDownByGurobiItself() {
         var slots = Enumerable.Range(0, 40).Select(index => Variable.Continuous($"slot{index}")).ToList();
         var padding = slots.AllOf(slot => slot.Between(0, 3600)) & slots.Zip(slots.Skip(1), (first, second) => ((first + 90 <= second) | (second + 90 <= first)).WithName($"changeover {first.Name}/{second.Name}")).AllOf();
-        var (early, late, gate) = ((X <= 100).WithName("x early"), (X >= 50 + 60 * A).WithName("x late"), (A | (slots[3] >= 4000)).WithName("gate"));
+        var (early, late, gate) = ((X <= 100).WithName("x early"), (X >= 50 + 60 * A.Indicator).WithName("x late"), (A | (slots[3] >= 4000)).WithName("gate"));
         var solver = (IConflictSolver)GurobiLicence.Require(GurobiSolver.Create());
 
         var narrowed = solver.NarrowConflict(Problem.Satisfy(padding & early & late & gate));
@@ -115,7 +115,7 @@ public sealed class GurobiTests {
 
     [Fact]
     public void AConflictThroughAPiecewiseFunctionNamesTheBoundsBehindIt() {
-        var tall = (Hephaestus.Piecewise.Max(X, 2 * A) >= 12).WithName("tall");
+        var tall = (Hephaestus.Piecewise.Max(X, 2 * A.Indicator) >= 12).WithName("tall");
         var solver = GurobiLicence.Require(GurobiSolver.Create());
 
         Assert.Equal(["tall", "x <= 10"], solver.FindConflict(X.Between(0, 10) & tall & (A | !A)).Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));

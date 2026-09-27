@@ -26,9 +26,6 @@ public static class Evaluation {
         /// <exception cref="KeyNotFoundException">The expression mentions a variable the solved problem did not.</exception>
         public TValue Value<TValue>(IReadableExpression<TValue> expression) => expression.Read(solution);
 
-        /// <summary>Whether a binary variable is set. (Read it as a number with <c>Value((ILinearExpression)variable)</c>, since it is both.)</summary>
-        public bool Value(BinaryVariable variable) => solution.ValueOf(variable) > 0.5;
-
         /// <summary>
         /// Whether a boolean expression holds under this solution, forgiving comparisons violated by
         /// no more than <paramref name="tolerance"/>. Reading one without saying forgives
@@ -60,7 +57,7 @@ public static class Evaluation {
                 ? solution.With(variable, value)
                 : throw new ArgumentException($"A starting value can be given to a variable, but '{expression.Format()}' is a compound expression.", nameof(expression));
 
-        private double ValueOf(IVariable variable) =>
+        internal double ValueOf(IVariable variable) =>
             solution.Values.TryGetValue(variable, out var value)
                 ? value
                 : throw new KeyNotFoundException($"The solution has no value for '{variable.Name}': the variable does not occur in the problem that was solved.");
@@ -86,7 +83,8 @@ public static class Evaluation {
     private static double EvaluateUnguarded(Solution solution, ILinearExpression expression) =>
         expression switch {
             Constant constant => constant.Value,
-            IVariable variable => solution.ValueOf(variable),
+            INumericVariable variable => solution.ValueOf(variable),
+            Indicator indicator => Holds(solution, indicator.Condition, Tolerance) ? 1 : 0,
             Product product => product.Coefficient * Evaluate(solution, product.Expression),
             NamedTerm named => Evaluate(solution, named.Expression),
             Sum sum => Evaluate(solution, sum.Left) + Evaluate(solution, sum.Right),
@@ -103,7 +101,7 @@ public static class Evaluation {
     private static bool HoldsUnguarded(Solution solution, IBooleanExpression expression, double tolerance) =>
         expression switch {
             BooleanConstant constant => constant.Value,
-            BinaryVariable variable => solution.Value(variable),
+            BinaryVariable variable => solution.ValueOf(variable) > 0.5,
             Comparison comparison => BooleanNormalisation.Holds(comparison.Relation, solution.Value(comparison.Left - comparison.Right), tolerance),
             Negation negation => !Holds(solution, negation.Operand, tolerance),
             NamedConstraint named => Holds(solution, named.Expression, tolerance),

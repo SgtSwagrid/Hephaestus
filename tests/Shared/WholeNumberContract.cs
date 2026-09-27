@@ -45,7 +45,7 @@ public abstract class WholeNumberContract {
 
         Assert.Equal(120, Optimum(Problem.Minimise(StartA + StartB).SubjectTo(constraint & UsesA & UsesB)).ObjectiveValue);
         Assert.Equal(0, Optimum(Problem.Minimise(StartA + StartB).SubjectTo(constraint & UsesA & !UsesB)).ObjectiveValue);
-        Assert.Equal(120, Optimum(Problem.Minimise(StartA + StartB + 1000 * (2 - UsesA - UsesB)).SubjectTo(constraint)).ObjectiveValue);
+        Assert.Equal(120, Optimum(Problem.Minimise(StartA + StartB + 1000 * (2 - UsesA.Indicator - UsesB.Indicator)).SubjectTo(constraint)).ObjectiveValue);
     }
 
     [Fact]
@@ -67,8 +67,8 @@ public abstract class WholeNumberContract {
     public void LogicBindsAsItShould() {
         var domain = N.Between(0, 10);
 
-        Assert.True(Optimum(Problem.Minimise(Flag).SubjectTo(domain & Flag.Iff(N >= 5) & N.EqualTo(7))).Value(Flag));
-        Assert.False(Optimum(Problem.Maximise(Flag).SubjectTo(domain & Flag.Iff(N >= 5) & N.EqualTo(3))).Value(Flag));
+        Assert.True(Optimum(Problem.Minimise(Flag.Indicator).SubjectTo(domain & Flag.Iff(N >= 5) & N.EqualTo(7))).Value(Flag));
+        Assert.False(Optimum(Problem.Maximise(Flag.Indicator).SubjectTo(domain & Flag.Iff(N >= 5) & N.EqualTo(3))).Value(Flag));
         Assert.Equal(6, Optimum(Problem.Minimise(N).SubjectTo(domain & Flag & Flag.Implies(N >= 6))).Value(N));
         Assert.Equal(4, Optimum(Problem.Minimise(N).SubjectTo(domain & (N >= 3) & N.NotEqualTo(3))).Value(N));
         Assert.Equal(9, Optimum(Problem.Maximise(N).SubjectTo(domain & (N < 10) & ((N <= 2) ^ (N >= 8)))).Value(N));
@@ -79,9 +79,9 @@ public abstract class WholeNumberContract {
         var domain = N.Between(0, 100);
 
         Assert.Equal(5, Optimum(Problem.Maximise(N).SubjectTo(domain & (0.5 * N < 3))).Value(N));
-        Assert.Equal(7, Optimum(Problem.Maximise(N).SubjectTo(domain & (0.25 * N + 0.125 * Flag <= 1.9))).Value(N));
+        Assert.Equal(7, Optimum(Problem.Maximise(N).SubjectTo(domain & (0.25 * N + 0.125 * Flag.Indicator <= 1.9))).Value(N));
         Assert.IsType<Infeasible>(Solver.Solve(Problem.Satisfy(domain & (2 * N).EqualTo(5))));
-        Assert.Equal(1, Optimum(Problem.Minimise(Flag).SubjectTo(domain & (Flag | (2 * N).EqualTo(5)))).ObjectiveValue);
+        Assert.Equal(1, Optimum(Problem.Minimise(Flag.Indicator).SubjectTo(domain & (Flag | (2 * N).EqualTo(5)))).ObjectiveValue);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public abstract class WholeNumberContract {
         var finish = Variable.Integer("finish");
         var constraint = StartA.Between(0, 100) & N.Between(10, 20) & finish.EqualTo(StartA + N) & Flag.Iff(finish >= 90);
 
-        var solution = Optimum(Problem.Maximise(finish - 50 * Flag).SubjectTo(constraint));
+        var solution = Optimum(Problem.Maximise(finish - 50 * Flag.Indicator).SubjectTo(constraint));
 
         Assert.Equal(89, solution.Value(finish));
         Assert.False(solution.Value(Flag));
@@ -100,7 +100,7 @@ public abstract class WholeNumberContract {
         var options = Enumerable.Range(0, 5).Select(index => Variable.Binary($"option{index}")).ToList();
         var weights = new double[] { 3, 9, 4, 7, 1 };
 
-        var solution = Optimum(Problem.Maximise(options.Zip(weights, (option, weight) => weight * option).Sum()).SubjectTo(options.Sum().EqualTo(1)));
+        var solution = Optimum(Problem.Maximise(options.Zip(weights, (option, weight) => weight * option.Indicator).Sum()).SubjectTo(options.Sum(option => option.Indicator).EqualTo(1)));
 
         Assert.Equal([false, true, false, false, false], options.Select(option => solution.Value(option)));
     }
@@ -161,8 +161,8 @@ public abstract class WholeNumberContract {
     public void ConditionalsOfWholeNumbersStayWhole() {
         var domain = StartA.Between(0, 100) & N.Between(0, 5);
 
-        Assert.Equal(100 + 5, Optimum(Problem.Maximise(UsesA * StartA + If(!UsesA, 200, N)).SubjectTo(domain & UsesA)).ObjectiveValue);
-        Assert.Equal(200, Optimum(Problem.Maximise(UsesA * StartA + If(!UsesA, 200, N)).SubjectTo(domain)).ObjectiveValue);
+        Assert.Equal(100 + 5, Optimum(Problem.Maximise(UsesA.Indicator * StartA + If(!UsesA, 200, N)).SubjectTo(domain & UsesA)).ObjectiveValue);
+        Assert.Equal(200, Optimum(Problem.Maximise(UsesA.Indicator * StartA + If(!UsesA, 200, N)).SubjectTo(domain)).ObjectiveValue);
         Assert.Equal(3, Optimum(Problem.Minimise(If(StartA >= 50, N + 3, StartA)).SubjectTo(domain & (StartA >= 10))).ObjectiveValue);
     }
 

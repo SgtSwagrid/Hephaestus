@@ -181,7 +181,7 @@ public sealed class ProjectionTests {
             .With(start, Origin.AddMinutes(5));
 
         // One name, and the type of the answer follows the thing asked about.
-        Assert.Equal(1d, solution.Value((ILinearExpression)flag));
+        Assert.Equal(1d, solution.Value(flag.Indicator));
         Assert.True(solution.Value(flag));
         Assert.True(solution.Value(flag & (count >= 1)));
         Assert.Equal(3, solution.Value(count));

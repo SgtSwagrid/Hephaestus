@@ -131,5 +131,5 @@ public static class Sensitivity {
     private static AffineForm Continuous(AffineForm form, Solution solution) =>
         form.Coefficients
             .Where(term => term.Key.IsIntegral)
-            .Aggregate(form, (reduced, term) => reduced.PlusTerm(term.Key, -term.Value).Plus(term.Value * solution.Value(term.Key)));
+            .Aggregate(form, (reduced, term) => reduced.PlusTerm(term.Key, -term.Value).Plus(term.Value * solution.ValueOf(term.Key)));
 }

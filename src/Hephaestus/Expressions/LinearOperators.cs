@@ -19,9 +19,9 @@ public static class LinearOperators {
         public static ILinearExpression operator *(ILinearExpression expression, double coefficient) => new Product(coefficient, expression);
         public static ILinearExpression operator /(ILinearExpression expression, double divisor) => new Product(1 / divisor, expression);
 
-        // The one product of two expressions that stays linear: by a binary variable, it is the expression or nothing.
-        public static ILinearExpression operator *(BinaryVariable gate, ILinearExpression expression) => new Conditional(gate, expression, new Constant(0));
-        public static ILinearExpression operator *(ILinearExpression expression, BinaryVariable gate) => new Conditional(gate, expression, new Constant(0));
+        // The one product of two expressions that stays linear: by an indicator, it is the expression or nothing.
+        public static ILinearExpression operator *(Indicator gate, ILinearExpression expression) => new Conditional(gate.Condition, expression, new Constant(0));
+        public static ILinearExpression operator *(ILinearExpression expression, Indicator gate) => new Conditional(gate.Condition, expression, new Constant(0));
 
         public static IBooleanExpression operator <=(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.LessThanOrEqual, right);
         public static IBooleanExpression operator <=(ILinearExpression left, double right) => new Comparison(left, Relation.LessThanOrEqual, new Constant(right));
@@ -40,9 +40,14 @@ public static class LinearOperators {
         public static IBooleanExpression operator >(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.GreaterThan, right);
     }
 
-    extension(BinaryVariable) {
-        /// <summary>The product of two binary variables, which is one exactly when both are. (It settles which of them is the gate.)</summary>
-        public static ILinearExpression operator *(BinaryVariable gate, BinaryVariable expression) => new Conditional(gate, expression, new Constant(0));
+    extension(Indicator) {
+        /// <summary>The product of two indicators, which is one exactly when both conditions hold. (It settles which of them is the gate.)</summary>
+        public static ILinearExpression operator *(Indicator gate, Indicator expression) => new Conditional(gate.Condition, expression, new Constant(0));
+    }
+
+    extension(IBooleanExpression condition) {
+        /// <summary>One when this holds, and zero when it does not: <c>needsSetup.Indicator * setupTime</c>, <c>flags.Sum(flag =&gt; flag.Indicator)</c>.</summary>
+        public Indicator Indicator => new(condition);
     }
 
     extension(ILinearExpression expression) {

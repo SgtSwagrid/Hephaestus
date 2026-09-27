@@ -85,11 +85,6 @@ public static class ExpressionOperators {
         public ILogicallyEncodable<bool> AsEncodable() => new LogicallyEncodableExpression<bool>(expression, new TruthProjection());
     }
 
-    extension(BinaryVariable variable) {
-        /// <summary>This variable as the truth it stands for, so that it can be zipped with typed ones. (It is both kinds of expression; this reads it as <c>solution.Value</c> does.)</summary>
-        public ILogicallyEncodable<bool> AsEncodable() => new LogicallyEncodableExpression<bool>(variable, new TruthProjection());
-    }
-
     private static IEncodable<ImmutableArray<TValue>> Sequenced<TValue>(ImmutableArray<IEncodable<TValue>> encodables) =>
         new EncodableExpression<ImmutableArray<TValue>>(
             [.. encodables.SelectMany(encodable => encodable.Components)],

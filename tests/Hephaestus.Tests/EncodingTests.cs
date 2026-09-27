@@ -128,7 +128,7 @@ public sealed class EncodingTests {
     [Fact]
     public void EachGuardGetsABigMDerivedWithThatGuardOff() {
         // A row that counts the very binary guarding it: with usesA off the row reaches 95, not the 105 it reaches unconditionally.
-        var constraint = X.Between(0, 100) & UsesA.Implies(X + 10 * (ILinearExpression)UsesA <= 5);
+        var constraint = X.Between(0, 100) & UsesA.Implies(X + 10 * UsesA.Indicator <= 5);
 
         var encoded = Problem.Satisfy(constraint).Encode();
 
@@ -137,7 +137,7 @@ public sealed class EncodingTests {
 
     [Fact]
     public void TheGuardsOfOneRowGetBigMValuesOfTheirOwn() {
-        var constraint = N.Between(0, 6) & (!UsesA | !UsesB | (N + 3 * (ILinearExpression)UsesA <= 4));
+        var constraint = N.Between(0, 6) & (!UsesA | !UsesB | (N + 3 * UsesA.Indicator <= 4));
 
         var encoded = Problem.Satisfy(constraint).Encode();
 
@@ -148,7 +148,7 @@ public sealed class EncodingTests {
     [Fact]
     public void AGuardThatTheRowHoldsWithoutIsNotRelaxedAgainstAtAll() {
         // Without usesA the row is 0 <= x, which the bounds already say, so no big-M is needed and the row stays unconditional.
-        var constraint = X.Between(0, 10) & UsesA.Implies(5 * (ILinearExpression)UsesA <= X);
+        var constraint = X.Between(0, 10) & UsesA.Implies(5 * UsesA.Indicator <= X);
 
         var encoded = Problem.Satisfy(constraint).Encode();
 
@@ -157,7 +157,7 @@ public sealed class EncodingTests {
 
     [Fact]
     public void TheRelaxedRowsAdmitExactlyTheAssignmentsTheConstraintDoes() {
-        var constraint = N.Between(0, 6) & (!UsesA | !UsesB | (N + 3 * (ILinearExpression)UsesA <= 4));
+        var constraint = N.Between(0, 6) & (!UsesA | !UsesB | (N + 3 * UsesA.Indicator <= 4));
 
         var encoded = Problem.Satisfy(constraint).Encode();
 
@@ -176,7 +176,7 @@ public sealed class EncodingTests {
                     .Select(value => assignment.With(column.Variable, value))));
 
     private static bool Admits(MilpProblem problem, Solution assignment) =>
-        problem.Rows.All(row => Within(row, new AffineForm(row.Coefficients, 0).Evaluate(variable => assignment.Value(variable))));
+        problem.Rows.All(row => Within(row, new AffineForm(row.Coefficients, 0).Evaluate(variable => assignment.ValueOf(variable))));
 
     private static bool Within(LinearRow row, double activity) => row.LowerBound <= activity && activity <= row.UpperBound;
 

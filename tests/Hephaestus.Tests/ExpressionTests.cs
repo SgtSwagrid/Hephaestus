@@ -61,9 +61,28 @@ public sealed class ExpressionTests {
     }
 
     [Fact]
-    public void ABinaryVariableIsBothANumberAndATruthValue() {
-        Assert.Equal(new Comparison(new Sum(A, B), Relation.LessThanOrEqual, new Constant(1)), A + B <= 1);
+    public void ABinaryVariableIsATruthAndItsIndicatorANumber() {
+        Assert.Equal(new Comparison(new Sum(new Indicator(A), new Indicator(B)), Relation.LessThanOrEqual, new Constant(1)), A.Indicator + B.Indicator <= 1);
         Assert.Equal(new Disjunction(new Negation(new Conjunction(A, B)), X <= Y), !(A & B) | (X <= Y));
+    }
+
+    [Fact]
+    public void AnIndicatorIsWrittenInIversonBracketsAndReadAsOneOrZero() {
+        var solution = Solution.Empty.With(X, 3).With(A, true);
+
+        Assert.Equal("3*[a] + [x >= 2] - [!a]", (3 * A.Indicator + (X >= 2).Indicator - (!A).Indicator).Format());
+        Assert.Equal(1, solution.Value(A.Indicator));
+        Assert.Equal(0, solution.Value((!A).Indicator));
+        Assert.Equal(1, solution.Value((X >= 2).Indicator));
+        Assert.Equal(0, solution.Value((X >= 5).Indicator));
+    }
+
+    [Fact]
+    public void TheIndicatorOfABinaryVariableOrItsNegationIsItsColumn() {
+        Assert.Equal(AffineForm.Zero.PlusTerm(A, 2), (2 * A.Indicator).Normalise());
+        Assert.Equal(AffineForm.Zero.PlusTerm(A, -2).Plus(2), (2 * (!A).Indicator).Normalise());
+        Assert.Equal(AffineForm.Zero.Plus(1), BooleanConstant.True.Indicator.Normalise());
+        Assert.Throws<ModellingException>(() => (X >= 2).Indicator.Normalise());
     }
 
     [Fact]

@@ -5,8 +5,8 @@ namespace Hephaestus;
 /// <summary>
 /// One of the things a solver holds towards a projected value: a linear expression read as a
 /// number, or a boolean expression read as a truth. The cases are <see cref="LinearComponent"/> and
-/// <see cref="LogicalComponent"/>. The kind is recorded rather than read off the expression, because
-/// a <see cref="BinaryVariable"/> is both kinds of expression and only its projection knows which it is.
+/// <see cref="LogicalComponent"/>, which tag the two kinds of expression, since they share no type
+/// that could say which a component is.
 /// </summary>
 public interface IComponent;
 

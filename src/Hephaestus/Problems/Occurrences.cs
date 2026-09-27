@@ -14,11 +14,6 @@ public static class Occurrences {
         public ImmutableSortedSet<IVariable> Variables => CollectBoolean(expression, Empty);
     }
 
-    extension(BinaryVariable variable) {
-        /// <summary>The variable itself. (A binary variable is both kinds of expression; this settles which traversal applies.)</summary>
-        public ImmutableSortedSet<IVariable> Variables => Empty.Add(variable);
-    }
-
     extension(IOneShotProblem problem) {
         /// <summary>Every variable mentioned in the problem, in the standard order.</summary>
         /// <exception cref="ModellingException">Two variables of different kinds share a name.</exception>
@@ -33,7 +28,8 @@ public static class Occurrences {
     private static ImmutableSortedSet<IVariable> CollectLinearUnguarded(ILinearExpression expression, ImmutableSortedSet<IVariable> found) =>
         expression switch {
             Constant => found,
-            IVariable variable => found.Add(variable),
+            INumericVariable variable => found.Add(variable),
+            Indicator indicator => CollectBoolean(indicator.Condition, found),
             Product product => CollectLinear(product.Expression, found),
             Sum sum => CollectLinear(sum.Right, CollectLinear(sum.Left, found)),
             Maximum maximum => CollectLinear(maximum.Right, CollectLinear(maximum.Left, found)),

@@ -49,7 +49,7 @@ public sealed class EncodingEquivalenceTests {
         ["unsatisfiable"] = (M >= 2) & (M <= 1),
         ["always-true comparison in a disjunction"] = B | (X <= 5),
         ["never-true comparison in a disjunction"] = B | (X >= 5),
-        ["binaries as numbers"] = (A + B).EqualTo(1) | (M >= 3),
+        ["binaries as numbers"] = (A.Indicator + B.Indicator).EqualTo(1) | (M >= 3),
         ["iff of iffs"] = A.Iff(B.Iff(M >= 2)),
     }.ToImmutableDictionary();
 
@@ -152,9 +152,9 @@ public sealed class EncodingEquivalenceTests {
 
     // Coefficients and constants are multiples of a half, as is the grid, so comparisons never come within epsilon of a tie.
     private static ILinearExpression RandomLinear(Random random) =>
-        new IVariable[] { A, M, N, X }
+        new ILinearExpression[] { A.Indicator, M, N, X }
             .Where(_ => random.Next(2) == 0)
-            .Select(variable => random.Next(-2, 3) * variable)
+            .Select(term => random.Next(-2, 3) * term)
             .Append(new Constant(random.Next(-4, 5) / 2.0))
             .Sum();
 }

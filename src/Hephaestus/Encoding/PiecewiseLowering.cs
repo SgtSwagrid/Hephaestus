@@ -5,19 +5,19 @@ namespace Hephaestus;
 /// <summary>What a variable introduced by the lowering stands for. The cases are <see cref="MaximumDefinition"/> and <see cref="ConditionalDefinition"/>.</summary>
 public interface IDefinition {
     /// <summary>The variable that was introduced.</summary>
-    IVariable Variable { get; }
+    INumericVariable Variable { get; }
 }
 
 /// <summary><c>Variable</c> stands for <c>max(Left, Right)</c>.</summary>
 public sealed record MaximumDefinition(
-    IVariable Variable,
+    INumericVariable Variable,
     ILinearExpression Left,
     ILinearExpression Right
 ) : IDefinition;
 
 /// <summary><c>Variable</c> stands for <c>Then</c> if <c>Condition</c> holds, and for <c>Otherwise</c> if not.</summary>
 public sealed record ConditionalDefinition(
-    IVariable Variable,
+    INumericVariable Variable,
     IBooleanExpression Condition,
     ILinearExpression Then,
     ILinearExpression Otherwise
@@ -88,7 +88,7 @@ public static class PiecewiseLowering {
     );
 
     private sealed record Lifting(
-        ImmutableDictionary<object, IVariable> Known,
+        ImmutableDictionary<object, INumericVariable> Known,
         ImmutableList<IDefinition> Definitions,
         ImmutableHashSet<string> Reserved,
         EncodingOptions Options,
@@ -110,7 +110,7 @@ public static class PiecewiseLowering {
     }
 
     private static LinearisedProblem Lower(IOneShotProblem problem, EncodingOptions options) {
-        var start = new Lifting(ImmutableDictionary<object, IVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options, 0);
+        var start = new Lifting(ImmutableDictionary<object, INumericVariable>.Empty, [], [.. problem.Variables.Select(variable => variable.Name)], options, 0);
         var constraint = Lift(problem.Constraint, start);
         var objective = Lift(problem.Objective.Expression, constraint.State);
         return objective.State.Definitions.IsEmpty
@@ -153,7 +153,7 @@ public static class PiecewiseLowering {
             ? BooleanConstant.True
             : definition.Condition.Implies(Held(definition.Variable, demand, definition.Then)) & (!definition.Condition).Implies(Held(definition.Variable, demand, definition.Otherwise));
 
-    private static IBooleanExpression Held(IVariable variable, Demand demand, ILinearExpression to) =>
+    private static IBooleanExpression Held(INumericVariable variable, Demand demand, ILinearExpression to) =>
         demand switch {
             Demand.AtLeast => variable >= to,
             Demand.AtMost => variable <= to,
@@ -198,6 +198,9 @@ public static class PiecewiseLowering {
             Minimum minimum => Named(Both(state, -minimum.Left, -minimum.Right), isNegated: true),
             AbsoluteValue absolute => Named(Both(state, absolute.Operand, -absolute.Operand), isNegated: false),
             Conditional conditional => Chosen(Lift(conditional.Condition, state), conditional),
+            // The indicator of a binary variable is its column; of anything else, a choice between one and zero.
+            Indicator { Condition: BinaryVariable or Negation { Operand: BinaryVariable } or BooleanConstant } => new Lifted<ILinearExpression>(expression, state),
+            Indicator indicator => Chosen(Lift(indicator.Condition, state), new Conditional(indicator.Condition, new Constant(1), new Constant(0))),
             _ => new Lifted<ILinearExpression>(expression, state),
         };
 
@@ -244,13 +247,13 @@ public static class PiecewiseLowering {
     }
 
     /// <summary>The state with a variable for <paramref name="key"/>, introduced now unless an equal expression has been met before.</summary>
-    private static Lifting Introduced(Lifting state, object key, string prefix, bool isIntegral, Func<IVariable, IDefinition> define) {
+    private static Lifting Introduced(Lifting state, object key, string prefix, bool isIntegral, Func<INumericVariable, IDefinition> define) {
         if (state.Known.ContainsKey(key)) {
             return state;
         }
         var fresh = FreshNames.After(state.NextIndex, prefix, state.Reserved.Contains);
         // A choice among whole numbers is a whole number, which matters to solvers that know no others.
-        IVariable variable = isIntegral ? new IntegerVariable(fresh.Name) : new ContinuousVariable(fresh.Name);
+        INumericVariable variable = isIntegral ? new IntegerVariable(fresh.Name) : new ContinuousVariable(fresh.Name);
         return state with { Known = state.Known.Add(key, variable), Definitions = state.Definitions.Add(define(variable)), NextIndex = fresh.Index + 1 };
     }
 

@@ -62,7 +62,7 @@ public sealed class SolvingTests {
         Assert.Equal(5, solution.Value(M - N));
         Assert.Equal(11, solution.Value(2 * M + 1));
         Assert.True(solution.Value(A));
-        Assert.Equal(1, solution.Value((ILinearExpression)A));
+        Assert.Equal(1, solution.Value(A.Indicator));
         Assert.True(solution.Value(A & (M > N)));
         Assert.False(solution.Value(A.Implies(N >= 1)));
     }
@@ -191,7 +191,7 @@ public sealed class SolvingTests {
 
     [Fact]
     public void ObjectivesCanBeChainedAtLength() {
-        var problem = Problem.Satisfy(Linked).Then(Objective.Maximise(M + N)).Then(Objective.Minimise(M)).Then(Objective.Maximise(A)).Then(Objective.Minimise(N));
+        var problem = Problem.Satisfy(Linked).Then(Objective.Maximise(M + N)).Then(Objective.Minimise(M)).Then(Objective.Maximise(A.Indicator)).Then(Objective.Minimise(N));
 
         var solution = Assert.IsType<Optimal>(Solver.Solve(problem)).Solution;
 
@@ -227,7 +227,7 @@ public sealed class SolvingTests {
 
     [Fact]
     public void AStageThatGivesUpLeavesTheSolutionBeforeItUnproven() {
-        var result = new MilpSolver(new FlaggingBackend([])).Solve(Problem.Minimise(M).SubjectTo(Linked).Then(Objective.Maximise(N)).Then(Objective.Maximise(A)));
+        var result = new MilpSolver(new FlaggingBackend([])).Solve(Problem.Minimise(M).SubjectTo(Linked).Then(Objective.Maximise(N)).Then(Objective.Maximise(A.Indicator)));
 
         Assert.Equal(0, Assert.IsType<Feasible>(result).Solution.Value(M));
     }
@@ -285,8 +285,8 @@ public sealed class SolvingTests {
 
     [Fact]
     public void ObjectivesAndConstraintsMayComeInAnyOrder() {
-        var objectives = new[] { new Prioritised(Objective.Minimise(M)), new Prioritised(Objective.Maximise(N), 1), new Prioritised(Objective.Minimise(A), 0, 0.5) };
-        var problem = Problem.Minimise(M).SubjectTo(Domain).ThenMaximise(N, absoluteTolerance: 1).SubjectTo(N <= M + 1).ThenMinimise(A, relativeTolerance: 0.5);
+        var objectives = new[] { new Prioritised(Objective.Minimise(M)), new Prioritised(Objective.Maximise(N), 1), new Prioritised(Objective.Minimise(A.Indicator), 0, 0.5) };
+        var problem = Problem.Minimise(M).SubjectTo(Domain).ThenMaximise(N, absoluteTolerance: 1).SubjectTo(N <= M + 1).ThenMinimise(A.Indicator, relativeTolerance: 0.5);
 
         Assert.Equal(objectives, problem.Objective.Priorities);
         Assert.Equal(Domain & (N <= M + 1), problem.Constraint);
@@ -303,15 +303,15 @@ public sealed class SolvingTests {
 
     [Fact]
     public void SeveralObjectivesGivenAtOnceAreTakenInOrder() {
-        var chained = Problem.Minimise(M).ThenMinimise(N).ThenMinimise(A).SubjectTo(Domain);
+        var chained = Problem.Minimise(M).ThenMinimise(N).ThenMinimise(A.Indicator).SubjectTo(Domain);
 
-        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(M, N, A).SubjectTo(Domain).Objective.Priorities);
-        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(new ILinearExpression[] { M, N, A }).Objective.Priorities);
-        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(M).ThenMinimise(N, A).Objective.Priorities);
-        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(M).ThenMinimise(new List<IntegerVariable> { N }).ThenMinimise(A).Objective.Priorities);
+        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(M, N, A.Indicator).SubjectTo(Domain).Objective.Priorities);
+        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(new ILinearExpression[] { M, N, A.Indicator }).Objective.Priorities);
+        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(M).ThenMinimise(N, A.Indicator).Objective.Priorities);
+        Assert.Equal(chained.Objective.Priorities, Problem.Minimise(M).ThenMinimise(new List<IntegerVariable> { N }).ThenMinimise(A.Indicator).Objective.Priorities);
         Assert.Equal(
-            [new Prioritised(Objective.Maximise(M)), new Prioritised(Objective.Maximise(N)), new Prioritised(Objective.Minimise(A)), new Prioritised(Objective.Maximise(M + N))],
-            Problem.Maximise(M, N).ThenMinimise(A).ThenMaximise(M + N, M + N).Objective.Priorities.Take(4));
+            [new Prioritised(Objective.Maximise(M)), new Prioritised(Objective.Maximise(N)), new Prioritised(Objective.Minimise(A.Indicator)), new Prioritised(Objective.Maximise(M + N))],
+            Problem.Maximise(M, N).ThenMinimise(A.Indicator).ThenMaximise(M + N, M + N).Objective.Priorities.Take(4));
         // One expression is still an ordinary problem, and a number after it is still a tolerance.
         Assert.IsType<SingleObjectiveProblem>(Problem.Minimise(M));
         Assert.Equal(new Prioritised(Objective.Minimise(N), 2), Problem.Minimise(M).ThenMinimise(N, 2).Objective.Priorities[1]);
@@ -334,7 +334,7 @@ public sealed class SolvingTests {
     [Fact]
     public void AnObjectiveIsAValueThatCanBeSetAgainstOneConstraintAfterAnother() {
         var earliest = Objective.Minimise(M);
-        var earliestThenFullest = earliest.Then(Objective.Maximise(N)).Then(Objective.Minimise(A, absoluteTolerance: 1));
+        var earliestThenFullest = earliest.Then(Objective.Maximise(N)).Then(Objective.Minimise(A.Indicator, absoluteTolerance: 1));
 
         Assert.Equal(0, Assert.IsType<Optimal>(Solver.Solve(Problem.Optimise(earliest).SubjectTo(Linked))).Solution.ObjectiveValue);
         Assert.Equal(2, Assert.IsType<Optimal>(Solver.Solve(Problem.Optimise(earliest).SubjectTo(Linked, M >= 2))).Solution.ObjectiveValue);
@@ -376,12 +376,12 @@ public sealed class SolvingTests {
 
     [Fact]
     public void ObjectivesChainAmongThemselvesAsProblemsDo() {
-        var chained = Objective.Minimise(M).ThenMaximise(N, absoluteTolerance: 1).ThenMinimise(A, M + N);
+        var chained = Objective.Minimise(M).ThenMaximise(N, absoluteTolerance: 1).ThenMinimise(A.Indicator, M + N);
 
         Assert.Equal(
-            [new Prioritised(Objective.Minimise(M)), new Prioritised(Objective.Maximise(N), 1), new Prioritised(Objective.Minimise(A)), new Prioritised(Objective.Minimise(M + N))],
+            [new Prioritised(Objective.Minimise(M)), new Prioritised(Objective.Maximise(N), 1), new Prioritised(Objective.Minimise(A.Indicator)), new Prioritised(Objective.Minimise(M + N))],
             chained.Priorities);
-        Assert.Equal(chained.Priorities, Problem.Minimise(M).ThenMaximise(N, absoluteTolerance: 1).ThenMinimise(A, M + N).Objective.Priorities);
-        Assert.Equal(chained.Priorities, Objective.None.ThenMinimise(M).ThenMaximise(N, 1).ThenMinimise(new ILinearExpression[] { A, M + N }).Priorities);
+        Assert.Equal(chained.Priorities, Problem.Minimise(M).ThenMaximise(N, absoluteTolerance: 1).ThenMinimise(A.Indicator, M + N).Objective.Priorities);
+        Assert.Equal(chained.Priorities, Objective.None.ThenMinimise(M).ThenMaximise(N, 1).ThenMinimise(new ILinearExpression[] { A.Indicator, M + N }).Priorities);
     }
 }

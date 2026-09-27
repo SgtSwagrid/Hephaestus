@@ -3,9 +3,9 @@ namespace Hephaestus;
 /// <summary>
 /// A real-valued expression that is linear (strictly: affine) in its variables, or piecewise so.
 /// The cases are <see cref="Constant"/>, <see cref="Sum"/>, <see cref="Product"/>, the
-/// <see cref="IVariable"/> records, and the piecewise-linear <see cref="Maximum"/>,
-/// <see cref="Minimum"/>, <see cref="AbsoluteValue"/> and <see cref="Conditional"/>, which the encoder lowers to linear form,
-/// and <see cref="NamedTerm"/>. Expressions are plain data, kept exactly as written;
+/// <see cref="INumericVariable"/> records, <see cref="Indicator"/>, the piecewise-linear
+/// <see cref="Maximum"/>, <see cref="Minimum"/>, <see cref="AbsoluteValue"/> and
+/// <see cref="Conditional"/>, which the encoder lowers to linear form, and <see cref="NamedTerm"/>. Expressions are plain data, kept exactly as written;
 /// all interpretation (normalisation, bounds, encoding, evaluation) happens in later passes.
 /// </summary>
 public interface ILinearExpression : IReadableExpression<double> {
@@ -48,10 +48,19 @@ public sealed record AbsoluteValue(ILinearExpression Operand) : ILinearExpressio
 /// <summary>
 /// One expression or another, according to whether a condition holds. Build it with
 /// <see cref="Piecewise.If(IBooleanExpression, ILinearExpression, ILinearExpression)"/>, or as the product
-/// of a binary variable and an expression, which is the expression if the variable is set and zero if not.
+/// of an <see cref="Indicator"/> and an expression, which is the expression if the condition holds and zero if not.
 /// </summary>
 public sealed record Conditional(
     IBooleanExpression Condition,
     ILinearExpression Then,
     ILinearExpression Otherwise
 ) : ILinearExpression;
+
+/// <summary>
+/// One when a condition holds, and zero when it does not: the number a truth stands for. Write it
+/// <c>condition.Indicator</c>. The indicator of a binary variable, or of its negation, is that
+/// variable's column; any other condition is lowered as <c>If(condition, 1, 0)</c>. Multiplying an
+/// expression by one is the one product of two expressions that stays linear:
+/// <c>needsSetup.Indicator * setupTime</c> is <c>If(needsSetup, setupTime, 0)</c>.
+/// </summary>
+public sealed record Indicator(IBooleanExpression Condition) : ILinearExpression;

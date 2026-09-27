@@ -59,7 +59,7 @@ public sealed class NormalisationTests {
 
     [Fact]
     public void IntegralityIsRecognised() {
-        Assert.True((2 * N + A - 3).Normalise().IsIntegral);
+        Assert.True((2 * N + A.Indicator - 3).Normalise().IsIntegral);
         Assert.False((0.5 * N).Normalise().IsIntegral);
         Assert.False((N + X).Normalise().IsIntegral);
         Assert.False((N + 0.5).Normalise().IsIntegral);
