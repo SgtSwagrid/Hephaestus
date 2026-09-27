@@ -147,23 +147,23 @@ public sealed class ProjectionTests {
 
     private enum Direction { Down, Up }
 
-    /// <summary>A two-state type over one binary: projected onto truth rather than onto the number line.</summary>
-    private sealed record DirectionProjection : IProjection<Direction, bool> {
-        public bool Encode(Direction value) => value == Direction.Up;
+    /// <summary>A two-state type, projected onto zero and one.</summary>
+    private sealed record DirectionProjection : IProjection<Direction> {
+        public double Encode(Direction value) => value == Direction.Up ? 1 : 0;
 
-        public Direction Decode(bool representation) => representation ? Direction.Up : Direction.Down;
+        public Direction Decode(double representation) => representation > 0.5 ? Direction.Up : Direction.Down;
     }
 
-    private sealed record Switch(IBooleanExpression<ILinearArithmetic> Expression, IProjection<Direction, bool> Projection) : ILogicallyEncodable<Direction>;
+    private sealed record Switch(ILinearExpression Expression, IProjection<Direction> Projection) : ILinearlyEncodable<Direction>;
 
     [Fact]
-    public void AValueCanBeProjectedOntoATruthRatherThanANumber() {
-        var lift = new Switch(Variable.Binary("up"), new DirectionProjection());
+    public void ATwoStateTypeIsCarriedByAnIndicator() {
+        var up = Variable.Binary("up");
+        var lift = new Switch(up.Indicator, new DirectionProjection());
 
-        Assert.Equal(Direction.Up, lift.Projection.Decode(true));
-        Assert.Equal(Direction.Down, lift.Projection.Decode(false));
-        Assert.True(lift.Projection.Encode(Direction.Up));
-        Assert.IsAssignableFrom<ILogicallyEncodable<Direction>>(lift);
+        Assert.Equal(Direction.Up, Solution.Empty.With(up, true).Value(lift));
+        Assert.Equal(Direction.Down, Solution.Empty.With(lift, Direction.Down).Value(lift));
+        Assert.Equal("[up] == 1", lift.EqualTo(Direction.Up).Format());
     }
 
     [Fact]

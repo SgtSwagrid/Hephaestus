@@ -62,11 +62,11 @@ public static class TypedComparisons {
     }
 
     private static IBooleanExpression<ILinearArithmetic> Relate<TValue>(IEncodable<TValue> left, Relation relation, IEncodable<TValue> right) =>
-        Componentwise.Relate(left.Components, relation, Componentwise.Convert(right.Components, right.Projection, left.Projection, like: left.Components));
+        Componentwise.Relate(left.Components, relation, Componentwise.Convert(right.Components, right.Projection, left.Projection));
 
     private static IBooleanExpression<ILinearArithmetic> Relate<TValue>(IEncodable<TValue> left, Relation relation, TValue right) =>
-        Componentwise.Relate(left.Components, relation, Componentwise.Constants(left.Components, left.Projection.Encode(right)));
+        Componentwise.Relate(left.Components, relation, Componentwise.Constants(left.Projection.Encode(right)));
 
     private static IBooleanExpression<ILinearArithmetic> Relate<TValue>(TValue left, Relation relation, IEncodable<TValue> right) =>
-        Componentwise.Relate(Componentwise.Constants(right.Components, right.Projection.Encode(left)), relation, right.Components);
+        Componentwise.Relate(Componentwise.Constants(right.Projection.Encode(left)), relation, right.Components);
 }

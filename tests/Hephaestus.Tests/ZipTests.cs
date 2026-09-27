@@ -12,25 +12,25 @@ public sealed class ZipTests {
     private static readonly Quantity<double> Y = Variable.Continuous<double>("y");
     private static readonly BinaryVariable Up = Variable.Binary("up");
     private static readonly BinaryVariable Down = Variable.Binary("down");
-    private static readonly Switch Lift = new(Up, new DirectionProjection());
+    private static readonly Switch Lift = new(Up.Indicator, new DirectionProjection());
 
     private enum Direction { Down, Up }
 
-    /// <summary>A two-state type over one binary, which holds when the lift goes up.</summary>
-    private sealed record DirectionProjection : IProjection<Direction, bool> {
-        public bool Encode(Direction value) => value == Direction.Up;
+    /// <summary>A two-state type over the indicator of one binary, which is one when the lift goes up.</summary>
+    private sealed record DirectionProjection : IProjection<Direction> {
+        public double Encode(Direction value) => value == Direction.Up ? 1 : 0;
 
-        public Direction Decode(bool representation) => representation ? Direction.Up : Direction.Down;
+        public Direction Decode(double representation) => representation > 0.5 ? Direction.Up : Direction.Down;
     }
 
-    /// <summary>The same type the other way round: its binary holds when the lift goes down.</summary>
-    private sealed record FlippedProjection : IProjection<Direction, bool> {
-        public bool Encode(Direction value) => value == Direction.Down;
+    /// <summary>The same type the other way round: its indicator is one when the lift goes down.</summary>
+    private sealed record FlippedProjection : IProjection<Direction> {
+        public double Encode(Direction value) => value == Direction.Down ? 1 : 0;
 
-        public Direction Decode(bool representation) => representation ? Direction.Down : Direction.Up;
+        public Direction Decode(double representation) => representation > 0.5 ? Direction.Down : Direction.Up;
     }
 
-    private sealed record Switch(IBooleanExpression<ILinearArithmetic> Expression, IProjection<Direction, bool> Projection) : ILogicallyEncodable<Direction>;
+    private sealed record Switch(ILinearExpression Expression, IProjection<Direction> Projection) : ILinearlyEncodable<Direction>;
 
     private sealed record Location(double X, double Y);
 
@@ -61,7 +61,7 @@ public sealed class ZipTests {
 
     [Fact]
     public void AZipHasTheComponentsOfBothInOrder() =>
-        Assert.Equal<IComponent>([new LinearComponent(Start.Expression), new LogicalComponent(Up)], Start.Zip(Lift).Components);
+        Assert.Equal([Start.Expression, Up.Indicator], Start.Zip(Lift).Components);
 
     [Fact]
     public void ZipsAndSequencesOfTheSameThingsAreEqual() {
@@ -74,7 +74,7 @@ public sealed class ZipTests {
     public void ATwoStateTypeIsReadPinnedAndGivenAValueLikeAnyOther() {
         Assert.Equal(Direction.Up, Solution.Empty.With(Lift, Direction.Up).Value(Lift));
         Assert.Equal(Direction.Down, Solution.Empty.With(Lift, Direction.Down).Value(Lift));
-        Assert.Equal("up <=> true", Lift.EqualTo(Direction.Up).Format());
+        Assert.Equal("[up] == 1", Lift.EqualTo(Direction.Up).Format());
         AssertEquivalent(!Up, Lift.EqualTo(Direction.Down));
     }
 
@@ -88,7 +88,7 @@ public sealed class ZipTests {
 
     [Fact]
     public void TruthsAreOrderedByImplicationFalseBeforeTrue() {
-        var other = new Switch(Down, new DirectionProjection());
+        var other = new Switch(Down.Indicator, new DirectionProjection());
 
         AssertEquivalent(Up.Implies(Down), Lift <= other);
         AssertEquivalent(Down.Implies(Up), Lift >= other);
@@ -129,21 +129,21 @@ public sealed class ZipTests {
 
     [Fact]
     public void ATruthUnderAnOppositeProjectionIsNegated() =>
-        AssertEquivalent(Up.Iff(!Down), Lift.EqualTo(new Switch(Down, new FlippedProjection())));
+        AssertEquivalent(Up.Iff(!Down), Lift.EqualTo(new Switch(Down.Indicator, new FlippedProjection())));
 
     [Fact]
     public void EntriesOfDifferentKindsInAnotherOrderAreReconciledToo() {
-        var reordered = new Switch(Down, new DirectionProjection()).Zip(Minutes).Biselect(pair => (pair.Item2, pair.Item1), pair => (pair.Item2, pair.Item1));
+        var reordered = new Switch(Down.Indicator, new DirectionProjection()).Zip(Minutes).Biselect(pair => (pair.Item2, pair.Item1), pair => (pair.Item2, pair.Item1));
 
-        AssertSameConstraint((Runtime.Expression <= 60 * Minutes.Expression) & Up.Implies(Down), Runtime.Zip(Lift) <= reordered);
+        AssertSameConstraint((Runtime.Expression <= 60 * Minutes.Expression) & (Up.Indicator <= Down.Indicator), Runtime.Zip(Lift) <= reordered);
     }
 
     [Fact]
-    public void ATruthCannotBeComparedWithANumber() {
+    public void ATruthIsANumberThroughItsIndicator() {
         var liftAsNumber = Lift.Biselect(direction => direction == Direction.Up ? 1d : 0d, number => number > 0.5 ? Direction.Up : Direction.Down);
 
-        Assert.Throws<ArgumentException>(() => X <= liftAsNumber);
-        Assert.Throws<ArgumentException>(() => liftAsNumber <= X);
+        Assert.Equal("x <= [up]", (X <= liftAsNumber).Format());
+        AssertEquivalent(!Up | (Runtime >= TimeSpan.FromSeconds(1)), liftAsNumber <= Runtime.In(TimeSpan.FromSeconds(1)).AsEncodable());
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public sealed class ZipTests {
         var right = Runtime.Zip(Start.Zip(Lift));
         var left = Runtime.Zip(Start).Zip(Lift);
 
-        Assert.Equal<IComponent>(left.Components, right.Components);
+        Assert.Equal(left.Components, right.Components);
         Assert.Equal((TimeSpan.FromMinutes(2), (Origin.AddMinutes(5), Direction.Up)), solution.Value(right));
         Assert.Equal(((TimeSpan.FromMinutes(2), Origin.AddMinutes(5)), Direction.Up), solution.Value(left));
     }
@@ -236,6 +236,6 @@ public sealed class ZipTests {
 
         Assert.Equal((true, TimeSpan.FromMinutes(6)), solution.Value(late.AsEncodable().Zip(Runtime)));
         Assert.Equal((true, 360d), solution.Value(Up.AsEncodable().Zip(Runtime.Expression.AsEncodable())));
-        Assert.IsType<LogicalComponent>(Up.AsEncodable().Components.Single());
+        Assert.IsType<Indicator>(Up.AsEncodable().Components.Single());
     }
 }

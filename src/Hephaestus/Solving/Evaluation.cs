@@ -42,20 +42,16 @@ public static class Evaluation {
         /// <summary>This solution with a value for a typed variable, or for each of the variables that a zipped or sequenced one is made of.</summary>
         /// <exception cref="ArgumentException">One of its components is a compound expression rather than a variable, so no one value can be given to it.</exception>
         public Solution With<TValue>(IEncodable<TValue> variable, TValue value) =>
-            Componentwise.Paired(variable.Components, variable.Projection.Encode(value)).Aggregate(solution, (current, entry) => current.With(entry.First, entry.Second));
+            Componentwise.Paired(variable.Components, variable.Projection.Encode(value)).Aggregate(solution, (current, entry) => current.WithEntry(entry.First, entry.Second));
 
-        private Solution With(IComponent component, double entry) =>
+        /// <summary>A variable given the value of a component: a number's column, or the binary variable whose indicator it is.</summary>
+        private Solution WithEntry(ILinearExpression component, double value) =>
             component switch {
-                LinearComponent linear => solution.With(linear.Expression, entry),
-                LogicalComponent { Expression: BinaryVariable variable } => solution.With(variable, entry > 0.5),
-                LogicalComponent logical => throw new ArgumentException($"A starting value can be given to a variable, but '{logical.Expression.Format()}' is a compound expression.", nameof(component)),
-                _ => throw new NotSupportedException($"Unknown kind of component: {component.GetType().Name}."),
+                INumericVariable variable => solution.With(variable, value),
+                Indicator { Condition: BinaryVariable variable } => solution.With(variable, value > 0.5),
+                Indicator { Condition: INegation<ILinearArithmetic> { Operand: BinaryVariable variable } } => solution.With(variable, value <= 0.5),
+                _ => throw new ArgumentException($"A starting value can be given to a variable, but '{component.Format()}' is a compound expression.", nameof(component)),
             };
-
-        private Solution With(ILinearExpression expression, double value) =>
-            expression is IVariable variable
-                ? solution.With(variable, value)
-                : throw new ArgumentException($"A starting value can be given to a variable, but '{expression.Format()}' is a compound expression.", nameof(expression));
 
         internal double ValueOf(IVariable variable) =>
             solution.Values.TryGetValue(variable, out var value)
@@ -64,19 +60,11 @@ public static class Evaluation {
     }
 
     /// <summary>
-    /// The raw form of <paramref name="components"/> under a solution: numbers rounded to
-    /// <see cref="DecimalPlaces"/>, so that solver noise does not reach a decoder, and truths as
-    /// <c>1</c> or <c>0</c>.
+    /// The raw form of <paramref name="components"/> under a solution: their numbers, rounded to
+    /// <see cref="DecimalPlaces"/> so that solver noise does not reach a decoder.
     /// </summary>
-    internal static ImmutableArray<double> Raw(Solution solution, ImmutableArray<IComponent> components) =>
-        [.. components.Select(component => Raw(solution, component))];
-
-    private static double Raw(Solution solution, IComponent component) =>
-        component switch {
-            LinearComponent linear => Math.Round(Evaluate(solution, linear.Expression), DecimalPlaces),
-            LogicalComponent logical => Holds(solution, logical.Expression, Tolerance) ? 1 : 0,
-            _ => throw new NotSupportedException($"Unknown kind of component: {component.GetType().Name}."),
-        };
+    internal static ImmutableArray<double> Raw(Solution solution, ImmutableArray<ILinearExpression> components) =>
+        [.. components.Select(component => Math.Round(Evaluate(solution, component), DecimalPlaces))];
 
     internal static double Evaluate(Solution solution, ILinearExpression expression) => DeepRecursion.Guard(EvaluateUnguarded, solution, expression);
 

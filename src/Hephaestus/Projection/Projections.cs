@@ -42,16 +42,14 @@ public interface IPointProjection<T, TDelta> : IProjection<T> {
 }
 
 /// <summary>
-/// Components read and written as a value of type <typeparamref name="TValue"/>, through a
-/// projection onto their raw form: one number for each component, a truth counting as <c>1</c> or
-/// <c>0</c>. It is what every typed expression is, however many components it has and of whatever
-/// kinds: a <see cref="Quantity{T}"/> is one number, a two-state type one truth, and <c>Zip</c>
-/// puts any two side by side. Comparison, reading and <c>With</c> are written once against it,
-/// entry by entry.
+/// Linear expressions read and written as a value of type <typeparamref name="TValue"/>, through a
+/// projection onto their raw form: one number for each component. It is what every typed
+/// expression is, however many components it has: a <see cref="Quantity{T}"/> is one number, a
+/// two-state type one indicator, and <c>Zip</c> puts any two side by side. Comparison, reading and
+/// <c>With</c> are written once against it, entry by entry.
 /// <para>
 /// A projection onto several entries must be affine and increasing in each of them, as one onto a
-/// single number is, and must read the entry of a truth as a truth. Those that <c>Zip</c> and
-/// <c>Sequence</c> build out of lawful projections are.
+/// single number is. Those that <c>Zip</c> and <c>Sequence</c> build out of lawful projections are.
 /// </para>
 /// </summary>
 public interface IEncodable<TValue> : IDecodedExpression<TValue>, IWritableExpression<TValue> {
@@ -71,7 +69,8 @@ public interface IEncodable<TValue> : IDecodedExpression<TValue>, IWritableExpre
 /// arithmetic differs between the two, and that stays with each.
 /// <para>
 /// Implement it to have a type of your own treated alike; supply the expression and the projection,
-/// and give it whatever algebra suits.
+/// and give it whatever algebra suits. A two-state type is one over an indicator, projected onto
+/// zero and one: <c>new Lift(goesUp.Indicator, directions)</c>.
 /// </para>
 /// </summary>
 public interface ILinearlyEncodable<TValue> : IEncodable<TValue> {
@@ -81,26 +80,9 @@ public interface ILinearlyEncodable<TValue> : IEncodable<TValue> {
     /// <summary>How the underlying number and a <typeparamref name="TValue"/> stand for each other.</summary>
     new IProjection<TValue> Projection { get; }
 
-    ImmutableArray<IComponent> IProjectedExpression.Components => [new LinearComponent(Expression)];
+    ImmutableArray<ILinearExpression> IProjectedExpression.Components => [Expression];
 
     IProjection<TValue, ImmutableArray<double>> IEncodable<TValue>.Projection => new SingleNumber<TValue>(Projection);
-}
-
-/// <summary>
-/// A boolean expression read as a value of type <typeparamref name="TValue"/>, through a projection
-/// onto truth rather than onto the number line: an <see cref="IEncodable{TValue}"/> of one truth,
-/// carrying a two-state type on a single binary.
-/// </summary>
-public interface ILogicallyEncodable<TValue> : IEncodable<TValue> {
-    /// <summary>The underlying boolean expression.</summary>
-    IBooleanExpression<ILinearArithmetic> Expression { get; }
-
-    /// <summary>How its truth is read as a <typeparamref name="TValue"/>.</summary>
-    new IProjection<TValue, bool> Projection { get; }
-
-    ImmutableArray<IComponent> IProjectedExpression.Components => [new LogicalComponent(Expression)];
-
-    IProjection<TValue, ImmutableArray<double>> IEncodable<TValue>.Projection => new SingleTruth<TValue>(Projection);
 }
 
 /// <summary>
@@ -153,15 +135,6 @@ internal sealed record SingleNumber<TValue>(IProjection<TValue> Projection) : IP
 
     /// <inheritdoc/>
     public ImmutableArray<double> Encode(TValue value) => [Projection.Encode(value)];
-}
-
-/// <summary>A projection onto one truth, seen as one onto a raw form of one entry: <c>1</c> for a truth that holds, <c>0</c> for one that does not.</summary>
-internal sealed record SingleTruth<TValue>(IProjection<TValue, bool> Projection) : IProjection<TValue, ImmutableArray<double>> {
-    /// <inheritdoc/>
-    public TValue Decode(ImmutableArray<double> representation) => Projection.Decode(representation.Single() > 0.5);
-
-    /// <inheritdoc/>
-    public ImmutableArray<double> Encode(TValue value) => [Projection.Encode(value) ? 1 : 0];
 }
 
 /// <summary>Two projections side by side: the first reads the leading <see cref="Split"/> entries of the raw form, and the second the rest.</summary>

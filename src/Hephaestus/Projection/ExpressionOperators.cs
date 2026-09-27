@@ -81,8 +81,8 @@ public static class ExpressionOperators {
     }
 
     extension(IBooleanExpression<ILinearArithmetic> expression) {
-        /// <summary>This expression as the truth it stands for, so that it can be zipped with typed ones.</summary>
-        public ILogicallyEncodable<bool> AsEncodable() => new LogicallyEncodableExpression<bool>(expression, new TruthProjection());
+        /// <summary>This expression as the truth it stands for, carried by its indicator, so that it can be zipped with typed ones.</summary>
+        public ILinearlyEncodable<bool> AsEncodable() => new LinearlyEncodableExpression<bool>(expression.Indicator, new TruthProjection());
     }
 
     private static IEncodable<ImmutableArray<TValue>> Sequenced<TValue>(ImmutableArray<IEncodable<TValue>> encodables) =>
@@ -98,19 +98,19 @@ public static class ExpressionOperators {
 
 /// <summary>Components with a reading and nothing more.</summary>
 internal sealed record DecodedExpression<TValue>(
-    ImmutableArray<IComponent> Components,
+    ImmutableArray<ILinearExpression> Components,
     IDecoder<TValue, ImmutableArray<double>> Decoder
 ) : IDecodedExpression<TValue>;
 
 /// <summary>Components that a value can be written into, and nothing more.</summary>
 internal sealed record WritableExpression<TValue>(
-    ImmutableArray<IComponent> Components,
+    ImmutableArray<ILinearExpression> Components,
     IEncoder<TValue, ImmutableArray<double>> Encoder
 ) : IWritableExpression<TValue>;
 
 /// <summary>Components read and written as a type of their own. Two are equal when their components and projections are, so zipping the same things twice gives equal zips.</summary>
 internal sealed record EncodableExpression<TValue>(
-    ImmutableArray<IComponent> Components,
+    ImmutableArray<ILinearExpression> Components,
     IProjection<TValue, ImmutableArray<double>> Projection
 ) : IEncodable<TValue> {
     /// <inheritdoc/>
@@ -126,17 +126,11 @@ internal sealed record LinearlyEncodableExpression<TValue>(
     IProjection<TValue> Projection
 ) : ILinearlyEncodable<TValue>;
 
-/// <summary>A boolean expression read and written as a type of its own.</summary>
-internal sealed record LogicallyEncodableExpression<TValue>(
-    IBooleanExpression<ILinearArithmetic> Expression,
-    IProjection<TValue, bool> Projection
-) : ILogicallyEncodable<TValue>;
-
-/// <summary>Truths standing for themselves.</summary>
-internal sealed record TruthProjection : IProjection<bool, bool> {
+/// <summary>Truths as the numbers of their indicators: one for true, and zero for false.</summary>
+internal sealed record TruthProjection : IProjection<bool> {
     /// <inheritdoc/>
-    public bool Encode(bool value) => value;
+    public double Encode(bool value) => value ? 1 : 0;
 
     /// <inheritdoc/>
-    public bool Decode(bool representation) => representation;
+    public bool Decode(double representation) => representation > 0.5;
 }
