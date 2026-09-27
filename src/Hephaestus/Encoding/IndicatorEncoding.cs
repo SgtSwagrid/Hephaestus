@@ -50,14 +50,8 @@ internal static class IndicatorEncoding {
     public static IndicatorProgram Encode(IEnumerable<(IBooleanExpression<ILinearArithmetic>? Origin, INormalForm Formula)> conjuncts, EncodingContext context) =>
         conjuncts.Aggregate(IndicatorProgram.Empty, (program, conjunct) => Enforce(program with { Origin = conjunct.Origin }, conjunct.Formula, [], context));
 
-    /// <summary>The 0/1-valued affine form of a literal.</summary>
-    public static AffineForm AsAffine(Literal literal) =>
-        literal.IsPositive
-            ? AffineForm.Zero.PlusTerm(literal.Variable, 1)
-            : AffineForm.Zero.PlusTerm(literal.Variable, -1).Plus(1);
-
     /// <summary>One exactly when the guard is off, and nothing when it holds.</summary>
-    public static AffineForm Slack(Literal guard) => AsAffine(Negated(guard));
+    public static AffineForm Slack(Literal guard) => Negated(guard).Indicator;
 
     /// <summary>The number of guards that are off: zero exactly when the guarded row must hold.</summary>
     public static AffineForm Slack(ImmutableList<Literal> guards) =>
@@ -134,7 +128,7 @@ internal static class IndicatorEncoding {
 
     /// <summary><c>&#931; literals + slack &gt;= 1</c>: whenever the guards all hold, so does some literal. Purely linear.</summary>
     public static GuardedRow AtLeastOne(ImmutableList<Literal> literals, ImmutableList<Literal> guards) =>
-        new([], literals.Aggregate(Slack(guards), (sum, literal) => sum.Plus(AsAffine(literal))).Negated.Plus(1), IsEquality: false);
+        new([], literals.Aggregate(Slack(guards), (sum, literal) => sum.Plus(literal.Indicator)).Negated.Plus(1), IsEquality: false);
 
     private static Literal Negated(Literal literal) => literal with { IsPositive = !literal.IsPositive };
 

@@ -206,8 +206,7 @@ public static class PiecewiseLowering {
             AbsoluteValue absolute => Named(Both(state, absolute.Operand, -absolute.Operand), isNegated: false),
             Conditional conditional => Chosen(Lift(conditional.Condition, state), conditional),
             // The indicator of a binary variable is its column; of anything else, a choice between one and zero.
-            Indicator { Condition: BinaryVariable or INegation<ILinearArithmetic> { Operand: BinaryVariable } or BooleanConstant } => new Lifted<ILinearExpression>(expression, state),
-            Indicator indicator => Chosen(Lift(indicator.Condition, state), new Conditional(indicator.Condition, new Constant(1), new Constant(0))),
+            Indicator indicator when indicator.Affine is null => Chosen(Lift(indicator.Condition, state), new Conditional(indicator.Condition, new Constant(1), new Constant(0))),
             _ => new Lifted<ILinearExpression>(expression, state),
         };
 

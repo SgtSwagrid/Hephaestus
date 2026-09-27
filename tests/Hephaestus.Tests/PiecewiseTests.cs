@@ -208,6 +208,13 @@ public sealed class PiecewiseTests {
     }
 
     [Fact]
+    public void OnlyAnIndicatorWithoutAnAffineFormIsLowered() {
+        // The indicator of a binary, of its negation or of a constant is a column or a number already, and costs nothing.
+        Assert.Empty(Auxiliaries(Problem.Minimise(Runs.Indicator - (!Stops).Indicator + BooleanConstant.False.Indicator).SubjectTo(Box)));
+        Assert.Contains("_if0", Auxiliaries(Problem.Minimise((X >= 2).Indicator).SubjectTo(Box)));
+    }
+
+    [Fact]
     public void AConditionalThatIsOnlyPushedOneWayIsOnlyHeldFromTheOther() =>
         Assert.Equal(["!runs => _if0 >= 2", "runs => _if0 - x >= 0"], Problem.Minimise(If(Runs, X, 2)).SubjectTo(Box).EncodeLogic().Rows.Select(row => row.Format().Replace("-_if0 + x <= 0", "_if0 - x >= 0").Replace("-_if0 <= -2", "_if0 >= 2")).Order(StringComparer.Ordinal));
 

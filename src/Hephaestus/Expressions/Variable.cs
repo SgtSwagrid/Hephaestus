@@ -11,6 +11,6 @@ public static class Variable {
     /// <summary>A whole-number variable.</summary>
     public static IntegerVariable Integer(string name) => new(name);
 
-    /// <summary>A 0/1 variable, usable both as a number and as a truth value.</summary>
+    /// <summary>A variable that is true or false. Where a number is wanted, its <c>Indicator</c> is one when it is true and zero when not.</summary>
     public static BinaryVariable Binary(string name) => new(name);
 }

@@ -1,9 +1,10 @@
 namespace Hephaestus;
 
 /// <summary>
-/// Logical operators over formulas, whatever their atoms. As with the linear operators, these only
-/// build data; normal forms are computed later, when a model is encoded for a solver. Operands over
-/// different atoms meet over the larger: <c>flag &amp; (x &lt;= 4)</c> is over <see cref="ILinearArithmetic"/>.
+/// Logical operators over formulas, whatever their theory. As with the linear operators, these only
+/// build data; normal forms are computed later, when a model is encoded for a solver. Operands of
+/// different theories meet in the one that extends the other: <c>flag &amp; (x &lt;= 4)</c> is a formula
+/// of <see cref="ILinearArithmetic"/>.
 /// </summary>
 public static class BooleanOperators {
     extension<TTheory>(IBooleanExpression<TTheory>) where TTheory : class, ILogic {

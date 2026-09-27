@@ -58,7 +58,8 @@ public static class TypedComparisons {
         /// The plain linear expression that measures this under another projection, for example a
         /// duration in minutes for use in a cost function.
         /// </summary>
-        public ILinearExpression In(IProjection<TValue> projection) => Projecting.Convert(expression.Expression, expression.Projection, projection);
+        public ILinearExpression In(IProjection<TValue> projection) =>
+            Componentwise.Convert([expression.Expression], new SingleNumber<TValue>(expression.Projection), new SingleNumber<TValue>(projection)).Single();
     }
 
     private static IBooleanExpression<ILinearArithmetic> Relate<TValue>(IEncodable<TValue> left, Relation relation, IEncodable<TValue> right) =>

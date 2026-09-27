@@ -145,17 +145,6 @@ public sealed class ProjectionTests {
         Assert.Equal("runtime <= 60", (Runtime <= TimeSpan.FromMinutes(1)).Format());
     }
 
-    private enum Direction { Down, Up }
-
-    /// <summary>A two-state type, projected onto zero and one.</summary>
-    private sealed record DirectionProjection : IProjection<Direction> {
-        public double Encode(Direction value) => value == Direction.Up ? 1 : 0;
-
-        public Direction Decode(double representation) => representation > 0.5 ? Direction.Up : Direction.Down;
-    }
-
-    private sealed record Switch(ILinearExpression Expression, IProjection<Direction> Projection) : ILinearlyEncodable<Direction>;
-
     [Fact]
     public void ATwoStateTypeIsCarriedByAnIndicator() {
         var up = Variable.Binary("up");
@@ -163,6 +152,8 @@ public sealed class ProjectionTests {
 
         Assert.Equal(Direction.Up, Solution.Empty.With(up, true).Value(lift));
         Assert.Equal(Direction.Down, Solution.Empty.With(lift, Direction.Down).Value(lift));
+        // Wired the other way round, giving it a direction gives the binary the opposite value.
+        Assert.Equal(Direction.Down, Solution.Empty.With(new Switch((!up).Indicator, new DirectionProjection()), Direction.Up).Value(lift));
         Assert.Equal("[up] == 1", lift.EqualTo(Direction.Up).Format());
     }
 
