@@ -19,7 +19,7 @@ public static class LinearNormalisation {
             NamedTerm named => Accumulate(named.Expression, scale, into),
             Sum sum => Accumulate(sum.Right, scale, Accumulate(sum.Left, scale, into)),
             Indicator { Condition: BinaryVariable variable } => into.PlusTerm(variable, scale),
-            Indicator { Condition: Negation { Operand: BinaryVariable variable } } => into.Plus(scale).PlusTerm(variable, -scale),
+            Indicator { Condition: INegation<ILinearRelation> { Operand: BinaryVariable variable } } => into.Plus(scale).PlusTerm(variable, -scale),
             Indicator { Condition: BooleanConstant constant } => constant.Value ? into.Plus(scale) : into,
             Maximum or Minimum or AbsoluteValue or Conditional or Indicator => throw new ModellingException($"The expression '{expression.Format()}' is piecewise linear, so it has no affine form of its own. It is lowered to linear form when the problem that contains it is encoded."),
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),

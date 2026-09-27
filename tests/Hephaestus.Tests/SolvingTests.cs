@@ -34,7 +34,7 @@ public sealed class SolvingTests {
     private static readonly IntegerVariable M = Variable.Integer("m");
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly BinaryVariable A = Variable.Binary("a");
-    private static readonly IBooleanExpression Domain = M.Between(0, 5) & N.Between(0, 5);
+    private static readonly IBooleanExpression<ILinearRelation> Domain = M.Between(0, 5) & N.Between(0, 5);
 
     [Fact]
     public void ADisjunctiveProblemIsSolvedThroughTheEncoding() {
@@ -168,7 +168,7 @@ public sealed class SolvingTests {
         }
     }
 
-    private static readonly IBooleanExpression Linked = Domain & (N <= M + 1);
+    private static readonly IBooleanExpression<ILinearRelation> Linked = Domain & (N <= M + 1);
 
     [Fact]
     public void ALaterObjectiveOnlyChoosesAmongTheBestForTheEarlierOnes() {
@@ -272,16 +272,16 @@ public sealed class SolvingTests {
 
     [Fact]
     public void SeveralConstraintsGivenAtOnceMustAllHold() {
-        var several = new List<IBooleanExpression> { M >= 3, N <= 2, A };
+        var several = new List<IBooleanExpression<ILinearRelation>> { M >= 3, N <= 2, A };
 
         Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(M), Domain & (M >= 3)), Problem.Minimise(M).SubjectTo(Domain, M >= 3));
         Assert.Equal(new SingleObjectiveProblem(Objective.Minimise(M), Domain & several.AllOf()), Problem.Minimise(M).SubjectTo(Domain).SubjectTo(several));
-        Assert.Equal(Problem.Minimise(M).SubjectTo(Domain), Problem.Minimise(M).SubjectTo(Domain).SubjectTo(Array.Empty<IBooleanExpression>()));
+        Assert.Equal(Problem.Minimise(M).SubjectTo(Domain), Problem.Minimise(M).SubjectTo(Domain).SubjectTo(Array.Empty<IBooleanExpression<ILinearRelation>>()));
         Assert.Equal(Domain & A & N.EqualTo(1), Problem.Minimise(M, N).SubjectTo(Domain, A, N.EqualTo(1)).Constraint.Conjuncts.AllOf(), EqualAsConjunctions);
         Assert.Equal(3, Assert.IsType<Optimal>(Solver.Solve(Problem.Minimise(M).SubjectTo(Domain, M >= 3, A))).Solution.ObjectiveValue);
     }
 
-    private static bool EqualAsConjunctions(IBooleanExpression left, IBooleanExpression right) => left.Conjuncts.SequenceEqual(right.Conjuncts);
+    private static bool EqualAsConjunctions(IBooleanExpression<IAtom> left, IBooleanExpression<IAtom> right) => left.Conjuncts.SequenceEqual(right.Conjuncts);
 
     [Fact]
     public void ObjectivesAndConstraintsMayComeInAnyOrder() {

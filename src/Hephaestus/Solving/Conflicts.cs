@@ -12,7 +12,7 @@ public interface IConflictBackend {
     /// The origins of the rows and bounds of some infeasible part of the problem; empty if the
     /// problem is not found to be infeasible.
     /// </summary>
-    ImmutableArray<IBooleanExpression> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken);
+    ImmutableArray<IBooleanExpression<IAtom>> FindConflict(IndicatorProblem problem, SolverOptions options, CancellationToken cancellationToken);
 }
 
 /// <summary>A solver that can say which constraints an infeasibility lies among, without being asked about them one subset at a time.</summary>
@@ -21,7 +21,7 @@ public interface IConflictSolver : ISolver {
     /// Constraints (conjuncts of the problem's constraint, the very objects) among which a conflict
     /// lies; empty if the solver has nothing to offer. It need not be minimal.
     /// </summary>
-    ImmutableArray<IBooleanExpression> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default);
+    ImmutableArray<IBooleanExpression<IAtom>> NarrowConflict(IOneShotProblem problem, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
@@ -45,11 +45,11 @@ public static class Conflicts {
         /// </summary>
         /// <exception cref="ModellingException">The constraint as a whole cannot be encoded.</exception>
         /// <exception cref="InvalidOperationException">The solver could not decide one of the subproblems, typically for want of time.</exception>
-        public ImmutableArray<IBooleanExpression> FindConflict(IBooleanExpression constraint, CancellationToken cancellationToken = default) =>
+        public ImmutableArray<IBooleanExpression<TAtom>> FindConflict<TAtom>(IBooleanExpression<TAtom> constraint, CancellationToken cancellationToken = default) where TAtom : class, IAtom =>
             Find(new Oracle(solver, cancellationToken), constraint.Conjuncts, Narrowed(solver, constraint, cancellationToken));
 
-        /// <inheritdoc cref="FindConflict(ISolver, IBooleanExpression, CancellationToken)"/>
-        public ImmutableArray<IBooleanExpression> FindConflict(IProblem problem, CancellationToken cancellationToken = default) =>
+        /// <inheritdoc cref="FindConflict{TAtom}(ISolver, IBooleanExpression{TAtom}, CancellationToken)"/>
+        public ImmutableArray<IBooleanExpression<IAtom>> FindConflict(IProblem problem, CancellationToken cancellationToken = default) =>
             solver.FindConflict(problem.Constraint, cancellationToken);
     }
 
@@ -59,15 +59,15 @@ public static class Conflicts {
     /// search is run over what it offers, which is quick because that is little; and if what it offers
     /// turns out not to be infeasible after all, the search is run over everything, as if it had offered nothing.
     /// </summary>
-    private static ImmutableArray<IBooleanExpression> Find(Oracle oracle, ImmutableArray<IBooleanExpression> conjuncts, ImmutableArray<IBooleanExpression> narrowed) =>
+    private static ImmutableArray<IBooleanExpression<TAtom>> Find<TAtom>(Oracle oracle, ImmutableArray<IBooleanExpression<TAtom>> conjuncts, ImmutableArray<IBooleanExpression<TAtom>> narrowed) where TAtom : class, IAtom =>
         !narrowed.IsEmpty && !oracle.CanHold(narrowed) ? [.. Explain(oracle, [], hasGrown: false, narrowed)]
         : oracle.Decide(conjuncts) ? []
         : [.. Explain(oracle, [], hasGrown: false, conjuncts)];
 
     /// <summary>What the solver offers, as conjuncts of the constraint in the order written.</summary>
-    private static ImmutableArray<IBooleanExpression> Narrowed(ISolver solver, IBooleanExpression constraint, CancellationToken cancellationToken) =>
-        solver is IConflictSolver native && native.NarrowConflict(Problem.Satisfy(constraint), cancellationToken).ToImmutableHashSet<IBooleanExpression>(ReferenceEqualityComparer.Instance) is { IsEmpty: false } offered
-            ? [.. constraint.Conjuncts.Where(offered.Contains)]
+    private static ImmutableArray<IBooleanExpression<TAtom>> Narrowed<TAtom>(ISolver solver, IBooleanExpression<TAtom> constraint, CancellationToken cancellationToken) where TAtom : class, IAtom =>
+        solver is IConflictSolver native && native.NarrowConflict(Problem.Satisfy(constraint), cancellationToken).ToImmutableHashSet<IBooleanExpression<IAtom>>(ReferenceEqualityComparer.Instance) is { IsEmpty: false } offered
+            ? [.. constraint.Conjuncts.Where(conjunct => offered.Contains(conjunct))]
             : [];
 
     /// <summary>
@@ -76,7 +76,7 @@ public static class Conflicts {
     /// were derived for auxiliary variables are lifted first. They lose nothing, but they stand in
     /// for the constraints they were derived from, and a conflict that named them would name nothing.
     /// </summary>
-    public static ImmutableArray<IBooleanExpression> Narrow(IndicatorProblem problem, IConflictBackend backend, SolverOptions options, CancellationToken cancellationToken) =>
+    public static ImmutableArray<IBooleanExpression<IAtom>> Narrow(IndicatorProblem problem, IConflictBackend backend, SolverOptions options, CancellationToken cancellationToken) =>
         problem.Columns.FirstOrDefault(column => column.LowerBound > column.UpperBound && problem.BoundOrigins.GetValueOrDefault(column.Variable) is { Lower: not null, Upper: not null }) is { } contradictory
             ? [problem.BoundOrigins[contradictory.Variable].Lower!, problem.BoundOrigins[contradictory.Variable].Upper!]
         : problem.Rows.FirstOrDefault(row => row.Guards.IsEmpty && row.Expression.IsConstant && !IndicatorProblems.IsSatisfied(row)) is { Origin: { } origin }
@@ -96,7 +96,7 @@ public static class Conflicts {
         CancellationToken CancellationToken
     ) {
         /// <summary>Whether the constraints can all hold, as the solver has it.</summary>
-        public bool Decide(IEnumerable<IBooleanExpression> constraints) =>
+        public bool Decide<TAtom>(IEnumerable<IBooleanExpression<TAtom>> constraints) where TAtom : class, IAtom =>
             Solver.Solve(Problem.Satisfy(constraints.AllOf()), cancellationToken: CancellationToken) switch {
                 Infeasible => false,
                 Unknown unknown => throw new InvalidOperationException($"The solver could not decide whether part of the problem is feasible ({unknown.Reason}), so no conflict can be vouched for."),
@@ -104,7 +104,7 @@ public static class Conflicts {
             };
 
         /// <summary>Whether part of the problem can hold, as far as can be told: a part that cannot be encoded by itself is not known to be infeasible.</summary>
-        public bool CanHold(IEnumerable<IBooleanExpression> constraints) {
+        public bool CanHold<TAtom>(IEnumerable<IBooleanExpression<TAtom>> constraints) where TAtom : class, IAtom {
             try {
                 return Decide(constraints);
             } catch (ModellingException) {
@@ -120,12 +120,12 @@ public static class Conflicts {
     /// are halved: what is needed from the second half is found with the first half held, then what is
     /// needed from the first half with only that.
     /// </summary>
-    private static ImmutableList<IBooleanExpression> Explain(Oracle oracle, ImmutableList<IBooleanExpression> background, bool hasGrown, ImmutableArray<IBooleanExpression> candidates) =>
+    private static ImmutableList<IBooleanExpression<TAtom>> Explain<TAtom>(Oracle oracle, ImmutableList<IBooleanExpression<TAtom>> background, bool hasGrown, ImmutableArray<IBooleanExpression<TAtom>> candidates) where TAtom : class, IAtom =>
         hasGrown && !oracle.CanHold(background) ? []
         : candidates.Length == 1 ? [candidates[0]]
         : ExplainHalves(oracle, background, candidates[..(candidates.Length / 2)], candidates[(candidates.Length / 2)..]);
 
-    private static ImmutableList<IBooleanExpression> ExplainHalves(Oracle oracle, ImmutableList<IBooleanExpression> background, ImmutableArray<IBooleanExpression> first, ImmutableArray<IBooleanExpression> second) {
+    private static ImmutableList<IBooleanExpression<TAtom>> ExplainHalves<TAtom>(Oracle oracle, ImmutableList<IBooleanExpression<TAtom>> background, ImmutableArray<IBooleanExpression<TAtom>> first, ImmutableArray<IBooleanExpression<TAtom>> second) where TAtom : class, IAtom {
         var fromSecond = Explain(oracle, background.AddRange(first), hasGrown: true, second);
         var fromFirst = Explain(oracle, background.AddRange(fromSecond), hasGrown: !fromSecond.IsEmpty, first);
         return fromFirst.AddRange(fromSecond);

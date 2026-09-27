@@ -25,4 +25,4 @@ public sealed record IntegerVariable(string Name) : INumericVariable;
 /// <c>!</c>. It is not a number; where one is wanted, its <c>Indicator</c> is one exactly when it is
 /// true, and zero when it is not: <c>needsSetup.Indicator * setupTime</c>.
 /// </summary>
-public sealed record BinaryVariable(string Name) : IVariable, IBooleanExpression;
+public sealed record BinaryVariable(string Name) : IVariable, IBooleanExpression<IPropositional>;

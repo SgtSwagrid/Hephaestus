@@ -11,7 +11,7 @@ public sealed class NumberQuantityTests {
     private static readonly IntegerVariable JobsUnderneath = Variable.Integer("jobs");
     private static readonly IntegerVariable MachinesUnderneath = Variable.Integer("machines");
 
-    private static void AssertSameConstraint(IBooleanExpression expected, IBooleanExpression actual) =>
+    private static void AssertSameConstraint(IBooleanExpression<ILinearRelation> expected, IBooleanExpression<ILinearRelation> actual) =>
         Assert.Equal(expected.Format(), actual.Format());
 
     [Fact]

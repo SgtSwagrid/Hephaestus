@@ -109,7 +109,9 @@ Swap `OrToolsSolver.Create()` for `OrToolsSolver.Create(OrToolsSolverId.Highs)` 
 There are two algebraic data types, each an interface with a handful of sealed records:
 
 - `ILinearExpression`: `Constant`, `Sum`, `Product`, `Indicator`, and the continuous and integer variables.
-- `IBooleanExpression`: `BooleanConstant`, `Comparison`, `Negation`, `Conjunction`, `Disjunction`, `Implication`, `Equivalence`, and `BinaryVariable`.
+- `IBooleanExpression<TAtom>`: `BooleanConstant`, `BinaryVariable`, the atoms, and the connectives `Negation`, `Conjunction`, `Disjunction`, `Implication` and `Equivalence`.
+
+A formula is generic in the atoms it is over, as in SMT, where the logic stays the same while the theory beneath it changes. The atoms of linear arithmetic are `ILinearRelation`s: `x <= y` is a `LinearRelation`, and a formula over them is an `IBooleanExpression<ILinearRelation>`. Pure logic, made of truths and binary variables alone, is over `IPropositional`, which lies beneath every kind of atom, so it mixes with any: `flag & (x <= 4)` is over `ILinearRelation`. The type is covariant, so a formula over fewer kinds of atom is a formula over more, and `IBooleanExpression<IAtom>` is any formula at all, which is what a problem's constraint is. Lowering (below) turns one into a formula over `IAffineRelation`s, relations of an affine form to zero with every piecewise-linear function gone; those are linear relations of a narrower kind, and only they can be normalised, so a backend cannot skip the lowering and still compile.
 
 Keeping them apart makes illegal compositions unrepresentable: `x * y`, `(x <= 1) + 1` and `if (x <= y)` do not compile. A `BinaryVariable` is a truth, combined with `&`, `|` and `!`; where a number is wanted, its `Indicator` is one when it is true and zero when not, so `usesA & usesB` and `usesA.Indicator + usesB.Indicator <= 1` are both fine. Any constraint has an indicator, not only a variable: `jobs.Sum(job => (job.Finish > deadline).Indicator)` counts the late ones.
 
@@ -229,7 +231,7 @@ The two types carry the right algebra, once, generically:
 ```csharp
 Quantity<Duration>               elapsed  = finish - start;          // point - point
 Point<LocalDateTime, Duration>   earliest = start + runtime + slack;     // point + quantity
-IBooleanExpression               onTime   = finish <= deadline;         // compare with plain values
+IBooleanExpression<ILinearRelation> onTime = finish <= deadline;      // compare with plain values
 Point<LocalDateTime, Duration>   release  = shiftStart + runtime;           // plain value + quantity
 //                                          finish + start            // does not compile
 //                                          2 * finish                // does not compile

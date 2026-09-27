@@ -25,9 +25,9 @@ public abstract class SolverContract {
     /// <summary>Decimal places to which continuous values are compared: solvers work to tolerances of about a millionth.</summary>
     private const int Precision = 4;
 
-    private static readonly IBooleanExpression Separated = (StartA + Changeover <= StartB) | (StartB + Changeover <= StartA);
-    private static readonly IBooleanExpression ConflictFree = !(UsesA & UsesB) | Separated;
-    private static readonly IBooleanExpression Horizon = StartA.Between(0, 3600) & StartB.Between(0, 3600);
+    private static readonly IBooleanExpression<ILinearRelation> Separated = (StartA + Changeover <= StartB) | (StartB + Changeover <= StartA);
+    private static readonly IBooleanExpression<ILinearRelation> ConflictFree = !(UsesA & UsesB) | Separated;
+    private static readonly IBooleanExpression<ILinearRelation> Horizon = StartA.Between(0, 3600) & StartB.Between(0, 3600);
 
     private static readonly TimeSpan Moment = TimeSpan.FromMilliseconds(1);
 
@@ -279,7 +279,7 @@ public abstract class SolverContract {
         var conflict = Solver.FindConflict(Problem.Minimise(StartA + StartB).SubjectTo(constraint));
 
         Assert.Equal(["0 <= startA", "0 <= startB", "A starts early", "B starts early", "changeover", "usesA", "usesB"], conflict.Select(conjunct => conjunct.Name).Order(StringComparer.Ordinal));
-        Assert.Empty(Solver.FindConflict(constraint.Conjuncts.Remove(conflict[0]).AllOf()));
+        Assert.Empty(Solver.FindConflict(constraint.Conjuncts.Where(conjunct => !ReferenceEquals(conjunct, conflict[0])).AllOf()));
     }
 
     [Fact]

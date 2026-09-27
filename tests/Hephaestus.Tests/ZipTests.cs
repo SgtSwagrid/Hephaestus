@@ -30,7 +30,7 @@ public sealed class ZipTests {
         public Direction Decode(bool representation) => representation ? Direction.Down : Direction.Up;
     }
 
-    private sealed record Switch(IBooleanExpression Expression, IProjection<Direction, bool> Projection) : ILogicallyEncodable<Direction>;
+    private sealed record Switch(IBooleanExpression<ILinearRelation> Expression, IProjection<Direction, bool> Projection) : ILogicallyEncodable<Direction>;
 
     private sealed record Location(double X, double Y);
 
@@ -46,11 +46,11 @@ public sealed class ZipTests {
     ];
 
     /// <summary>Whether two constraints hold under exactly the same assignments of the variables they mention.</summary>
-    private static void AssertEquivalent(IBooleanExpression expected, IBooleanExpression actual) =>
+    private static void AssertEquivalent(IBooleanExpression<ILinearRelation> expected, IBooleanExpression<ILinearRelation> actual) =>
         Assert.Equal(Assignments.Select(solution => solution.Value(expected)), Assignments.Select(solution => solution.Value(actual)));
 
-    private static void AssertSameConstraint(IBooleanExpression expected, IBooleanExpression actual) =>
-        Assert.Equal(expected.Normalise(1e-4), actual.Normalise(1e-4));
+    private static void AssertSameConstraint(IBooleanExpression<ILinearRelation> expected, IBooleanExpression<ILinearRelation> actual) =>
+        Assert.Equal(expected.Normalised(), actual.Normalised());
 
     [Fact]
     public void AZipOfANumberAndATruthIsReadAsAPair() {

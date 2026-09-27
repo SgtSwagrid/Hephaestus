@@ -11,7 +11,7 @@ namespace Hephaestus;
 internal static class Componentwise {
     /// <summary>The constraint that <paramref name="left"/> and <paramref name="right"/> stand in <paramref name="relation"/>, entry by entry.</summary>
     /// <exception cref="ArgumentException">The two have different numbers of entries, or entries of different kinds.</exception>
-    public static IBooleanExpression Relate(ImmutableArray<IComponent> left, Relation relation, ImmutableArray<IComponent> right) =>
+    public static IBooleanExpression<ILinearRelation> Relate(ImmutableArray<IComponent> left, Relation relation, ImmutableArray<IComponent> right) =>
         Combined(relation, Paired(left, right).Select(pair => Relate(pair.First, relation, pair.Second)));
 
     /// <summary>Components that stand for the entries of <paramref name="raw"/>, of the kinds of <paramref name="kinds"/>: a plain value brought into a model.</summary>
@@ -41,17 +41,17 @@ internal static class Componentwise {
             ? first.Zip(second)
             : throw new ArgumentException($"Values of {first.Length} and {second.Length} entries cannot be taken entry by entry.");
 
-    private static IBooleanExpression Combined(Relation relation, IEnumerable<IBooleanExpression> relations) =>
+    private static IBooleanExpression<ILinearRelation> Combined(Relation relation, IEnumerable<IBooleanExpression<ILinearRelation>> relations) =>
         relation == Relation.NotEqual ? relations.AnyOf() : relations.AllOf();
 
-    private static IBooleanExpression Relate(IComponent left, Relation relation, IComponent right) =>
+    private static IBooleanExpression<ILinearRelation> Relate(IComponent left, Relation relation, IComponent right) =>
         (left, right) switch {
-            (LinearComponent linear, LinearComponent other) => new Comparison(linear.Expression, relation, other.Expression),
+            (LinearComponent linear, LinearComponent other) => new LinearRelation(linear.Expression, relation, other.Expression),
             (LogicalComponent logical, LogicalComponent other) => Logically(logical.Expression, relation, other.Expression),
             _ => throw new ArgumentException($"A {Kind(left)} cannot be compared with a {Kind(right)}."),
         };
 
-    private static IBooleanExpression Logically(IBooleanExpression left, Relation relation, IBooleanExpression right) =>
+    private static IBooleanExpression<ILinearRelation> Logically(IBooleanExpression<ILinearRelation> left, Relation relation, IBooleanExpression<ILinearRelation> right) =>
         relation switch {
             Relation.LessThan => !left & right,
             Relation.LessThanOrEqual => left.Implies(right),
@@ -118,7 +118,7 @@ internal static class Componentwise {
             ? Projecting.Affine(linear.Expression, term.Coefficient, offset: 0)
             : throw new ArgumentException($"A number cannot be written in terms of a {Kind(term.Component)}.");
 
-    private static IBooleanExpression Kept(ImmutableArray<(IComponent Component, double Coefficient)> terms, double offset) =>
+    private static IBooleanExpression<ILinearRelation> Kept(ImmutableArray<(IComponent Component, double Coefficient)> terms, double offset) =>
         (terms, offset) switch {
             ([], 0) => BooleanConstant.False,
             ([], 1) => BooleanConstant.True,

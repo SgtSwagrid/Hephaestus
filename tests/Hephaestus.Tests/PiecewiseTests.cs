@@ -9,7 +9,7 @@ public sealed class PiecewiseTests {
     private static readonly ContinuousVariable Z = Variable.Continuous("z");
     private static readonly IntegerVariable N = Variable.Integer("n");
     private static readonly IntegerVariable M = Variable.Integer("m");
-    private static readonly IBooleanExpression Box = X.Between(0, 10) & Y.Between(0, 10);
+    private static readonly IBooleanExpression<ILinearRelation> Box = X.Between(0, 10) & Y.Between(0, 10);
 
     private static IEnumerable<string> Rows(IOneShotProblem problem) => problem.Encode().Rows.Select(row => row.Format()).Order(StringComparer.Ordinal);
 
@@ -144,11 +144,14 @@ public sealed class PiecewiseTests {
         Assert.Equal(["_max1"], Auxiliaries(Problem.Minimise(Max(X, Variable.Continuous("_max0"))).SubjectTo(Box & Variable.Continuous("_max0").Between(0, 1))));
 
     [Fact]
-    public void AProblemWithoutThemIsLeftAlone() {
+    public void AProblemWithoutThemKeepsItsObjectiveAndItsShape() {
         var problem = Problem.Minimise(X).SubjectTo(Box);
+        var linearised = problem.Linearise();
 
-        Assert.Same(problem, problem.Linearise().Problem);
-        Assert.Empty(problem.Linearise().Definitions);
+        Assert.Equal(problem.Objective, linearised.Objective);
+        Assert.Empty(linearised.Definitions);
+        Assert.Equal(problem.Constraint.Conjuncts.Select(conjunct => conjunct.Format()), linearised.Constraints(problem.Constraint).Select(constraint => constraint.Written!.Format()));
+        Assert.Equal(["-x <= 0", "x <= 10", "-y <= 0", "y <= 10"], linearised.Constraint.Conjuncts.Select(conjunct => conjunct.Format()));
     }
 
     [Fact]

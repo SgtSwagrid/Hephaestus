@@ -70,41 +70,41 @@ public sealed class NormalisationTests {
         var atom = new Atom(Form(-1, (X, 1)), IsEquality: false);
         var flipped = new Atom(Form(1 + 1e-4, (X, -1)), IsEquality: false);
 
-        Assert.Equal(new All([new Literal(A, true), atom]), (A & (X <= 1)).Normalise(1e-4));
-        Assert.Equal(new Any([new Literal(A, false), flipped]), (!(A & (X <= 1))).Normalise(1e-4));
-        Assert.Equal(new Literal(A, true), (!!A).Normalise(1e-4));
+        Assert.Equal(new All([new Literal(A, true), atom]), (A & (X <= 1)).Normalised());
+        Assert.Equal(new Any([new Literal(A, false), flipped]), (!(A & (X <= 1))).Normalised());
+        Assert.Equal(new Literal(A, true), (!!A).Normalised());
     }
 
     [Fact]
     public void NestedJunctionsOfTheSameKindAreFlattened() {
         var c = Variable.Binary("c");
 
-        Assert.Equal(new Any([new Literal(A, true), new Literal(B, true), new Literal(c, true)]), (A | (B | c)).Normalise(1e-4));
-        Assert.Equal(new Any([new Literal(A, false), new Literal(B, false), new Literal(c, true)]), (!(A & B) | c).Normalise(1e-4));
-        Assert.Equal(new Any([new Literal(A, false), new Literal(B, true)]), A.Implies(B).Normalise(1e-4));
+        Assert.Equal(new Any([new Literal(A, true), new Literal(B, true), new Literal(c, true)]), (A | (B | c)).Normalised());
+        Assert.Equal(new Any([new Literal(A, false), new Literal(B, false), new Literal(c, true)]), (!(A & B) | c).Normalised());
+        Assert.Equal(new Any([new Literal(A, false), new Literal(B, true)]), A.Implies(B).Normalised());
     }
 
     [Fact]
     public void ConstantsAreAbsorbed() {
-        Assert.Equal(BooleanNormalisation.True, (A | BooleanConstant.True).Normalise(1e-4));
-        Assert.Equal(new Literal(A, true), (A & BooleanConstant.True).Normalise(1e-4));
-        Assert.Equal(BooleanNormalisation.False, (A & (new Constant(2) <= 1)).Normalise(1e-4));
-        Assert.Equal(new Literal(A, true), (A | (X - X > 0)).Normalise(1e-4));
+        Assert.Equal(BooleanNormalisation.True, (A | BooleanConstant.True).Normalised());
+        Assert.Equal(new Literal(A, true), (A & BooleanConstant.True).Normalised());
+        Assert.Equal(BooleanNormalisation.False, (A & (new Constant(2) <= 1)).Normalised());
+        Assert.Equal(new Literal(A, true), (A | (X - X > 0)).Normalised());
     }
 
     [Fact]
     public void StrictnessOverWholeNumbersIsExactAndOverRealsUsesEpsilon() {
-        Assert.Equal(new Atom(Form(-2, (N, 1)), IsEquality: false), (N < 3).Normalise(1e-4));
-        Assert.Equal(new Atom(Form(-3 + 1e-4, (X, 1)), IsEquality: false), (X < 3).Normalise(1e-4));
-        Assert.Equal(new Atom(Form(4, (N, -1)), IsEquality: false), (!(N <= 3)).Normalise(1e-4));
+        Assert.Equal(new Atom(Form(-2, (N, 1)), IsEquality: false), (N < 3).Normalised());
+        Assert.Equal(new Atom(Form(-3 + 1e-4, (X, 1)), IsEquality: false), (X < 3).Normalised());
+        Assert.Equal(new Atom(Form(4, (N, -1)), IsEquality: false), (!(N <= 3)).Normalised());
     }
 
     [Fact]
     public void EqualitiesAreSignNormalisedAndDisequalitiesSplit() {
-        Assert.Equal(X.EqualTo(Y).Normalise(1e-4), Y.EqualTo(X).Normalise(1e-4));
+        Assert.Equal(X.EqualTo(Y).Normalised(), Y.EqualTo(X).Normalised());
         Assert.Equal(
             new Any([new Atom(Form(-2, (N, 1)), IsEquality: false), new Atom(Form(4, (N, -1)), IsEquality: false)]),
-            N.NotEqualTo(3).Normalise(1e-4));
+            N.NotEqualTo(3).Normalised());
     }
 
     [Theory]
@@ -125,9 +125,9 @@ public sealed class NormalisationTests {
 
     [Fact]
     public void AVeryLongChainOfConjunctionsDoesNotOverflowTheStack() {
-        var chain = Enumerable.Range(0, 100_000).Aggregate<int, IBooleanExpression>(BooleanConstant.True, (all, index) => all & (Variable.Continuous($"v{index}") <= index));
+        var chain = Enumerable.Range(0, 100_000).Aggregate<int, IBooleanExpression<ILinearRelation>>(BooleanConstant.True, (all, index) => all & (Variable.Continuous($"v{index}") <= index));
 
-        var normalised = Assert.IsType<All>(chain.Normalise(1e-4));
+        var normalised = Assert.IsType<All>(chain.Normalised());
 
         Assert.Equal(100_000, normalised.Operands.Count);
     }
@@ -143,7 +143,7 @@ public sealed class NormalisationTests {
 
     [Fact]
     public void NorDoesWritingOneOut() {
-        var chain = Enumerable.Range(0, 100_000).Aggregate<int, IBooleanExpression>(BooleanConstant.True, (all, index) => all & (X <= index));
+        var chain = Enumerable.Range(0, 100_000).Aggregate<int, IBooleanExpression<ILinearRelation>>(BooleanConstant.True, (all, index) => all & (X <= index));
 
         Assert.EndsWith("(x <= 99999)", chain.Format(), StringComparison.Ordinal);
     }

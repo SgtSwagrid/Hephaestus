@@ -14,7 +14,7 @@ public sealed class EncodingTests {
     private const double Changeover = 120;
     private const double Horizon = 3600;
 
-    private static IBooleanExpression ChangeoverConstraint =>
+    private static IBooleanExpression<ILinearRelation> ChangeoverConstraint =>
         StartA.Between(0, Horizon)
         & StartB.Between(0, Horizon)
         & (!(UsesA & UsesB) | (StartA + Changeover <= StartB) | (StartB + Changeover <= StartA));

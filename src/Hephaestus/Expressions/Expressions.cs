@@ -14,7 +14,7 @@ public interface IComponent;
 public sealed record LinearComponent(ILinearExpression Expression) : IComponent;
 
 /// <summary>A boolean expression, standing for a truth in the raw form: <c>1</c> if it holds and <c>0</c> if not.</summary>
-public sealed record LogicalComponent(IBooleanExpression Expression) : IComponent;
+public sealed record LogicalComponent(IBooleanExpression<ILinearRelation> Expression) : IComponent;
 
 /// <summary>
 /// Expressions read together as something else, through one or both halves of a projection. The

@@ -7,7 +7,7 @@ public sealed class ModelFilesTests {
     private static readonly BinaryVariable UsesB = Variable.Binary("usesB");
     private static readonly IntegerVariable N = Variable.Integer("n");
 
-    private static readonly IBooleanExpression Changeover =
+    private static readonly IBooleanExpression<ILinearRelation> Changeover =
         (!(UsesA & UsesB) | (StartA + 120 <= StartB) | (StartB + 120 <= StartA)).WithName("changeover A/B");
 
     private static readonly IOneShotProblem Problem1 = Problem.Minimise(StartA + 2 * StartB + 7).SubjectTo(StartA.Between(0, 3600) & StartB.Between(0, 3600) & Changeover & UsesA & (StartA - StartB + N).EqualTo(3) & (N >= -4));

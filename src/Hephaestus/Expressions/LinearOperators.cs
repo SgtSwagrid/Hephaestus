@@ -23,21 +23,21 @@ public static class LinearOperators {
         public static ILinearExpression operator *(Indicator gate, ILinearExpression expression) => new Conditional(gate.Condition, expression, new Constant(0));
         public static ILinearExpression operator *(ILinearExpression expression, Indicator gate) => new Conditional(gate.Condition, expression, new Constant(0));
 
-        public static IBooleanExpression operator <=(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.LessThanOrEqual, right);
-        public static IBooleanExpression operator <=(ILinearExpression left, double right) => new Comparison(left, Relation.LessThanOrEqual, new Constant(right));
-        public static IBooleanExpression operator <=(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.LessThanOrEqual, right);
+        public static IBooleanExpression<ILinearRelation> operator <=(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.LessThanOrEqual, right);
+        public static IBooleanExpression<ILinearRelation> operator <=(ILinearExpression left, double right) => new LinearRelation(left, Relation.LessThanOrEqual, new Constant(right));
+        public static IBooleanExpression<ILinearRelation> operator <=(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.LessThanOrEqual, right);
 
-        public static IBooleanExpression operator >=(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.GreaterThanOrEqual, right);
-        public static IBooleanExpression operator >=(ILinearExpression left, double right) => new Comparison(left, Relation.GreaterThanOrEqual, new Constant(right));
-        public static IBooleanExpression operator >=(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.GreaterThanOrEqual, right);
+        public static IBooleanExpression<ILinearRelation> operator >=(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.GreaterThanOrEqual, right);
+        public static IBooleanExpression<ILinearRelation> operator >=(ILinearExpression left, double right) => new LinearRelation(left, Relation.GreaterThanOrEqual, new Constant(right));
+        public static IBooleanExpression<ILinearRelation> operator >=(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.GreaterThanOrEqual, right);
 
-        public static IBooleanExpression operator <(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.LessThan, right);
-        public static IBooleanExpression operator <(ILinearExpression left, double right) => new Comparison(left, Relation.LessThan, new Constant(right));
-        public static IBooleanExpression operator <(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.LessThan, right);
+        public static IBooleanExpression<ILinearRelation> operator <(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.LessThan, right);
+        public static IBooleanExpression<ILinearRelation> operator <(ILinearExpression left, double right) => new LinearRelation(left, Relation.LessThan, new Constant(right));
+        public static IBooleanExpression<ILinearRelation> operator <(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.LessThan, right);
 
-        public static IBooleanExpression operator >(ILinearExpression left, ILinearExpression right) => new Comparison(left, Relation.GreaterThan, right);
-        public static IBooleanExpression operator >(ILinearExpression left, double right) => new Comparison(left, Relation.GreaterThan, new Constant(right));
-        public static IBooleanExpression operator >(double left, ILinearExpression right) => new Comparison(new Constant(left), Relation.GreaterThan, right);
+        public static IBooleanExpression<ILinearRelation> operator >(ILinearExpression left, ILinearExpression right) => new LinearRelation(left, Relation.GreaterThan, right);
+        public static IBooleanExpression<ILinearRelation> operator >(ILinearExpression left, double right) => new LinearRelation(left, Relation.GreaterThan, new Constant(right));
+        public static IBooleanExpression<ILinearRelation> operator >(double left, ILinearExpression right) => new LinearRelation(new Constant(left), Relation.GreaterThan, right);
     }
 
     extension(Indicator) {
@@ -45,7 +45,7 @@ public static class LinearOperators {
         public static ILinearExpression operator *(Indicator gate, Indicator expression) => new Conditional(gate.Condition, expression, new Constant(0));
     }
 
-    extension(IBooleanExpression condition) {
+    extension(IBooleanExpression<ILinearRelation> condition) {
         /// <summary>One when this holds, and zero when it does not: <c>needsSetup.Indicator * setupTime</c>, <c>flags.Sum(flag =&gt; flag.Indicator)</c>.</summary>
         public Indicator Indicator => new(condition);
     }
@@ -55,28 +55,28 @@ public static class LinearOperators {
         /// The constraint that this expression equals <paramref name="other"/>. (C# reserves
         /// <c>==</c> on records and interfaces for structural and reference equality.)
         /// </summary>
-        public IBooleanExpression EqualTo(ILinearExpression other) => new Comparison(expression, Relation.Equal, other);
+        public IBooleanExpression<ILinearRelation> EqualTo(ILinearExpression other) => new LinearRelation(expression, Relation.Equal, other);
 
         /// <inheritdoc cref="EqualTo(ILinearExpression, ILinearExpression)"/>
-        public IBooleanExpression EqualTo(double other) => new Comparison(expression, Relation.Equal, new Constant(other));
+        public IBooleanExpression<ILinearRelation> EqualTo(double other) => new LinearRelation(expression, Relation.Equal, new Constant(other));
 
         /// <summary>The constraint that this expression differs from <paramref name="other"/>.</summary>
-        public IBooleanExpression NotEqualTo(ILinearExpression other) => new Comparison(expression, Relation.NotEqual, other);
+        public IBooleanExpression<ILinearRelation> NotEqualTo(ILinearExpression other) => new LinearRelation(expression, Relation.NotEqual, other);
 
         /// <inheritdoc cref="NotEqualTo(ILinearExpression, ILinearExpression)"/>
-        public IBooleanExpression NotEqualTo(double other) => new Comparison(expression, Relation.NotEqual, new Constant(other));
+        public IBooleanExpression<ILinearRelation> NotEqualTo(double other) => new LinearRelation(expression, Relation.NotEqual, new Constant(other));
 
         /// <summary>The constraint <c>lower &lt;= expression &lt;= upper</c>.</summary>
-        public IBooleanExpression Between(double lower, double upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearRelation> Between(double lower, double upper) => lower <= expression & expression <= upper;
 
         /// <inheritdoc cref="Between(ILinearExpression, double, double)"/>
-        public IBooleanExpression Between(ILinearExpression lower, ILinearExpression upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearRelation> Between(ILinearExpression lower, ILinearExpression upper) => lower <= expression & expression <= upper;
 
         /// <inheritdoc cref="Between(ILinearExpression, double, double)"/>
-        public IBooleanExpression Between(double lower, ILinearExpression upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearRelation> Between(double lower, ILinearExpression upper) => lower <= expression & expression <= upper;
 
         /// <inheritdoc cref="Between(ILinearExpression, double, double)"/>
-        public IBooleanExpression Between(ILinearExpression lower, double upper) => lower <= expression & expression <= upper;
+        public IBooleanExpression<ILinearRelation> Between(ILinearExpression lower, double upper) => lower <= expression & expression <= upper;
     }
 
     extension(IEnumerable<ILinearExpression> terms) {

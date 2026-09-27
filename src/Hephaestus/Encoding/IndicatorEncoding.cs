@@ -13,7 +13,7 @@ internal sealed record IndicatorProgram(
     int NextAuxiliaryIndex
 ) {
     /// <summary>The constraint being encoded, which every row added meanwhile is put down to.</summary>
-    public IBooleanExpression? Origin { get; init; }
+    public IBooleanExpression<IAtom>? Origin { get; init; }
 
     public static IndicatorProgram Empty { get; } = new([], ImmutableDictionary<INormalForm, Literal>.Empty, [], 0);
 }
@@ -42,7 +42,7 @@ internal static class IndicatorEncoding {
     /// result is the same as for the conjunction as a whole: the auxiliaries are shared and numbered
     /// alike, since the conjuncts are met in the same order.
     /// </summary>
-    public static IndicatorProgram Encode(IEnumerable<(IBooleanExpression Origin, INormalForm Formula)> conjuncts, AuxiliaryNaming naming) =>
+    public static IndicatorProgram Encode(IEnumerable<(IBooleanExpression<IAtom> Origin, INormalForm Formula)> conjuncts, AuxiliaryNaming naming) =>
         conjuncts.Aggregate(IndicatorProgram.Empty, (program, conjunct) => Enforce(program with { Origin = conjunct.Origin }, conjunct.Formula, [], naming));
 
     /// <summary>The 0/1-valued affine form of a literal.</summary>

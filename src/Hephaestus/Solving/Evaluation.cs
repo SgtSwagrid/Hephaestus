@@ -31,7 +31,7 @@ public static class Evaluation {
         /// no more than <paramref name="tolerance"/>. Reading one without saying forgives
         /// <see cref="Tolerance"/>, which is nearly always what is wanted.
         /// </summary>
-        public bool Value(IBooleanExpression expression, double tolerance) => Holds(solution, expression, tolerance);
+        public bool Value<TAtom>(IBooleanExpression<TAtom> expression, double tolerance) => Holds(solution, expression, tolerance);
 
         /// <summary>This solution with a value for one more variable.</summary>
         public Solution With(IVariable variable, double value) => solution with { Values = solution.Values.SetItem(variable, value) };
@@ -95,20 +95,21 @@ public static class Evaluation {
             _ => throw new NotSupportedException($"Unknown kind of linear expression: {expression.GetType().Name}."),
         };
 
-    internal static bool Holds(Solution solution, IBooleanExpression expression, double tolerance) =>
+    internal static bool Holds<TAtom>(Solution solution, IBooleanExpression<TAtom> expression, double tolerance) =>
         DeepRecursion.Guard(HoldsUnguarded, solution, expression, tolerance);
 
-    private static bool HoldsUnguarded(Solution solution, IBooleanExpression expression, double tolerance) =>
+    private static bool HoldsUnguarded<TAtom>(Solution solution, IBooleanExpression<TAtom> expression, double tolerance) =>
         expression switch {
             BooleanConstant constant => constant.Value,
             BinaryVariable variable => solution.ValueOf(variable) > 0.5,
-            Comparison comparison => BooleanNormalisation.Holds(comparison.Relation, solution.Value(comparison.Left - comparison.Right), tolerance),
-            Negation negation => !Holds(solution, negation.Operand, tolerance),
-            NamedConstraint named => Holds(solution, named.Expression, tolerance),
-            Conjunction conjunction => Holds(solution, conjunction.Left, tolerance) && Holds(solution, conjunction.Right, tolerance),
-            Disjunction disjunction => Holds(solution, disjunction.Left, tolerance) || Holds(solution, disjunction.Right, tolerance),
-            Implication implication => !Holds(solution, implication.Antecedent, tolerance) || Holds(solution, implication.Consequent, tolerance),
-            Equivalence equivalence => Holds(solution, equivalence.Left, tolerance) == Holds(solution, equivalence.Right, tolerance),
+            LinearRelation relation => BooleanNormalisation.Holds(relation.Relation, solution.Value(relation.Left - relation.Right), tolerance),
+            AffineRelation relation => BooleanNormalisation.Holds(relation.Relation, relation.Difference.Evaluate(solution.ValueOf), tolerance),
+            INegation<TAtom> negation => !Holds(solution, negation.Operand, tolerance),
+            INamedConstraint<TAtom> named => Holds(solution, named.Expression, tolerance),
+            IConjunction<TAtom> conjunction => Holds(solution, conjunction.Left, tolerance) && Holds(solution, conjunction.Right, tolerance),
+            IDisjunction<TAtom> disjunction => Holds(solution, disjunction.Left, tolerance) || Holds(solution, disjunction.Right, tolerance),
+            IImplication<TAtom> implication => !Holds(solution, implication.Antecedent, tolerance) || Holds(solution, implication.Consequent, tolerance),
+            IEquivalence<TAtom> equivalence => Holds(solution, equivalence.Left, tolerance) == Holds(solution, equivalence.Right, tolerance),
             _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 }

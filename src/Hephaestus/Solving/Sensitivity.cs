@@ -32,7 +32,7 @@ public static class Sensitivity {
 
     extension(ShadowPrices prices) {
         /// <summary>The price of a constraint: of one conjunct, or the sum over the conjuncts of a conjunction, such as the two sides of <c>Between</c>.</summary>
-        public double Of(IBooleanExpression constraint) => constraint.Conjuncts.Sum(conjunct => prices.ByName.GetValueOrDefault(conjunct.Name));
+        public double Of<TAtom>(IBooleanExpression<TAtom> constraint) => constraint.Conjuncts.Sum(conjunct => prices.ByName.GetValueOrDefault(conjunct.Name));
     }
 
     /// <summary>A row of the linear programme, and the constraint it came from.</summary>
@@ -48,7 +48,7 @@ public static class Sensitivity {
         var rows = linearised.Constraints(original.Constraint)
             .SelectMany(constraint => RowsOf(constraint.Written?.Name ?? "", constraint.Lowered, full))
             .ToImmutableArray();
-        var programme = Programme(linearised.Problem, rows, full);
+        var programme = Programme(linearised, rows, full);
         var duals = Duals(backend.Solve(programme, full.Values.Where(entry => !entry.Key.IsIntegral).ToImmutableDictionary(), options, cancellationToken), rows.Length);
         return new ShadowPrices(rows
             .Zip(duals, (row, dual) => (row.Name, Dual: dual))
@@ -66,15 +66,15 @@ public static class Sensitivity {
             _ => throw new NotSupportedException($"Unknown kind of definition: {definition.GetType().Name}."),
         };
 
-    private static IEnumerable<PricedRow> RowsOf(string name, IBooleanExpression conjunct, Solution solution) =>
-        Active(conjunct, true, solution).SelectMany(comparison => AsRow(comparison, solution)).Select(row => new PricedRow(name, row));
+    private static IEnumerable<PricedRow> RowsOf(string name, IBooleanExpression<IAffineRelation> conjunct, Solution solution) =>
+        Active(conjunct, true, solution).SelectMany(relation => AsRow(relation, solution)).Select(row => new PricedRow(name, row));
 
-    private static MilpProblem Programme(IOneShotProblem problem, ImmutableArray<PricedRow> rows, Solution solution) {
+    private static MilpProblem Programme(LinearisedProblem problem, ImmutableArray<PricedRow> rows, Solution solution) {
         var objective = Continuous(problem.Objective.Expression.Normalise(), solution);
         return new MilpProblem(
             [.. rows.SelectMany(row => row.Row.Coefficients.Keys).Concat(objective.Coefficients.Keys).Distinct().Order(VariableOrder.Comparer).Select(variable => new Column(variable, double.NegativeInfinity, double.PositiveInfinity, IsAuxiliary: false))],
             [.. rows.Select(row => row.Row)],
-            problem.Sense,
+            problem.Objective.Sense,
             objective);
     }
 
@@ -86,32 +86,32 @@ public static class Sensitivity {
                     ? "The backend solved the linear programme but reported no dual values. Use one that does: Gurobi, HiGHS, or OR-Tools with GLOP."
                     : $"The linear programme at the solution was not solved to optimality ({result.GetType().Name}), so it has no prices. Is the solution one of this problem?");
 
-    /// <summary>The comparisons that are in force at the solution: both sides of what is conjunctive, and the side that holds of what is disjunctive.</summary>
-    private static IEnumerable<Comparison> Active(IBooleanExpression expression, bool polarity, Solution solution) =>
+    /// <summary>The relations that are in force at the solution: both sides of what is conjunctive, and the side that holds of what is disjunctive.</summary>
+    private static IEnumerable<AffineRelation> Active(IBooleanExpression<IAffineRelation> expression, bool polarity, Solution solution) =>
         DeepRecursion.Guard(ActiveUnguarded, expression, polarity, solution);
 
-    private static IEnumerable<Comparison> ActiveUnguarded(IBooleanExpression expression, bool polarity, Solution solution) =>
+    private static IEnumerable<AffineRelation> ActiveUnguarded(IBooleanExpression<IAffineRelation> expression, bool polarity, Solution solution) =>
         expression switch {
-            Comparison comparison => [Oriented(comparison, polarity, solution)],
-            NamedConstraint named => Active(named.Expression, polarity, solution),
-            Negation negation => Active(negation.Operand, !polarity, solution),
-            Conjunction conjunction => Junction(conjunction.Left, conjunction.Right, isConjunctive: polarity, polarity, solution),
-            Disjunction disjunction => Junction(disjunction.Left, disjunction.Right, isConjunctive: !polarity, polarity, solution),
-            Implication implication => Active(!implication.Antecedent | implication.Consequent, polarity, solution),
-            Equivalence equivalence => Active((equivalence.Left & equivalence.Right) | (!equivalence.Left & !equivalence.Right), polarity, solution),
+            AffineRelation relation => [Oriented(relation, polarity, solution)],
+            INamedConstraint<IAffineRelation> named => Active(named.Expression, polarity, solution),
+            INegation<IAffineRelation> negation => Active(negation.Operand, !polarity, solution),
+            IConjunction<IAffineRelation> conjunction => Junction(conjunction.Left, conjunction.Right, isConjunctive: polarity, polarity, solution),
+            IDisjunction<IAffineRelation> disjunction => Junction(disjunction.Left, disjunction.Right, isConjunctive: !polarity, polarity, solution),
+            IImplication<IAffineRelation> implication => Active(!implication.Antecedent | implication.Consequent, polarity, solution),
+            IEquivalence<IAffineRelation> equivalence => Active((equivalence.Left & equivalence.Right) | (!equivalence.Left & !equivalence.Right), polarity, solution),
             _ => [],
         };
 
-    private static IEnumerable<Comparison> Junction(IBooleanExpression left, IBooleanExpression right, bool isConjunctive, bool polarity, Solution solution) =>
+    private static IEnumerable<AffineRelation> Junction(IBooleanExpression<IAffineRelation> left, IBooleanExpression<IAffineRelation> right, bool isConjunctive, bool polarity, Solution solution) =>
         isConjunctive ? [.. Active(left, polarity, solution), .. Active(right, polarity, solution)]
         : solution.Value(left) == polarity ? Active(left, polarity, solution)
         : Active(right, polarity, solution);
 
-    /// <summary>A comparison under negation is the opposite comparison, and a disequality is whichever strict inequality holds.</summary>
-    private static Comparison Oriented(Comparison comparison, bool polarity, Solution solution) =>
-        (polarity ? comparison.Relation : BooleanNormalisation.Opposite(comparison.Relation)) switch {
-            Relation.NotEqual => comparison with { Relation = solution.Value(comparison.Left - comparison.Right) < 0 ? Relation.LessThan : Relation.GreaterThan },
-            var relation => comparison with { Relation = relation },
+    /// <summary>A relation under negation is the opposite relation, and a disequality is whichever strict inequality holds.</summary>
+    private static AffineRelation Oriented(AffineRelation relation, bool polarity, Solution solution) =>
+        (polarity ? relation.Relation : BooleanNormalisation.Opposite(relation.Relation)) switch {
+            Relation.NotEqual => relation with { Relation = relation.Difference.Evaluate(solution.ValueOf) < 0 ? Relation.LessThan : Relation.GreaterThan },
+            var oriented => relation with { Relation = oriented },
         };
 
     /// <summary>
@@ -119,9 +119,9 @@ public static class Sensitivity {
     /// the right-hand side as written raises that bound by as much, whichever way the comparison faces.
     /// Strictness is dropped: a price is a rate, and the rate is the same at the boundary.
     /// </summary>
-    private static IEnumerable<LinearRow> AsRow(Comparison comparison, Solution solution) =>
-        Continuous((comparison.Left - comparison.Right).Normalise(), solution) is var form && form.IsConstant ? []
-        : [comparison.Relation switch {
+    private static IEnumerable<LinearRow> AsRow(AffineRelation relation, Solution solution) =>
+        Continuous(relation.Difference, solution) is var form && form.IsConstant ? []
+        : [relation.Relation switch {
             Relation.LessThan or Relation.LessThanOrEqual => new LinearRow(form.Coefficients, double.NegativeInfinity, 0 - form.Constant),
             Relation.GreaterThan or Relation.GreaterThanOrEqual => new LinearRow(form.Coefficients, 0 - form.Constant, double.PositiveInfinity),
             _ => new LinearRow(form.Coefficients, 0 - form.Constant, 0 - form.Constant),

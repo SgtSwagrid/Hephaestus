@@ -8,7 +8,11 @@ internal static class BooleanNormalisation {
 
     public static INormalForm False { get; } = new Any([]);
 
-    extension(IBooleanExpression expression) {
+    extension(IBooleanExpression<IAffineRelation> expression) {
+        /// <summary>
+        /// The formula in negation normal form. Only a lowered formula has one: the relations of a
+        /// formula as written may still hold piecewise-linear functions, which lowering takes out.
+        /// </summary>
         /// <param name="epsilon">
         /// The gap that stands in for strictness over the reals: <c>e &lt; 0</c> becomes
         /// <c>e + epsilon &lt;= 0</c>. Whole-valued expressions use a gap of exactly one instead.
@@ -23,38 +27,38 @@ internal static class BooleanNormalisation {
         double Epsilon
     );
 
-    private static INormalForm Convert(IBooleanExpression expression, bool polarity, double epsilon) =>
+    private static INormalForm Convert(IBooleanExpression<IAffineRelation> expression, bool polarity, double epsilon) =>
         DeepRecursion.Guard(ConvertUnguarded, expression, polarity, epsilon);
 
-    private static INormalForm ConvertUnguarded(IBooleanExpression expression, bool polarity, double epsilon) =>
+    private static INormalForm ConvertUnguarded(IBooleanExpression<IAffineRelation> expression, bool polarity, double epsilon) =>
         expression switch {
             BooleanConstant constant => constant.Value == polarity ? True : False,
             BinaryVariable variable => new Literal(variable, polarity),
-            Comparison comparison => OfComparison(comparison, polarity, epsilon),
-            Negation negation => Convert(negation.Operand, !polarity, epsilon),
-            NamedConstraint named => Convert(named.Expression, polarity, epsilon),
-            Conjunction => OfJunction(expression, new Gathering(IsConjunctive: polarity, polarity, epsilon)),
-            Disjunction => OfJunction(expression, new Gathering(IsConjunctive: !polarity, polarity, epsilon)),
-            Implication implication => Convert(!implication.Antecedent | implication.Consequent, polarity, epsilon),
-            Equivalence equivalence => Convert(equivalence.Left.Implies(equivalence.Right) & equivalence.Right.Implies(equivalence.Left), polarity, epsilon),
+            AffineRelation relation => OfRelation(relation.Difference, polarity ? relation.Relation : Opposite(relation.Relation), epsilon),
+            INegation<IAffineRelation> negation => Convert(negation.Operand, !polarity, epsilon),
+            INamedConstraint<IAffineRelation> named => Convert(named.Expression, polarity, epsilon),
+            IConjunction<IAffineRelation> => OfJunction(expression, new Gathering(IsConjunctive: polarity, polarity, epsilon)),
+            IDisjunction<IAffineRelation> => OfJunction(expression, new Gathering(IsConjunctive: !polarity, polarity, epsilon)),
+            IImplication<IAffineRelation> implication => Convert(!implication.Antecedent | implication.Consequent, polarity, epsilon),
+            IEquivalence<IAffineRelation> equivalence => Convert(equivalence.Left.Implies(equivalence.Right) & equivalence.Right.Implies(equivalence.Left), polarity, epsilon),
             _ => throw new NotSupportedException($"Unknown kind of boolean expression: {expression.GetType().Name}."),
         };
 
-    private static INormalForm OfJunction(IBooleanExpression expression, Gathering gathering) =>
+    private static INormalForm OfJunction(IBooleanExpression<IAffineRelation> expression, Gathering gathering) =>
         Junction(Collect(expression, gathering, []), gathering.IsConjunctive);
 
     /// <summary>Gathers the operands of a maximal run of same-kind junctions, left to right.</summary>
-    private static ImmutableList<INormalForm> Collect(IBooleanExpression expression, Gathering gathering, ImmutableList<INormalForm> into) =>
+    private static ImmutableList<INormalForm> Collect(IBooleanExpression<IAffineRelation> expression, Gathering gathering, ImmutableList<INormalForm> into) =>
         DeepRecursion.Guard(CollectUnguarded, expression, gathering, into);
 
-    private static ImmutableList<INormalForm> CollectUnguarded(IBooleanExpression expression, Gathering gathering, ImmutableList<INormalForm> into) =>
+    private static ImmutableList<INormalForm> CollectUnguarded(IBooleanExpression<IAffineRelation> expression, Gathering gathering, ImmutableList<INormalForm> into) =>
         expression switch {
-            Conjunction conjunction when gathering.Polarity == gathering.IsConjunctive => CollectBoth(conjunction.Left, conjunction.Right, gathering, into),
-            Disjunction disjunction when gathering.Polarity != gathering.IsConjunctive => CollectBoth(disjunction.Left, disjunction.Right, gathering, into),
+            IConjunction<IAffineRelation> conjunction when gathering.Polarity == gathering.IsConjunctive => CollectBoth(conjunction.Left, conjunction.Right, gathering, into),
+            IDisjunction<IAffineRelation> disjunction when gathering.Polarity != gathering.IsConjunctive => CollectBoth(disjunction.Left, disjunction.Right, gathering, into),
             _ => Splice(into, Convert(expression, gathering.Polarity, gathering.Epsilon), gathering.IsConjunctive),
         };
 
-    private static ImmutableList<INormalForm> CollectBoth(IBooleanExpression left, IBooleanExpression right, Gathering gathering, ImmutableList<INormalForm> into) =>
+    private static ImmutableList<INormalForm> CollectBoth(IBooleanExpression<IAffineRelation> left, IBooleanExpression<IAffineRelation> right, Gathering gathering, ImmutableList<INormalForm> into) =>
         Collect(right, gathering, Collect(left, gathering, into));
 
     private static ImmutableList<INormalForm> Splice(ImmutableList<INormalForm> into, INormalForm operand, bool isConjunctive) =>
@@ -74,12 +78,6 @@ internal static class BooleanNormalisation {
         : operands.Count == 1 ? operands[0]
         : isConjunctive ? new All(operands)
         : new Any(operands);
-
-    private static INormalForm OfComparison(Comparison comparison, bool polarity, double epsilon) =>
-        OfRelation(
-            (comparison.Left - comparison.Right).Normalise(),
-            polarity ? comparison.Relation : Opposite(comparison.Relation),
-            epsilon);
 
     private static INormalForm OfRelation(AffineForm difference, Relation relation, double epsilon) =>
         difference.IsConstant

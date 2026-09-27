@@ -32,7 +32,7 @@ public static class LexicographicSolving {
     }
 
     private sealed record Progress(
-        IBooleanExpression Constraint,
+        IBooleanExpression<IAtom> Constraint,
         Solution? Start,
         ImmutableList<ISolveResult> Stages
     );
