@@ -4,9 +4,9 @@
   <p>A purely functional modelling layer for MILP and SMT solvers, for C# 14 / .NET 10.</p>
 
   <span>
-    <a href="https://github.com/SgtSwagrid/Hephaestus/actions/workflows/build-integrity.yml"><img src="https://github.com/SgtSwagrid/Hephaestus/actions/workflows/build-integrity.yml/badge.svg" alt="Build status" /></a>
+    <a href="https://github.com/SgtSwagrid/hephaestus/actions/workflows/build-integrity.yml"><img src="https://github.com/SgtSwagrid/hephaestus/actions/workflows/build-integrity.yml/badge.svg" alt="Build status" /></a>
     <a href="https://www.nuget.org/packages/Hephaestus.Optimisation"><img src="https://img.shields.io/nuget/vpre/Hephaestus.Optimisation.svg" alt="NuGet" /></a>
-    <a href="https://alecdorrington.com/Hephaestus"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Documentation" /></a>
+    <a href="https://alecdorrington.com/hephaestus"><img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Documentation" /></a>
   </span>
 
 </div>
